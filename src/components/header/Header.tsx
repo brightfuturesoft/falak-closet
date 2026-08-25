@@ -64,15 +64,31 @@ export function Header() {
   const allStoreProducts = cartProducts && cartProducts.length > 0 ? cartProducts : PRODUCTS;
 
   useEffect(() => {
-    try {
-      const savedUser = localStorage.getItem('falak_user_account');
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        if (parsed.name) {
-          setUserName(parsed.name.split(' ')[0]);
+    const checkUser = () => {
+      try {
+        const savedUser = localStorage.getItem('falak_user_account');
+        if (savedUser) {
+          const parsed = JSON.parse(savedUser);
+          if (parsed.name) {
+            setUserName(parsed.name.split(' ')[0]);
+            return;
+          }
         }
+        setUserName(null);
+      } catch {
+        setUserName(null);
       }
-    } catch { }
+    };
+
+    checkUser();
+
+    window.addEventListener('storage', checkUser);
+    window.addEventListener('falak_auth_change', checkUser);
+
+    return () => {
+      window.removeEventListener('storage', checkUser);
+      window.removeEventListener('falak_auth_change', checkUser);
+    };
   }, [pathname]);
 
   useEffect(() => {
