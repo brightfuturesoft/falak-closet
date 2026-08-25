@@ -82,6 +82,10 @@ export function AdminHeader({
     settings: {
       title: 'System & Database Config',
       subtitle: 'MongoDB connection parameters, database seeder, and store parameters.'
+    },
+    hero: {
+      title: 'Homepage Hero Banner Slider',
+      subtitle: 'Manage slider banners, edit visibility toggles, and configure custom sorting order.'
     }
   };
 
