@@ -27,7 +27,13 @@ export function filterProducts(
   let result = [...products];
 
   if (filters.category && filters.category !== 'All') {
-    result = result.filter((p) => p.category === filters.category);
+    const qCat = filters.category.toLowerCase();
+    const qCatSlug = qCat.replace(/[^a-z0-9]+/g, '-');
+    result = result.filter((p) => {
+      const pCat = (p.category || '').toLowerCase();
+      const pCatSlug = pCat.replace(/[^a-z0-9]+/g, '-');
+      return pCat === qCat || pCatSlug === qCatSlug || pCatSlug === qCat || pCat === qCatSlug;
+    });
   }
 
   if (filters.workType && filters.workType !== 'All') {

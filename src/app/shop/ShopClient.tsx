@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import {
   PRODUCTS,
-  CATEGORIES,
   WORK_TYPES,
   COLOR_FAMILIES,
   MATERIALS,
@@ -156,9 +155,13 @@ function ShopContent() {
     });
 
     if (subCategoryParam !== 'All') {
-      list = list.filter(
-        (p) => ((p as any).subCategory || '').toLowerCase() === subCategoryParam.toLowerCase()
-      );
+      const targetSub = subCategoryParam.toLowerCase();
+      const targetSubSlug = targetSub.replace(/[^a-z0-9]+/g, '-');
+      list = list.filter((p) => {
+        const pSub = ((p as any).subCategory || '').toLowerCase();
+        const pSubSlug = pSub.replace(/[^a-z0-9]+/g, '-');
+        return pSub === targetSub || pSubSlug === targetSubSlug || pSubSlug === targetSub || pSub === targetSubSlug;
+      });
     }
 
     if (wishlistParam) {
@@ -314,7 +317,7 @@ function ShopContent() {
                   <div key={catObj.id} className="space-y-1">
                     <button
                       onClick={() => {
-                        updateFilterParam('category', catName);
+                        updateFilterParam('category', isSelectedCat ? 'All' : catName);
                         updateFilterParam('subCategory', 'All');
                       }}
                       className={`w-full text-left px-3 py-2 rounded-xl transition-all flex items-center justify-between font-bold cursor-pointer ${
@@ -477,7 +480,7 @@ function ShopContent() {
               <div className="space-y-2">
                 <h4 className="font-bold text-xs uppercase tracking-wider text-stone-700">Category</h4>
                 <div className="space-y-1 text-xs">
-                  {['All', ...CATEGORIES].map((cat) => (
+                  {['All', ...managedCategories.map((c) => c.name)].map((cat) => (
                     <button
                       key={cat}
                       onClick={() => {

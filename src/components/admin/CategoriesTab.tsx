@@ -171,20 +171,24 @@ export function CategoriesTab({ products = PRODUCTS, onRefreshProducts }: Catego
       description: catFormData.description.trim(),
       isFeatured: catFormData.isFeatured
     };
-
     try {
+      let res;
       if (editingCategory) {
-        await fetch('/api/categories', {
+        res = await fetch('/api/categories', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...payload, isSubcategory: false })
         });
       } else {
-        await fetch('/api/categories', {
+        res = await fetch('/api/categories', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...payload, action: 'create_category' })
         });
+      }
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to save category');
       }
       await loadCategories();
       setIsCategoryModalOpen(false);
@@ -223,20 +227,24 @@ export function CategoriesTab({ products = PRODUCTS, onRefreshProducts }: Catego
       slug: subFormData.slug.trim() || subFormData.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       description: subFormData.description.trim()
     };
-
     try {
+      let res;
       if (editingSubcategory) {
-        await fetch('/api/categories', {
+        res = await fetch('/api/categories', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...payload, isSubcategory: true })
         });
       } else {
-        await fetch('/api/categories', {
+        res = await fetch('/api/categories', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...payload, action: 'create_subcategory' })
         });
+      }
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to save subcategory');
       }
       await loadCategories();
       setIsSubcategoryModalOpen(false);
@@ -269,9 +277,13 @@ export function CategoriesTab({ products = PRODUCTS, onRefreshProducts }: Catego
     if (!deletingTarget) return;
 
     try {
-      await fetch(`/api/categories?id=${deletingTarget.id}&isSubcategory=${deletingTarget.isSubcategory}`, {
+      const res = await fetch(`/api/categories?id=${deletingTarget.id}&isSubcategory=${deletingTarget.isSubcategory}`, {
         method: 'DELETE'
       });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to delete category');
+      }
       await loadCategories();
     } catch {
       // Fallback local delete
