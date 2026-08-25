@@ -1,0 +1,36 @@
+schema: spec-driven
+
+context: |
+  Technology Stack:
+  - Framework: Next.js 16 (App Router), React 19, TypeScript
+  - Styling: TailwindCSS v4 (using postcss)
+  - Database: MongoDB via Mongoose ORM (models in src/models/)
+  - Real-time: Socket.io (standalone server socket-server.js runs on port 4000)
+  
+  Repository Conventions:
+  - Use Next.js App Router API routes under src/app/api/
+  - Use modular UI components under src/components/
+  - Use central schemas and mongoose models under src/models/
+  - Business logic/utilities live in src/lib/ and static data sets in src/data/
+  - Always verify compilation and database seed when modifying API routes or database models.
+
+rules:
+  proposal:
+    - Always state why the change is needed and the target audience.
+    - Clearly document any new API endpoints, DB schema fields, or Socket.io events.
+  design:
+    - Focus on data flow, component layout, and API schemas.
+    - Document any new Tailwind CSS patterns or environment variables needed.
+  tasks:
+    - Separate backend schema, API, socket events, and frontend UI changes into distinct milestones.
+    - Include validation tasks for both build and runtime tests.
+
+operations:
+  apply:
+    guidance:
+      - Always run `npm run dev` and test key features.
+      - Ensure socket connections are cleaned up in useEffect hooks.
+  archive:
+    guidance:
+      - Ensure specs are consolidated into the main `openspec/specs` directory.
+
