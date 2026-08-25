@@ -333,6 +333,32 @@ function AdminDashboardContent() {
     }
   };
 
+  // Toggle Product Featured Flag inline (4.1)
+  const handleToggleProductFlag = async (
+    id: string,
+    flag: 'isNewArrival' | 'isBestSeller' | 'isFlashSale',
+    value: boolean
+  ) => {
+    // Optimistic update
+    setProductsList((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, [flag]: value } : p))
+    );
+    try {
+      await fetch(`/api/products/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [flag]: value })
+      });
+    } catch {
+      // Revert on failure
+      setProductsList((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, [flag]: !value } : p))
+      );
+      addToast('error', `Failed to update flag for product ${id}`);
+    }
+    addToast('info', `Product flag updated.`);
+  };
+
   // Update In-Line Stock
   const handleUpdateStock = async (id: string, newStock: number) => {
     try {
@@ -540,6 +566,7 @@ function AdminDashboardContent() {
               }}
               onDeleteProduct={handleDeleteProduct}
               onUpdateStock={handleUpdateStock}
+              onToggleProductFlag={handleToggleProductFlag}
               searchQuery={globalSearchQuery}
             />
           )}
