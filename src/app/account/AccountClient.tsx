@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { User, Package, Heart, MapPin, LogOut, ArrowRight, ShieldCheck, Mail, Phone } from 'lucide-react';
+import { User, Package, Heart, MapPin, LogOut, ArrowRight, ShieldCheck, Mail, Phone, ArrowLeft, Lock } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { formatCurrency } from '@/lib/utils';
 
@@ -71,50 +71,45 @@ export default function AccountClient() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginEmail || !loginPassword) return;
+    setFeedback(null);
 
     try {
-      const res = await fetch('/api/user/all');
+      const res = await fetch('/api/user/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: loginEmail, password: loginPassword })
+      });
       const data = await res.json();
 
-      if (data.success && data.users) {
-        const matched = data.users.find(
-          (u: any) => u.email.toLowerCase() === loginEmail.toLowerCase()
-        );
-        if (matched) {
-          const profileObj: UserProfile = {
-            name: matched.name,
-            email: matched.email,
-            phone: matched.phone || '01700000000',
-            district: matched.district || 'Dhaka',
-            fullAddress: matched.fullAddress || 'Banani, Dhaka'
-          };
-          setUserProfile(profileObj);
-          localStorage.setItem('falak_user_account', JSON.stringify(profileObj));
-          setFeedback({ type: 'success', message: `Welcome back, ${profileObj.name}!` });
-          return;
-        }
+      if (data.success && data.user) {
+        const profileObj: UserProfile = {
+          name: data.user.name,
+          email: data.user.email,
+          phone: data.user.phone || '01700000000',
+          district: data.user.district || 'Dhaka',
+          fullAddress: data.user.fullAddress || ''
+        };
+        setUserProfile(profileObj);
+        localStorage.setItem('falak_user_account', JSON.stringify(profileObj));
+        setFeedback({ type: 'success', message: `Welcome back, ${profileObj.name}!` });
+        // Trigger storage event so that Header component state syncs instantly
+        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new Event('falak_auth_change'));
+      } else {
+        setFeedback({ type: 'error', message: data.error || 'Incorrect credentials' });
       }
-    } catch { }
-
-    // Demo account fallback
-    const demoProfile: UserProfile = {
-      name: loginEmail.split('@')[0] || 'Valued Member',
-      email: loginEmail,
-      phone: '01700000000',
-      district: 'Dhaka',
-      fullAddress: 'House 12, Road 5, Dhanmondi'
-    };
-    setUserProfile(demoProfile);
-    localStorage.setItem('falak_user_account', JSON.stringify(demoProfile));
-    setFeedback({ type: 'success', message: 'Signed in successfully!' });
+    } catch {
+      setFeedback({ type: 'error', message: 'Authentication server error. Check your connection.' });
+    }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!signupName || !signupEmail || !signupPassword) return;
+    setFeedback(null);
 
     try {
-      await fetch('/api/user', {
+      const res = await fetch('/api/user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -126,25 +121,115 @@ export default function AccountClient() {
           password: signupPassword
         })
       });
-    } catch { }
+      const data = await res.json();
 
-    const profileObj: UserProfile = {
-      name: signupName,
-      email: signupEmail,
-      phone: signupPhone || '01700000000',
-      district: signupDistrict || 'Dhaka',
-      fullAddress: signupAddress || 'Dhaka, Bangladesh'
-    };
+      if (data.success && data.user) {
+        const profileObj: UserProfile = {
+          name: data.user.name,
+          email: data.user.email,
+          phone: data.user.phone || '01700000000',
+          district: data.user.district || 'Dhaka',
+          fullAddress: data.user.fullAddress || ''
+        };
+        setUserProfile(profileObj);
+        localStorage.setItem('falak_user_account', JSON.stringify(profileObj));
+        setFeedback({ type: 'success', message: 'Account registered and signed in successfully!' });
+        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new Event('falak_auth_change'));
+      } else {
+        setFeedback({ type: 'error', message: data.error || 'Failed to create account.' });
+      }
+    } catch {
+      setFeedback({ type: 'error', message: 'Registration server error.' });
+    }
+  };
 
-    setUserProfile(profileObj);
-    localStorage.setItem('falak_user_account', JSON.stringify(profileObj));
-    setFeedback({ type: 'success', message: 'Account created successfully!' });
+  const handleRequestOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetIdentifier) return;
+    setFeedback(null);
+    setIsResetting(true);
+
+    try {
+      const res = await fetch('/api/user/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'request-otp', identifier: resetIdentifier })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setDemoOtpCode(data.demoOtp || '');
+        setFeedback({ type: 'success', message: `OTP verification code generated! Use: ${data.demoOtp}` });
+        setResetStep(2);
+      } else {
+        setFeedback({ type: 'error', message: data.error || 'Account not found.' });
+      }
+    } catch {
+      setFeedback({ type: 'error', message: 'Failed to request password reset OTP.' });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetOtpInput || !newResetPassword || !confirmResetPassword) {
+      setFeedback({ type: 'error', message: 'All password fields are required.' });
+      return;
+    }
+
+    if (newResetPassword !== confirmResetPassword) {
+      setFeedback({ type: 'error', message: 'Passwords do not match.' });
+      return;
+    }
+
+    if (newResetPassword.length < 6) {
+      setFeedback({ type: 'error', message: 'Password must be at least 6 characters.' });
+      return;
+    }
+
+    setFeedback(null);
+    setIsResetting(true);
+
+    try {
+      const res = await fetch('/api/user/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'reset-password',
+          identifier: resetIdentifier,
+          otp: resetOtpInput,
+          newPassword: newResetPassword
+        })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setFeedback({ type: 'success', message: 'Password reset successful! You can now log in.' });
+        setAuthMode('signin');
+        setResetStep(1);
+        setDemoOtpCode('');
+        setResetOtpInput('');
+        setNewResetPassword('');
+        setConfirmResetPassword('');
+      } else {
+        setFeedback({ type: 'error', message: data.error || 'Failed to reset password.' });
+      }
+    } catch {
+      setFeedback({ type: 'error', message: 'Reset request server error.' });
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   const handleLogout = () => {
     setUserProfile(null);
     localStorage.removeItem('falak_user_account');
     setFeedback({ type: 'success', message: 'Signed out successfully.' });
+    // Trigger storage event so that Header component syncs instantly
+    window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new Event('falak_auth_change'));
   };
 
   const getInitials = (name: string) => {
@@ -321,45 +406,292 @@ export default function AccountClient() {
           )}
         </>
       ) : (
-        /* Sign In / Sign Up Form */
-        <div className="max-w-md mx-auto bg-white rounded-3xl border-2 border-[#F2C76E]/80 p-6 shadow-sm space-y-6">
+        /* Sign In / Sign Up Form Container */
+        <div className="max-w-md mx-auto bg-white rounded-3xl border-2 border-[#F2C76E]/80 p-6 sm:p-8 shadow-sm space-y-6">
+          {/* Header */}
           <div className="text-center space-y-1">
-            <h1 className="font-serif font-extrabold text-2xl text-[#0C163A]">Customer Portal</h1>
-            <p className="text-xs text-stone-500">Sign in to manage your orders & profile</p>
+            <h1 className="font-serif font-extrabold text-2xl text-[#0C163A]">
+              {authMode === 'signin' && 'Customer Sign In'}
+              {authMode === 'signup' && 'Create Account'}
+              {authMode === 'forgot' && 'Reset Password'}
+            </h1>
+            <p className="text-xs text-stone-500 font-medium">
+              {authMode === 'signin' && 'Sign in to manage your orders & profile'}
+              {authMode === 'signup' && 'Register for a new customer account'}
+              {authMode === 'forgot' && 'Recover your account password'}
+            </p>
           </div>
 
-          <form onSubmit={handleSignIn} className="space-y-4 text-xs">
-            <div className="space-y-1">
-              <label className="font-bold text-[#0C163A]">Email Address</label>
-              <input
-                type="email"
-                required
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                placeholder="e.g. sarah@example.com"
-                className="w-full px-3.5 py-2.5 bg-[#FFFBF0] border border-[#F2C76E]/60 rounded-full text-[#0C163A] focus:outline-none focus:ring-2 focus:ring-[#9B050B]/30"
-              />
+          {/* Feedback banner */}
+          {feedback && (
+            <div className={`p-3.5 rounded-xl border text-xs font-bold text-center ${
+              feedback.type === 'success'
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                : 'bg-rose-50 border-rose-200 text-rose-800'
+            }`}>
+              {feedback.message}
             </div>
+          )}
 
-            <div className="space-y-1">
-              <label className="font-bold text-[#0C163A]">Password</label>
-              <input
-                type="password"
-                required
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-3.5 py-2.5 bg-[#FFFBF0] border border-[#F2C76E]/60 rounded-full text-[#0C163A] focus:outline-none focus:ring-2 focus:ring-[#9B050B]/30"
-              />
+          {/* Render Active Form */}
+          {authMode === 'signin' && (
+            <form onSubmit={handleSignIn} className="space-y-4 text-xs">
+              <div className="space-y-1">
+                <label className="font-bold text-[#0C163A]">Email Address or Phone Number</label>
+                <input
+                  type="text"
+                  required
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  placeholder="e.g. customer@example.com or 017XXXXXXXX"
+                  className="w-full px-4 py-3 bg-[#FFFBF0] border border-[#F2C76E]/60 rounded-full text-[#0C163A] focus:outline-none focus:ring-2 focus:ring-[#9B050B]/30"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-[#0C163A]">Password</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('forgot');
+                      setFeedback(null);
+                    }}
+                    className="text-[11px] text-[#9B050B] hover:underline font-bold"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+                <input
+                  type="password"
+                  required
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-4 py-3 bg-[#FFFBF0] border border-[#F2C76E]/60 rounded-full text-[#0C163A] focus:outline-none focus:ring-2 focus:ring-[#9B050B]/30"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 bg-[#9B050B] hover:bg-[#B8000A] text-[#FFFBF0] font-bold text-xs uppercase tracking-wider rounded-full shadow-md transition-colors cursor-pointer"
+              >
+                Sign In to Account
+              </button>
+
+              <div className="text-center pt-2">
+                <span className="text-stone-500 font-medium">New to Falak Closet? </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('signup');
+                    setFeedback(null);
+                  }}
+                  className="text-[#9B050B] font-extrabold hover:underline"
+                >
+                  Create an Account
+                </button>
+              </div>
+            </form>
+          )}
+
+          {authMode === 'signup' && (
+            <form onSubmit={handleSignUp} className="space-y-3 text-xs">
+              <div className="space-y-1">
+                <label className="font-bold text-[#0C163A]">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={signupName}
+                  onChange={(e) => setSignupName(e.target.value)}
+                  placeholder="Sarah Rahman"
+                  className="w-full px-4 py-2.5 bg-[#FFFBF0] border border-[#F2C76E]/60 rounded-full text-[#0C163A] focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#0C163A]">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  value={signupEmail}
+                  onChange={(e) => setSignupEmail(e.target.value)}
+                  placeholder="sarah@example.com"
+                  className="w-full px-4 py-2.5 bg-[#FFFBF0] border border-[#F2C76E]/60 rounded-full text-[#0C163A] focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#0C163A]">Phone Number</label>
+                <input
+                  type="tel"
+                  required
+                  value={signupPhone}
+                  onChange={(e) => setSignupPhone(e.target.value)}
+                  placeholder="017XXXXXXXX"
+                  className="w-full px-4 py-2.5 bg-[#FFFBF0] border border-[#F2C76E]/60 rounded-full text-[#0C163A] focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="font-bold text-[#0C163A]">District</label>
+                  <select
+                    value={signupDistrict}
+                    onChange={(e) => setSignupDistrict(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-[#FFFBF0] border border-[#F2C76E]/60 rounded-full text-[#0C163A] focus:outline-none font-bold"
+                  >
+                    <option value="Dhaka">Dhaka</option>
+                    <option value="Chittagong">Chittagong</option>
+                    <option value="Sylhet">Sylhet</option>
+                    <option value="Rajshahi">Rajshahi</option>
+                    <option value="Khulna">Khulna</option>
+                    <option value="Barisal">Barisal</option>
+                    <option value="Rangpur">Rangpur</option>
+                    <option value="Mymensingh">Mymensingh</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-[#0C163A]">Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={signupPassword}
+                    onChange={(e) => setSignupPassword(e.target.value)}
+                    placeholder="Min. 6 chars"
+                    className="w-full px-4 py-2.5 bg-[#FFFBF0] border border-[#F2C76E]/60 rounded-full text-[#0C163A] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#0C163A]">Full Shipping Address</label>
+                <input
+                  type="text"
+                  value={signupAddress}
+                  onChange={(e) => setSignupAddress(e.target.value)}
+                  placeholder="House 12, Road 4, Dhanmondi"
+                  className="w-full px-4 py-2.5 bg-[#FFFBF0] border border-[#F2C76E]/60 rounded-full text-[#0C163A] focus:outline-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 bg-[#9B050B] hover:bg-[#B8000A] text-[#FFFBF0] font-bold text-xs uppercase tracking-wider rounded-full shadow-md transition-colors cursor-pointer mt-2"
+              >
+                Register & Sign In
+              </button>
+
+              <div className="text-center pt-2">
+                <span className="text-stone-500 font-medium">Already have an account? </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('signin');
+                    setFeedback(null);
+                  }}
+                  className="text-[#9B050B] font-extrabold hover:underline"
+                >
+                  Sign In
+                </button>
+              </div>
+            </form>
+          )}
+
+          {authMode === 'forgot' && (
+            <div className="space-y-4">
+              {resetStep === 1 ? (
+                <form onSubmit={handleRequestOtp} className="space-y-4 text-xs">
+                  <div className="space-y-1">
+                    <label className="font-bold text-[#0C163A]">Email Address or Phone Number</label>
+                    <input
+                      type="text"
+                      required
+                      value={resetIdentifier}
+                      onChange={(e) => setResetIdentifier(e.target.value)}
+                      placeholder="e.g. sarah@example.com or 017XXXXXXXX"
+                      className="w-full px-4 py-3 bg-[#FFFBF0] border border-[#F2C76E]/60 rounded-full text-[#0C163A] focus:outline-none"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isResetting}
+                    className="w-full py-3 bg-[#9B050B] hover:bg-[#B8000A] text-[#FFFBF0] font-bold text-xs uppercase tracking-wider rounded-full shadow-md transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {isResetting ? 'Generating Code...' : 'Request Verification OTP'}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleResetPassword} className="space-y-3 text-xs">
+                  {demoOtpCode && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-stone-800 font-mono text-[11px] text-center">
+                      Demo Mode OTP Code: <strong className="text-[#9B050B]">{demoOtpCode}</strong>
+                    </div>
+                  )}
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-[#0C163A]">Verification OTP Code</label>
+                    <input
+                      type="text"
+                      required
+                      value={resetOtpInput}
+                      onChange={(e) => setResetOtpInput(e.target.value)}
+                      placeholder="Enter 6-digit code"
+                      className="w-full px-4 py-2.5 bg-[#FFFBF0] border border-[#F2C76E]/60 rounded-full text-[#0C163A] focus:outline-none text-center font-mono tracking-widest text-sm"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-[#0C163A]">New Password</label>
+                    <input
+                      type="password"
+                      required
+                      value={newResetPassword}
+                      onChange={(e) => setNewResetPassword(e.target.value)}
+                      placeholder="At least 6 characters"
+                      className="w-full px-4 py-2.5 bg-[#FFFBF0] border border-[#F2C76E]/60 rounded-full text-[#0C163A] focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-[#0C163A]">Confirm New Password</label>
+                    <input
+                      type="password"
+                      required
+                      value={confirmResetPassword}
+                      onChange={(e) => setConfirmResetPassword(e.target.value)}
+                      placeholder="At least 6 characters"
+                      className="w-full px-4 py-2.5 bg-[#FFFBF0] border border-[#F2C76E]/60 rounded-full text-[#0C163A] focus:outline-none"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isResetting}
+                    className="w-full py-3 bg-[#9B050B] hover:bg-[#B8000A] text-[#FFFBF0] font-bold text-xs uppercase tracking-wider rounded-full shadow-md transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {isResetting ? 'Updating...' : 'Update Password'}
+                  </button>
+                </form>
+              )}
+
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('signin');
+                    setResetStep(1);
+                    setFeedback(null);
+                  }}
+                  className="text-stone-500 hover:text-[#9B050B] text-xs font-bold inline-flex items-center gap-1"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" /> Back to Sign In
+                </button>
+              </div>
             </div>
-
-            <button
-              type="submit"
-              className="w-full py-3 bg-[#9B050B] hover:bg-[#B8000A] text-[#FFFBF0] font-bold text-xs uppercase tracking-wider rounded-full shadow-md transition-colors cursor-pointer"
-            >
-              Sign In to Account
-            </button>
-          </form>
+          )}
         </div>
       )}
     </div>
