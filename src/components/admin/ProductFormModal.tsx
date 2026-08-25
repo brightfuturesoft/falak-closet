@@ -67,8 +67,38 @@ export function ProductFormModal({
     stock: 0,
     description: '',
     featuresText: '',
-    careText: ''
+    careText: '',
+    isNewArrival: false,
+    isBestSeller: false,
+    isFlashSale: false
   });
+
+  // Form Validation Errors State (2.1)
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // Validate a single wizard step (2.1)
+  const validateStep = (step: number): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    if (step === 1) {
+      if (!formData.name.trim()) errors.name = 'Product name is required.';
+      if (!formData.description.trim()) errors.description = 'Description is required.';
+    }
+    if (step === 2) {
+      if (!formData.price || formData.price <= 0) errors.price = 'Sale price must be greater than 0.';
+      if (!formData.originalPrice || formData.originalPrice <= 0) errors.originalPrice = 'Original price must be greater than 0.';
+    }
+    if (step === 3) {
+      const hasImages = colorVariations.some((c) => c.images.length > 0);
+      if (colorVariations.length === 0) errors.colors = 'At least one color variation is required.';
+      if (!hasImages) errors.images = 'At least one color variation must have an image.';
+    }
+    return errors;
+  };
+
+  // Validate all steps (2.1)
+  const validateAll = (): Record<string, string> => {
+    return { ...validateStep(1), ...validateStep(2), ...validateStep(3) };
+  };
 
   // Dynamic Managed Categories & Subcategories State
   const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
@@ -135,15 +165,20 @@ export function ProductFormModal({
         stock: editingProduct.stock ?? 10,
         description: editingProduct.description || 'Luxury modest ensemble.',
         featuresText: (editingProduct.features || []).join('\n'),
-        careText: (editingProduct.careInstructions || []).join('\n')
+        careText: (editingProduct.careInstructions || []).join('\n'),
+        // Pre-populate featured flags (2.7)
+        isNewArrival: editingProduct.isNewArrival ?? false,
+        isBestSeller: editingProduct.isBestSeller ?? false,
+        isFlashSale: editingProduct.isFlashSale ?? false
       });
 
-      // Construct color variations array from editing product
+      // Construct color variations array from editing product (2.8 - fixed broken Unsplash URL)
+      const FALLBACK_IMG = 'https://images.unsplash.com/photo-1609357605129-26f69add5d6e?auto=format&fit=crop&w=1000&q=80';
       if (editingProduct.colors && editingProduct.colors.length > 0) {
         const constructed: DetailedColorVariation[] = editingProduct.colors.map((c, i) => {
           const colorImages = editingProduct.images && editingProduct.images.length > 0
             ? [editingProduct.images[c.imageIndex || i % editingProduct.images.length] || editingProduct.images[0]]
-            : ['https://images.unsplash.com/photo-1609357605129-26f69add5d6e?auto=format&fit=crop&w=1000&q=80'];
+            : [FALLBACK_IMG];
 
           return {
             id: `col-${Date.now()}-${i}-${Math.random()}`,
@@ -155,13 +190,13 @@ export function ProductFormModal({
         });
         setColorVariations(constructed);
       } else {
-        // Default initial color variation
+        // Default initial color variation (2.8 - fixed broken Unsplash URL)
         setColorVariations([
           {
             id: `col-${Date.now()}`,
             name: 'Royal Crimson',
             hex: '#9B050B',
-            images: editingProduct.images || ['https://images.unsplash.com/photo-1609357605129-26f69add5d6e?auto=format&fit=crop&w=1000&q=80'],
+            images: editingProduct.images || [FALLBACK_IMG],
             mainImageIndex: 0
           }
         ]);
@@ -186,7 +221,10 @@ export function ProductFormModal({
         stock: 0,
         description: '',
         featuresText: '',
-        careText: ''
+        careText: '',
+        isNewArrival: false,
+        isBestSeller: false,
+        isFlashSale: false
       });
       setColorVariations([
         {
@@ -198,6 +236,7 @@ export function ProductFormModal({
         }
       ]);
       setSelectedSizes(['M']);
+      setFormErrors({});
     }
   }, [editingProduct, isOpen]);
 
@@ -382,6 +421,18 @@ export function ProductFormModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 2.3 — Validate all steps before final submission
+    const allErrors = validateAll();
+    if (Object.keys(allErrors).length > 0) {
+      setFormErrors(allErrors);
+      // Navigate to first step with errors
+      if (allErrors.name || allErrors.description) setWizardStep(1);
+      else if (allErrors.price || allErrors.originalPrice) setWizardStep(2);
+      else if (allErrors.colors || allErrors.images) setWizardStep(3);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       // Aggregate all images across all color variations for global product images array
@@ -420,8 +471,18 @@ export function ProductFormModal({
 
       const totalStockFromMatrix = variationsMatrix.reduce((sum, v) => sum + v.stock, 0);
 
+      // 2.4 — Auto-compute discountPercentage
+      const computedDiscount = formData.originalPrice > formData.price && formData.originalPrice > 0
+        ? Math.round((1 - formData.price / formData.originalPrice) * 100)
+        : 0;
+
+      // 2.6 — Include featured flags and discountPercentage in payload
       await onSaveProduct({
         ...formData,
+        isNewArrival: formData.isNewArrival,
+        isBestSeller: formData.isBestSeller,
+        isFlashSale: formData.isFlashSale,
+        discountPercentage: computedDiscount,
         colors: formattedColors,
         sizes: selectedSizes,
         images: allAggregatedImages.length > 0 ? allAggregatedImages : ['https://images.unsplash.com/photo-1609357605129-26f69add5d6e?auto=format&fit=crop&w=1000&q=80'],
@@ -511,15 +572,21 @@ export function ProductFormModal({
               {wizardStep === 1 && (
                 <div className="space-y-4 animate-in fade-in">
                   <div className="space-y-1.5">
-                    <label className="font-bold text-stone-700">Product Title / Name</label>
+                    <label className="font-bold text-stone-700">Product Title / Name *</label>
                     <input
                       type="text"
                       required
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={(e) => {
+                        setFormData({ ...formData, name: e.target.value });
+                        if (formErrors.name) setFormErrors((prev) => { const n = { ...prev }; delete n.name; return n; });
+                      }}
                       placeholder="e.g. Royal Emerald Silk Embroidered Abaya"
-                      className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900"
+                      className={`w-full px-4 py-3 bg-stone-50 border rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900 ${
+                        formErrors.name ? 'border-rose-400 ring-1 ring-rose-400' : 'border-stone-200'
+                      }`}
                     />
+                    {formErrors.name && <p className="text-[11px] text-rose-600 font-medium">{formErrors.name}</p>}
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -611,13 +678,19 @@ export function ProductFormModal({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="font-bold text-stone-700">Detailed Description</label>
+                    <label className="font-bold text-stone-700">Detailed Description *</label>
                     <textarea
                       rows={4}
                       value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900"
+                      onChange={(e) => {
+                        setFormData({ ...formData, description: e.target.value });
+                        if (formErrors.description) setFormErrors((prev) => { const n = { ...prev }; delete n.description; return n; });
+                      }}
+                      className={`w-full px-4 py-3 bg-stone-50 border rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900 ${
+                        formErrors.description ? 'border-rose-400 ring-1 ring-rose-400' : 'border-stone-200'
+                      }`}
                     />
+                    {formErrors.description && <p className="text-[11px] text-rose-600 font-medium">{formErrors.description}</p>}
                   </div>
                 </div>
               )}
@@ -627,28 +700,41 @@ export function ProductFormModal({
                 <div className="space-y-4 animate-in fade-in">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="font-bold text-stone-700">Regular Sale Price (৳ BDT)</label>
+                      <label className="font-bold text-stone-700">Regular Sale Price (৳ BDT) *</label>
                       <input
                         type="number"
                         required
                         min={1}
-                        value={formData.price}
-                        onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-[#9B050B] font-mono text-base font-bold focus:outline-none focus:ring-2 focus:ring-stone-900"
+                        value={formData.price || ''}
+                        onChange={(e) => {
+                          setFormData({ ...formData, price: Number(e.target.value) });
+                          if (formErrors.price) setFormErrors((prev) => { const n = { ...prev }; delete n.price; return n; });
+                        }}
+                        className={`w-full px-4 py-3 bg-stone-50 border rounded-xl text-[#9B050B] font-mono text-base font-bold focus:outline-none focus:ring-2 focus:ring-stone-900 ${
+                          formErrors.price ? 'border-rose-400 ring-1 ring-rose-400' : 'border-stone-200'
+                        }`}
                       />
+                      {formErrors.price && <p className="text-[11px] text-rose-600 font-medium">{formErrors.price}</p>}
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="font-bold text-stone-700">Original Price (৳ BDT)</label>
+                      <label className="font-bold text-stone-700">Original Price (৳ BDT) *</label>
                       <input
                         type="number"
-                        value={formData.originalPrice}
-                        onChange={(e) => setFormData({ ...formData, originalPrice: Number(e.target.value) })}
-                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 font-mono text-base focus:outline-none focus:ring-2 focus:ring-stone-900"
+                        value={formData.originalPrice || ''}
+                        onChange={(e) => {
+                          setFormData({ ...formData, originalPrice: Number(e.target.value) });
+                          if (formErrors.originalPrice) setFormErrors((prev) => { const n = { ...prev }; delete n.originalPrice; return n; });
+                        }}
+                        className={`w-full px-4 py-3 bg-stone-50 border rounded-xl text-stone-700 font-mono text-base focus:outline-none focus:ring-2 focus:ring-stone-900 ${
+                          formErrors.originalPrice ? 'border-rose-400 ring-1 ring-rose-400' : 'border-stone-200'
+                        }`}
                       />
+                      {formErrors.originalPrice && <p className="text-[11px] text-rose-600 font-medium">{formErrors.originalPrice}</p>}
                     </div>
                   </div>
 
+                  {/* 2.4 — Auto-computed discount badge */}
                   <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 flex items-center justify-between text-xs">
                     <span className="text-stone-500 font-bold">Calculated Savings Badge:</span>
                     <span className="px-3 py-1 bg-[#9B050B] text-white rounded-full font-bold font-mono">
@@ -669,6 +755,43 @@ export function ProductFormModal({
                     <p className="text-[10px] text-stone-500">
                       Note: Setting color/size variation stock in Step 4 automatically updates the total stock.
                     </p>
+                  </div>
+
+                  {/* 2.5 — Featured Flags toggles */}
+                  <div className="p-4 bg-white border border-stone-200 rounded-2xl space-y-3">
+                    <p className="text-xs font-extrabold text-stone-900 uppercase tracking-wider">Featured Flags</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {([
+                        { key: 'isNewArrival', label: '🆕 New Arrival', color: 'emerald' },
+                        { key: 'isBestSeller', label: '⭐ Best Seller', color: 'amber' },
+                        { key: 'isFlashSale', label: '⚡ Flash Sale', color: 'rose' }
+                      ] as const).map(({ key, label, color }) => {
+                        const isActive = formData[key];
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => setFormData((prev) => ({ ...prev, [key]: !prev[key] }))}
+                            className={`flex items-center justify-between gap-2 px-4 py-3 rounded-xl border-2 transition-all cursor-pointer font-bold text-xs ${
+                              isActive
+                                ? color === 'emerald'
+                                  ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
+                                  : color === 'amber'
+                                  ? 'border-amber-500 bg-amber-50 text-amber-800'
+                                  : 'border-rose-500 bg-rose-50 text-rose-800'
+                                : 'border-stone-200 bg-stone-50 text-stone-500 hover:border-stone-400'
+                            }`}
+                          >
+                            <span>{label}</span>
+                            <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                              isActive ? 'bg-current border-current' : 'border-stone-300'
+                            }`}>
+                              {isActive && <span className="w-2 h-2 rounded-full bg-white" />}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               )}
@@ -929,7 +1052,15 @@ export function ProductFormModal({
                 {wizardStep < 4 ? (
                   <button
                     type="button"
-                    onClick={() => setWizardStep((wizardStep + 1) as any)}
+                    onClick={() => {
+                      // 2.2 — Validate current step before advancing
+                      const stepErrors = validateStep(wizardStep);
+                      if (Object.keys(stepErrors).length > 0) {
+                        setFormErrors((prev) => ({ ...prev, ...stepErrors }));
+                        return;
+                      }
+                      setWizardStep((wizardStep + 1) as any);
+                    }}
                     className="px-5 py-2.5 bg-stone-900 text-white font-extrabold rounded-xl hover:bg-stone-800 flex items-center gap-1 cursor-pointer shadow-md"
                   >
                     Next Step <ChevronRight className="w-4 h-4" />

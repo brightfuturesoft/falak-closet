@@ -10,7 +10,10 @@ import {
   Edit,
   Trash2,
   Minus,
-  Star
+  Star,
+  Sparkles,
+  Zap,
+  Award
 } from 'lucide-react';
 import { Product, CATEGORIES } from '@/data/products';
 import { formatCurrency } from '@/lib/utils';
@@ -21,6 +24,8 @@ interface ProductsTabProps {
   onOpenEditModal: (product: Product) => void;
   onDeleteProduct: (id: string) => void;
   onUpdateStock: (id: string, newStock: number) => void;
+  // 3.3 — new prop for inline flag toggle
+  onToggleProductFlag?: (id: string, flag: 'isNewArrival' | 'isBestSeller' | 'isFlashSale', value: boolean) => void;
   searchQuery: string;
 }
 
@@ -30,6 +35,7 @@ export function ProductsTab({
   onOpenEditModal,
   onDeleteProduct,
   onUpdateStock,
+  onToggleProductFlag,
   searchQuery
 }: ProductsTabProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -37,6 +43,8 @@ export function ProductsTab({
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
   const [localQuery, setLocalQuery] = useState('');
   const [categoriesList, setCategoriesList] = useState<string[]>([]);
+  // 3.5 — selectedIds state for bulk-delete
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetch('/api/categories')
@@ -167,6 +175,28 @@ export function ProductsTab({
       {/* View Mode 1: Table View */}
       {viewMode === 'table' && (
         <div className="p-6 bg-white rounded-3xl border border-stone-200 shadow-sm space-y-4">
+          {/* 3.6 — Bulk Delete Action Bar */}
+          {selectedIds.size > 0 && (
+            <div className="flex items-center justify-between p-3 bg-rose-50 border border-rose-200 rounded-2xl">
+              <span className="text-xs font-bold text-rose-800">
+                {selectedIds.size} product{selectedIds.size > 1 ? 's' : ''} selected
+              </span>
+              <button
+                onClick={async () => {
+                  if (!confirm(`Delete ${selectedIds.size} selected product(s)?`)) return;
+                  for (const id of Array.from(selectedIds)) {
+                    await onDeleteProduct(id);
+                  }
+                  setSelectedIds(new Set());
+                }}
+                className="px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Delete Selected ({selectedIds.size})
+              </button>
+            </div>
+          )}
+
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono text-stone-500">
               Displaying <strong className="text-stone-900">{filteredProducts.length}</strong> items in inventory
@@ -177,12 +207,30 @@ export function ProductsTab({
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-stone-200 text-stone-500 font-mono text-[11px]">
+                  {/* 3.4 — Checkbox column header */}
+                  <th className="pb-3 w-8">
+                    <input
+                      type="checkbox"
+                      className="rounded cursor-pointer"
+                      checked={filteredProducts.length > 0 && filteredProducts.every((p) => selectedIds.has(p.id))}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds(new Set(filteredProducts.map((p) => p.id)));
+                        } else {
+                          setSelectedIds(new Set());
+                        }
+                      }}
+                    />
+                  </th>
                   <th className="pb-3 font-semibold">Product</th>
                   <th className="pb-3 font-semibold">Category</th>
                   <th className="pb-3 font-semibold">Price (৳)</th>
                   <th className="pb-3 font-semibold">Stock Quantity</th>
                   <th className="pb-3 font-semibold">Fabric / Work</th>
-                  <th className="pb-3 font-semibold">Rating</th>
+                  {/* 3.1 — Flag columns */}
+                  <th className="pb-3 font-semibold text-center" title="New Arrival"><Sparkles className="w-3.5 h-3.5 inline" /></th>
+                  <th className="pb-3 font-semibold text-center" title="Best Seller"><Award className="w-3.5 h-3.5 inline" /></th>
+                  <th className="pb-3 font-semibold text-center" title="Flash Sale"><Zap className="w-3.5 h-3.5 inline" /></th>
                   <th className="pb-3 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
@@ -221,7 +269,23 @@ export function ProductsTab({
                   const displayImg = matchedVarPhoto || p.images?.[0] || 'https://images.unsplash.com/photo-1583391733956-6c78276477e2?auto=format&fit=crop&w=300&q=80';
 
                   return (
-                    <tr key={p.id} className="hover:bg-stone-50 transition-colors">
+                    <tr key={p.id} className={`hover:bg-stone-50 transition-colors ${selectedIds.has(p.id) ? 'bg-stone-50' : ''}`}>
+                      {/* 3.4 — Checkbox cell */}
+                      <td className="py-3">
+                        <input
+                          type="checkbox"
+                          className="rounded cursor-pointer"
+                          checked={selectedIds.has(p.id)}
+                          onChange={(e) => {
+                            setSelectedIds((prev) => {
+                              const next = new Set(prev);
+                              if (e.target.checked) next.add(p.id);
+                              else next.delete(p.id);
+                              return next;
+                            });
+                          }}
+                        />
+                      </td>
                       <td className="py-3 flex items-center gap-3">
                         <div className="w-12 h-14 relative rounded-lg overflow-hidden border border-stone-200 shrink-0 bg-stone-100 shadow-xs">
                           <Image
@@ -315,11 +379,45 @@ export function ProductsTab({
                         <p className="text-[10px] text-stone-500">{p.workType || 'Embroidery'}</p>
                       </td>
 
-                      <td className="py-3 text-stone-700 font-mono text-[11px]">
-                        <div className="flex items-center gap-1 text-amber-500">
-                          <Star className="w-3 h-3 fill-amber-400" />
-                          <span className="font-bold text-stone-900">{p.rating || 5.0}</span>
-                        </div>
+                      {/* 3.2 — Inline flag toggle buttons */}
+                      <td className="py-3 text-center">
+                        <button
+                          title="Toggle New Arrival"
+                          onClick={() => onToggleProductFlag?.(p.id, 'isNewArrival', !p.isNewArrival)}
+                          className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                            p.isNewArrival
+                              ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
+                              : 'bg-stone-50 border-stone-200 text-stone-400 hover:text-emerald-600'
+                          }`}
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                      <td className="py-3 text-center">
+                        <button
+                          title="Toggle Best Seller"
+                          onClick={() => onToggleProductFlag?.(p.id, 'isBestSeller', !p.isBestSeller)}
+                          className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                            p.isBestSeller
+                              ? 'bg-amber-100 border-amber-300 text-amber-700'
+                              : 'bg-stone-50 border-stone-200 text-stone-400 hover:text-amber-600'
+                          }`}
+                        >
+                          <Award className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                      <td className="py-3 text-center">
+                        <button
+                          title="Toggle Flash Sale"
+                          onClick={() => onToggleProductFlag?.(p.id, 'isFlashSale', !p.isFlashSale)}
+                          className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                            p.isFlashSale
+                              ? 'bg-rose-100 border-rose-300 text-rose-700'
+                              : 'bg-stone-50 border-stone-200 text-stone-400 hover:text-rose-600'
+                          }`}
+                        >
+                          <Zap className="w-3.5 h-3.5" />
+                        </button>
                       </td>
 
                       <td className="py-3 text-right">
@@ -346,7 +444,7 @@ export function ProductsTab({
 
                 {filteredProducts.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-stone-500">
+                    <td colSpan={10} className="py-12 text-center text-stone-500">
                       No products match your criteria. Click "Add New Product" to create one!
                     </td>
                   </tr>
