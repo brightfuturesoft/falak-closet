@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import {
   Plus,
@@ -36,6 +36,20 @@ export function ProductsTab({
   const [stockFilter, setStockFilter] = useState<string>('All');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
   const [localQuery, setLocalQuery] = useState('');
+  const [categoriesList, setCategoriesList] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch('/api/categories')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.categories)) {
+          setCategoriesList(data.categories.map((c: any) => c.name));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const displayCategories = categoriesList.length > 0 ? categoriesList : CATEGORIES;
 
   const activeSearch = searchQuery || localQuery;
 
@@ -67,7 +81,7 @@ export function ProductsTab({
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           {/* Category Filter Pills */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto text-xs font-bold scrollbar-none">
-            {['All', ...CATEGORIES].map((cat) => {
+            {['All', ...displayCategories].map((cat) => {
               const count = cat === 'All' ? products.length : products.filter((p) => p.category === cat).length;
               return (
                 <button

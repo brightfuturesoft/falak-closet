@@ -5,6 +5,7 @@ export interface IProductDoc extends Document {
   slug: string;
   name: string;
   category: string;
+  subCategory?: string;
   price: number;
   originalPrice: number;
   rating: number;
@@ -31,6 +32,7 @@ const ProductSchema = new Schema<IProductDoc>(
     slug: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true },
     category: { type: String, required: true, index: true },
+    subCategory: { type: String, index: true },
     price: { type: Number, required: true },
     originalPrice: { type: Number, required: true },
     rating: { type: Number, default: 4.8 },
