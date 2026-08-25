@@ -17,6 +17,7 @@ export interface IProductDoc extends Document {
   workType: string;
   occasion: string;
   material: string;
+  weather?: string;
   colors: { name: string; hex: string }[];
   sizes: string[];
   stock: number;
@@ -44,6 +45,7 @@ const ProductSchema = new Schema<IProductDoc>(
     workType: { type: String, required: true },
     occasion: { type: String, required: true },
     material: { type: String, required: true },
+    weather: { type: String, default: '' },
     colors: [{ name: String, hex: String }],
     sizes: [String],
     stock: { type: Number, default: 10 },
