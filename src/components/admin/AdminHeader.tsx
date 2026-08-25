@@ -86,6 +86,10 @@ export function AdminHeader({
     hero: {
       title: 'Homepage Hero Banner Slider',
       subtitle: 'Manage slider banners, edit visibility toggles, and configure custom sorting order.'
+    },
+    reviews: {
+      title: 'Verified Customer Reviews',
+      subtitle: 'Moderate customer ratings and review logs from product feedback collections.'
     }
   };
 

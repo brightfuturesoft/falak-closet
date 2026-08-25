@@ -10,7 +10,17 @@ import { useAnalytics } from '@/context/AnalyticsContext';
 
 export default function CheckoutClient() {
   const router = useRouter();
-  const { cart, subtotal, discountAmount, shippingFee, totalAmount, placeOrder } = useCart();
+  const { 
+    cart, 
+    subtotal, 
+    discountAmount, 
+    shippingFee, 
+    totalAmount, 
+    placeOrder, 
+    deliveryCity, 
+    setDeliveryCity, 
+    systemSettings 
+  } = useCart();
   const { trackEvent } = useAnalytics();
 
   const [formData, setFormData] = useState({
@@ -64,6 +74,13 @@ export default function CheckoutClient() {
   const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery (COD)');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // bKash Simulated Gateway State
+  const [isBkashModalOpen, setIsBkashModalOpen] = useState(false);
+  const [bkashStep, setBkashStep] = useState(1);
+  const [bkashAccountNumber, setBkashAccountNumber] = useState('');
+  const [bkashTrxId, setBkashTrxId] = useState('');
+  const [bkashModalError, setBkashModalError] = useState<string | null>(null);
+
   // Promo Code State
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [appliedPromoCode, setAppliedPromoCode] = useState('');
@@ -80,12 +97,8 @@ export default function CheckoutClient() {
     setPromoFeedback(null);
 
     try {
-      const res = await fetch('/api/promotions/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: promoCodeInput.trim(), cartSubtotal: subtotal })
-      });
-      const data = await res.json();
+      const { validatePromotion } = await import('@/actions/orderActions');
+      const data = await validatePromotion({ code: promoCodeInput.trim(), cartSubtotal: subtotal });
 
       if (!data.success) {
         setAppliedDiscountAmount(0);
@@ -93,8 +106,8 @@ export default function CheckoutClient() {
         setPromoFeedback({ type: 'error', message: data.error || 'Invalid promo code' });
       } else {
         setAppliedDiscountAmount(data.calculatedDiscount || 0);
-        setAppliedPromoCode(data.code);
-        setPromoFeedback({ type: 'success', message: data.message });
+        setAppliedPromoCode(data.code || '');
+        setPromoFeedback({ type: 'success', message: data.message || 'Promo applied successfully!' });
       }
     } catch {
       setPromoFeedback({ type: 'error', message: 'Failed to validate promo code.' });
@@ -106,11 +119,21 @@ export default function CheckoutClient() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === 'city') {
+      setDeliveryCity(value);
+    }
   };
 
-  const handleCompleteOrder = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCompleteOrder = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (cart.length === 0 || isIpBlocked) return;
+
+    if (paymentMethod === 'bKash' && (!bkashAccountNumber || !bkashTrxId)) {
+      setIsBkashModalOpen(true);
+      setBkashStep(1);
+      setBkashModalError(null);
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -125,8 +148,11 @@ export default function CheckoutClient() {
         deliveryMethod,
         paymentMethod,
         userEmail,
-        userIp
-      });
+        userIp,
+        paymentStatus: paymentMethod === 'bKash' ? 'Pending Review' : 'Unpaid',
+        bkashSenderNumber: paymentMethod === 'bKash' ? bkashAccountNumber : undefined,
+        bkashTrxId: paymentMethod === 'bKash' ? bkashTrxId : undefined
+      } as any);
 
       trackEvent('purchase', {
         orderId: order.id,
@@ -136,6 +162,7 @@ export default function CheckoutClient() {
       });
 
       setCreatedOrder(order);
+      setIsBkashModalOpen(false);
     } catch (err) {
       console.error('Order placement error:', err);
     } finally {
@@ -375,7 +402,7 @@ export default function CheckoutClient() {
             <div className="space-y-2 text-xs">
               {[
                 'Cash on Delivery (COD)',
-                'bKash / Nagad / Rocket Mobile Banking',
+                'bKash',
                 'Credit / Debit Card'
               ].map((pm) => (
                 <label
@@ -489,6 +516,153 @@ export default function CheckoutClient() {
           </div>
         </div>
       </form>
+
+      {/* simulated bKash payment gateway modal */}
+      {isBkashModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
+          <div className="w-full max-w-sm bg-[#E2136E] rounded-2xl overflow-hidden shadow-2xl flex flex-col text-white">
+            {/* Header */}
+            <div className="bg-white p-4 flex items-center justify-between border-b border-stone-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#E2136E] rounded-xl flex items-center justify-center font-black text-white text-xs tracking-tighter">
+                  bKash
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-stone-900 text-xs">Falak Closet Merchant</h3>
+                  <p className="text-[10px] text-stone-500 font-mono">Invoice: {`FLK-${Math.floor(1000 + Math.random()*9000)}`}</p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsBkashModalOpen(false)}
+                className="text-stone-400 hover:text-stone-900 font-bold text-sm cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Merchant Details Bar */}
+            <div className="bg-[#D10F62] px-5 py-3 flex justify-between items-center text-xs">
+              <span className="font-bold uppercase tracking-wider text-[10px]">Payment Amount</span>
+              <span className="font-mono font-black text-sm">৳ {activeTotalAmount}</span>
+            </div>
+
+            {/* Step 1: Account Number Entry */}
+            {bkashStep === 1 && (
+              <div className="p-6 space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold tracking-wider opacity-80">Your bKash Wallet Number</label>
+                  <input
+                    type="tel"
+                    required
+                    value={bkashAccountNumber}
+                    onChange={(e) => setBkashAccountNumber(e.target.value)}
+                    placeholder="e.g. 01XXXXXXXXX"
+                    className="w-full bg-[#D10F62] border border-white/20 rounded-xl px-4 py-3 text-white text-xs font-mono placeholder-white/50 focus:outline-none focus:border-white"
+                  />
+                </div>
+
+                <div className="text-[10px] opacity-80 leading-relaxed text-center py-2">
+                  By clicking <strong>Proceed</strong>, you agree to the terms & conditions of bKash personal send money gateway API.
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsBkashModalOpen(false)}
+                    className="w-1/2 py-2.5 bg-white/10 hover:bg-white/20 rounded-full font-bold text-xs text-center cursor-pointer transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!bkashAccountNumber.trim()}
+                    onClick={() => {
+                      if (/^\d{11}$/.test(bkashAccountNumber.trim())) {
+                        setBkashStep(2);
+                        setBkashModalError(null);
+                      } else {
+                        setBkashModalError('Please enter a valid 11-digit bKash number.');
+                      }
+                    }}
+                    className="w-1/2 py-2.5 bg-white text-[#E2136E] hover:bg-stone-50 rounded-full font-black text-xs text-center cursor-pointer shadow-md transition-colors disabled:opacity-50"
+                  >
+                    Proceed
+                  </button>
+                </div>
+                {bkashModalError && (
+                  <div className="p-2 bg-white/10 text-white text-[10px] rounded-lg text-center font-bold">
+                    ⚠️ {bkashModalError}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Step 2: Send Money Instructions & TrxID Verification */}
+            {bkashStep === 2 && (
+              <div className="p-6 space-y-4 text-left">
+                <div className="bg-white/10 p-3.5 rounded-xl space-y-2 border border-white/10 text-xs">
+                  <p className="font-extrabold uppercase text-[9px] tracking-wider text-pink-200">Payment Instructions</p>
+                  <ol className="list-decimal pl-4 space-y-1 text-[11px] opacity-90">
+                    <li>Open your bKash app or dial *247#</li>
+                    <li>Select <strong>Send Money</strong> option</li>
+                    <li>Enter Admin Personal number: <strong className="font-mono text-white underline select-all">{systemSettings?.adminBkashNumber || '01700000000'}</strong></li>
+                    <li>Enter Amount: <strong>৳ {activeTotalAmount}</strong></li>
+                    <li>Complete transfer and copy the Transaction ID (TrxID)</li>
+                  </ol>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-wider opacity-80">Enter Transaction ID (TrxID)</label>
+                  <input
+                    type="text"
+                    required
+                    value={bkashTrxId}
+                    onChange={(e) => setBkashTrxId(e.target.value)}
+                    placeholder="e.g. B8A9Z1K2"
+                    className="w-full bg-[#D10F62] border border-white/20 rounded-xl px-4 py-2.5 text-white text-xs font-mono uppercase placeholder-white/50 focus:outline-none focus:border-white"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold tracking-wider opacity-80">Sender bKash Number</label>
+                  <input
+                    type="tel"
+                    required
+                    value={bkashAccountNumber}
+                    onChange={(e) => setBkashAccountNumber(e.target.value)}
+                    placeholder="01XXXXXXXXX"
+                    className="w-full bg-[#D10F62] border border-white/20 rounded-xl px-4 py-2.5 text-white text-xs font-mono placeholder-white/50 focus:outline-none focus:border-white"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setBkashStep(1)}
+                    className="w-1/2 py-2.5 bg-white/10 hover:bg-white/20 rounded-full font-bold text-xs text-center cursor-pointer transition-colors"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!bkashTrxId.trim() || !bkashAccountNumber.trim() || isSubmitting}
+                    onClick={() => handleCompleteOrder()}
+                    className="w-1/2 py-2.5 bg-white text-[#E2136E] hover:bg-stone-50 rounded-full font-black text-xs text-center cursor-pointer shadow-md transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                  >
+                    <span>{isSubmitting ? 'Confirming...' : 'Confirm Payment'}</span>
+                  </button>
+                </div>
+                {bkashModalError && (
+                  <div className="p-2 bg-white/10 text-white text-[10px] rounded-lg text-center font-bold">
+                    ⚠️ {bkashModalError}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Flame, Clock, Copy, Check, ArrowRight } from 'lucide-react';
-import { PROMOTIONS } from '@/data/promotions';
 import { ProductCard } from '@/components/product/ProductCard';
 import { useCart } from '@/context/CartContext';
 
@@ -35,6 +34,34 @@ function CountdownTimer({ expiryTimestamp }: { expiryTimestamp: number }) {
 export default function LivePromotionsClient() {
   const { products } = useCart();
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [promotions, setPromotions] = useState<any[]>([]);
+
+  useEffect(() => {
+    import('@/actions/orderActions').then(({ getPromotions }) => {
+      getPromotions().then((res) => {
+        if (res.success && res.promotions) {
+          const mapped = res.promotions.map((promo: any) => {
+            const badge = promo.discountType === 'percentage'
+              ? `${promo.discountValue}% OFF`
+              : `৳${promo.discountValue} OFF`;
+            const title = `Falak Closet Coupon - ${promo.code}`;
+            const subtitle = promo.discountType === 'percentage'
+              ? `Save ${promo.discountValue}% on orders over ৳${promo.minSpend.toLocaleString()}${promo.maxDiscount ? ` (Up to ৳${promo.maxDiscount})` : ''}`
+              : `Flat ৳${promo.discountValue} discount on orders over ৳${promo.minSpend.toLocaleString()}`;
+            return {
+              id: promo.id || promo.code,
+              code: promo.code,
+              discountBadge: badge,
+              minSpend: promo.minSpend,
+              title,
+              subtitle
+            };
+          });
+          setPromotions(mapped);
+        }
+      });
+    });
+  }, []);
 
   const flashProducts = products.filter((p) => p.isFlashSale);
 
@@ -48,7 +75,7 @@ export default function LivePromotionsClient() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-10 pb-28 lg:pb-12 text-stone-900">
       <div className="text-center max-w-xl mx-auto space-y-3">
         <span className="px-3.5 py-1 bg-pink-100 text-[#D92670] text-xs font-bold rounded-full uppercase tracking-wider inline-flex items-center gap-1.5">
-          <Flame className="w-4 h-4 fill-[#D92670]" /> Special Discounts & Vouchers
+          <Flame className="w-4 h-4 fill-[#D92670]" /> Special Discounts & Vouchers.
         </span>
         <h1 className="font-sans text-3xl sm:text-4xl font-extrabold text-stone-900">
           Live Seasonal Offers & Flash Deals
@@ -59,7 +86,7 @@ export default function LivePromotionsClient() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {PROMOTIONS.map((promo) => (
+        {promotions.map((promo) => (
           <div key={promo.id} className="p-6 bg-white rounded-3xl border border-pink-100 shadow-xs space-y-4 flex flex-col justify-between">
             <div className="space-y-2">
               <div className="flex items-center justify-between">

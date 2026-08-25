@@ -25,6 +25,7 @@ import { useToast } from '@/components/ui/Toast';
 import { getProductSchema, getBreadcrumbSchema } from '@/lib/schema';
 import { ProductZoomModal } from '@/components/product/ProductZoomModal';
 import { NewArrivalSection } from '@/components/home/NewArrivalSection';
+import { getReviewsForProduct, createReview } from '@/actions/reviewActions';
 
 export default function ProductDetailClient({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = use(params);
@@ -207,8 +208,80 @@ export default function ProductDetailClient({ params }: { params: Promise<{ slug
   const [deliveryEstimate, setDeliveryEstimate] = useState<string | null>(null);
 
   // Review Form State
-  const [newReview, setNewReview] = useState({ author: '', rating: 5, comment: '' });
+  const [reviewForm, setReviewForm] = useState({ author: '', rating: 5, comment: '', phone: '' });
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [reviewSuccess, setReviewSuccess] = useState<string | null>(null);
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!product) return;
+
+    setIsSubmittingReview(true);
+    setReviewError(null);
+    setReviewSuccess(null);
+
+    try {
+      const res = await createReview({
+        productId: product.id,
+        rating: reviewForm.rating,
+        comment: reviewForm.comment,
+        author: reviewForm.author,
+        phone: reviewForm.phone
+      });
+
+      if (res.success) {
+        setReviewSuccess("Review submitted successfully!");
+        const updatedReviews = await getReviewsForProduct(product.id);
+        if (updatedReviews.success && updatedReviews.reviews) {
+          const mapped = (updatedReviews.reviews as any[]).map((rev: any) => ({
+            id: rev.id,
+            author: rev.author,
+            rating: rev.rating,
+            comment: rev.comment,
+            date: rev.createdAt ? new Date(rev.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            verifiedPurchase: rev.verifiedPurchase
+          }));
+          setReviewsList(mapped);
+        }
+        setTimeout(() => {
+          setIsWriteReviewOpen(false);
+          setReviewForm({ author: '', rating: 5, comment: '', phone: '' });
+          setReviewSuccess(null);
+        }, 1500);
+      } else {
+        setReviewError(res.error || "Verification failed.");
+      }
+    } catch (err: any) {
+      setReviewError(err.message || "An error occurred.");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
   const [reviewsList, setReviewsList] = useState(product?.reviewsList || []);
+
+  useEffect(() => {
+    if (product) {
+      getReviewsForProduct(product.id).then((res) => {
+        if (res.success && res.reviews) {
+          const dbReviews = res.reviews as any[];
+          if (dbReviews.length === 0 && product.reviewsList) {
+            setReviewsList(product.reviewsList);
+          } else {
+            const mapped = dbReviews.map((rev: any) => ({
+              id: rev.id,
+              author: rev.author,
+              rating: rev.rating,
+              comment: rev.comment,
+              date: rev.createdAt ? new Date(rev.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+              verifiedPurchase: rev.verifiedPurchase
+            }));
+            setReviewsList(mapped);
+          }
+        }
+      });
+    }
+  }, [product]);
 
   // Active Tab State
   const [activeTab, setActiveTab] = useState<'specs' | 'care' | 'shipping' | 'reviews'>('specs');
@@ -667,6 +740,118 @@ export default function ProductDetailClient({ params }: { params: Promise<{ slug
         imageUrl={imagesList[selectedImageIndex] || imagesList[0]}
         title={product?.name}
       />
+      {/* Write a Review Modal */}
+      {isWriteReviewOpen && (
+        <div className="fixed inset-0 bg-[#0C163A]/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-[#FFFBF0] border-2 border-[#F2C76E] rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-4 text-[#0C163A]">
+            <div className="flex justify-between items-center border-b border-[#F2C76E]/40 pb-2">
+              <h3 className="font-serif font-bold text-sm uppercase tracking-wider text-[#9B050B]">
+                Write Product Review
+              </h3>
+              <button 
+                onClick={() => setIsWriteReviewOpen(false)} 
+                className="text-stone-400 hover:text-stone-600 font-bold text-sm cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <p className="text-xs text-stone-600">
+              Only customers who have purchased and received this product can write a review. Please provide your order phone number for verification.
+            </p>
+
+            <form onSubmit={handleSubmitReview} className="space-y-4">
+              {/* Star Selection */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Your Rating</label>
+                <div className="flex items-center gap-1.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewForm(prev => ({ ...prev, rating: star }))}
+                      className="text-amber-400 hover:scale-110 transition-transform cursor-pointer"
+                    >
+                      <Star 
+                        className={`w-6 h-6 ${star <= reviewForm.rating ? 'fill-amber-400 text-amber-400' : 'text-stone-300'}`} 
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Reviewer Name */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Your Name</label>
+                <input
+                  type="text"
+                  required
+                  value={reviewForm.author}
+                  onChange={(e) => setReviewForm(prev => ({ ...prev, author: e.target.value }))}
+                  placeholder="e.g. Nusrat Jahan"
+                  className="w-full bg-white border border-[#F2C76E]/60 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#9B050B]"
+                />
+              </div>
+
+              {/* Phone Number Verification */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Order Phone Number</label>
+                <input
+                  type="tel"
+                  required
+                  value={reviewForm.phone}
+                  onChange={(e) => setReviewForm(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="Phone number used at checkout"
+                  className="w-full bg-white border border-[#F2C76E]/60 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#9B050B]"
+                />
+              </div>
+
+              {/* Comment */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Review Feedback</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={reviewForm.comment}
+                  onChange={(e) => setReviewForm(prev => ({ ...prev, comment: e.target.value }))}
+                  placeholder="Tell us about the fabric quality, comfort, fit, and style..."
+                  className="w-full bg-white border border-[#F2C76E]/60 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#9B050B] resize-none"
+                />
+              </div>
+
+              {/* Messages */}
+              {reviewError && (
+                <div className="p-2.5 bg-red-50 text-red-700 text-[10px] rounded-lg border border-red-200 font-bold">
+                  ⚠️ {reviewError}
+                </div>
+              )}
+              {reviewSuccess && (
+                <div className="p-2.5 bg-emerald-50 text-emerald-800 text-[10px] rounded-lg border border-emerald-200 font-bold">
+                  ✓ {reviewSuccess}
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsWriteReviewOpen(false)}
+                  className="w-1/2 py-2 border border-stone-300 rounded-full text-xs font-bold text-stone-600 hover:bg-stone-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingReview}
+                  className="w-1/2 py-2 bg-[#9B050B] hover:bg-[#B8000A] disabled:bg-stone-300 text-white font-bold text-xs rounded-full shadow-xs transition-colors cursor-pointer flex items-center justify-center"
+                >
+                  {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -33,8 +33,8 @@ export function HeroCarousel() {
   useEffect(() => {
     async function loadSlides() {
       try {
-        const res = await fetch('/api/hero-slides');
-        const data = await res.json();
+        const { getHeroSlides } = await import('@/actions/heroActions');
+        const data = await getHeroSlides();
         if (data.success && data.slides && data.slides.length > 0) {
           setSlides(data.slides.map((s: any, idx: number) => ({
             id: s._id || s.id || idx,

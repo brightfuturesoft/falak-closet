@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, ShoppingBag } from 'lucide-react';
+import { Heart, ShoppingBag, Star } from 'lucide-react';
 import { Product } from '@/data/products';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/components/ui/Toast';
@@ -120,6 +120,13 @@ export function ProductCard({ product, selectedColor, variationCode }: ProductCa
             {product?.name}
           </h3>
         </Link>
+
+        {/* Rating and reviewCount badge */}
+        <div className="flex items-center gap-1 text-[10px] text-amber-500 font-bold">
+          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+          <span>{product?.rating || 4.8}</span>
+          <span className="text-stone-400 font-normal">({product?.reviewCount || 0})</span>
+        </div>
 
         {/* Interactive Color Swatches Row */}
         {product?.colors && product.colors.length > 1 && (

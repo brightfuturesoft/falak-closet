@@ -15,6 +15,7 @@ import { AnalyticsTab } from '@/components/admin/AnalyticsTab';
 import { SecurityTab } from '@/components/admin/SecurityTab';
 import { SettingsTab } from '@/components/admin/SettingsTab';
 import { HeroTab } from '@/components/admin/HeroTab';
+import { ReviewsTab } from '@/components/admin/ReviewsTab';
 import { ProductFormModal } from '@/components/admin/ProductFormModal';
 import { OrderReceiptModal } from '@/components/admin/OrderReceiptModal';
 import { PromoFormModal } from '@/components/admin/PromoFormModal';
@@ -22,8 +23,21 @@ import { AdminCreateOrderModal } from '@/components/admin/AdminCreateOrderModal'
 import { ToastNotification, ToastMessage } from '@/components/admin/ToastNotification';
 
 import { PRODUCTS, Product } from '@/data/products';
-import { PROMOTIONS, Promotion } from '@/data/promotions';
 import { playNewOrderSound } from '@/lib/soundNotification';
+
+interface Promotion {
+  id?: string;
+  _id?: string;
+  code: string;
+  discountType: string;
+  discountValue: number;
+  minSpend: number;
+  maxDiscount?: number;
+  usageLimit?: number;
+  usedCount?: number;
+  expiryDate: string;
+  status: string;
+}
 import { useCart, OrderRecord } from '@/context/CartContext';
 import { getSocket } from '@/lib/socketClient';
 
@@ -62,9 +76,11 @@ function AdminDashboardContent() {
       setActiveTab('settings');
     } else if (pathname.includes('/admin/hero')) {
       setActiveTab('hero');
+    } else if (pathname.includes('/admin/reviews')) {
+      setActiveTab('reviews');
     } else {
       const tabParam = searchParams.get('tab');
-      if (tabParam && ['overview', 'orders', 'products', 'categories', 'promotions', 'customers', 'security', 'analytics', 'settings', 'hero'].includes(tabParam)) {
+      if (tabParam && ['overview', 'orders', 'products', 'categories', 'promotions', 'customers', 'security', 'analytics', 'settings', 'hero', 'reviews'].includes(tabParam)) {
         setActiveTab(tabParam as AdminTabType);
       } else {
         setActiveTab('overview');
@@ -185,9 +201,17 @@ function AdminDashboardContent() {
     }
 
     try {
-      const prRes = await fetch('/api/promotions');
-      const prData = await prRes.json();
-      setPromosList(prData.promotions || []);
+      import('@/actions/orderActions').then(({ getPromotions }) => {
+        getPromotions()
+          .then((promos) => {
+            if (promos.success) {
+              setPromosList(promos.promotions as any)
+            }
+          }).catch(err => {
+            console.log(err)
+            setPromosList([])
+          })
+      })
     } catch {
       setPromosList([]);
     }
@@ -409,23 +433,24 @@ function AdminDashboardContent() {
   const handleSavePromotion = async (promoData: any) => {
     const isEdit = !!promoData._id || !!promoData.id;
     try {
-      const res = await fetch('/api/promotions', {
-        method: isEdit ? 'PATCH' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(promoData)
-      });
-      const data = await res.json();
+      const { createPromotion, updatePromotion } = await import('@/actions/orderActions');
+      const res = isEdit
+        ? await updatePromotion({ id: promoData._id || promoData.id, ...promoData })
+        : await createPromotion(promoData);
 
-      if (data.promotion) {
+      if (res.success && res.promotion) {
+        const savedPromo = res.promotion as any;
         if (isEdit) {
           setPromosList((prev) =>
-            prev.map((p: any) => ((p._id || p.id) === (promoData._id || promoData.id) ? data.promotion : p))
+            prev.map((p: any) => ((p._id || p.id) === (promoData._id || promoData.id) ? savedPromo : p))
           );
         } else {
-          setPromosList((prev) => [data.promotion, ...prev]);
+          setPromosList((prev) => [savedPromo, ...prev]);
         }
       }
-    } catch { }
+    } catch (err) {
+      console.error('handleSavePromotion error:', err);
+    }
 
     addToast('success', `Voucher code ${promoData.code} ${isEdit ? 'updated' : 'created'} successfully!`);
   };
@@ -436,12 +461,11 @@ function AdminDashboardContent() {
     const promoId = promo._id || promo.id;
 
     try {
-      await fetch('/api/promotions', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: promoId, code: promo.code, status: nextStatus })
-      });
-    } catch { }
+      const { updatePromotion } = await import('@/actions/orderActions');
+      await updatePromotion({ id: promoId, code: promo.code, status: nextStatus });
+    } catch (err) {
+      console.error('handleTogglePromoStatus error:', err);
+    }
 
     setPromosList((prev) =>
       prev.map((p: any) => ((p._id || p.id) === promoId ? { ...p, status: nextStatus } : p))
@@ -453,10 +477,11 @@ function AdminDashboardContent() {
   const handleDeletePromotion = async (id: string, code: string) => {
     if (confirm(`Are you sure you want to delete promo code "${code}"?`)) {
       try {
-        await fetch(`/api/promotions?id=${encodeURIComponent(id)}&code=${encodeURIComponent(code)}`, {
-          method: 'DELETE'
-        });
-      } catch { }
+        const { deletePromotion } = await import('@/actions/orderActions');
+        await deletePromotion({ id, code });
+      } catch (err) {
+        console.error('handleDeletePromotion error:', err);
+      }
 
       setPromosList((prev) => prev.filter((p: any) => (p._id || p.id || p.code) !== id && p.code !== code));
       addToast('warning', `Promo voucher code ${code} deleted.`);
@@ -617,6 +642,10 @@ function AdminDashboardContent() {
           {activeTab === 'hero' && (
             <HeroTab addToast={addToast} />
           )}
+
+          {activeTab === 'reviews' && (
+            <ReviewsTab addToast={addToast} />
+          )}
         </main>
       </div>
 
@@ -624,6 +653,7 @@ function AdminDashboardContent() {
       <OrderReceiptModal
         order={selectedOrderReceipt}
         onClose={() => setSelectedOrderReceipt(null)}
+        onRefreshOrders={fetchAllData}
       />
 
       {/* Direct Admin POS Order Creation Modal */}

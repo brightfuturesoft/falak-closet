@@ -74,12 +74,8 @@ export default function AccountClient() {
     setFeedback(null);
 
     try {
-      const res = await fetch('/api/user/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: loginEmail, password: loginPassword })
-      });
-      const data = await res.json();
+      const { loginUser } = await import('@/actions/userActions');
+      const data = await loginUser({ identifier: loginEmail, password: loginPassword });
 
       if (data.success && data.user) {
         const profileObj: UserProfile = {
@@ -109,19 +105,15 @@ export default function AccountClient() {
     setFeedback(null);
 
     try {
-      const res = await fetch('/api/user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: signupName,
-          email: signupEmail,
-          phone: signupPhone,
-          district: signupDistrict,
-          fullAddress: signupAddress,
-          password: signupPassword
-        })
+      const { registerOrUpdateUser } = await import('@/actions/userActions');
+      const data = await registerOrUpdateUser({
+        name: signupName,
+        email: signupEmail,
+        phone: signupPhone,
+        district: signupDistrict,
+        fullAddress: signupAddress,
+        password: signupPassword
       });
-      const data = await res.json();
 
       if (data.success && data.user) {
         const profileObj: UserProfile = {

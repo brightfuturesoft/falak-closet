@@ -3,6 +3,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Heart, LayoutGrid, Scissors, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getHomeFilters } from '@/actions/productActions';
 
 interface CategoryFilterSliderProps {
   onSelectFilter?: (type: string, value: string) => void;
@@ -65,6 +66,51 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
   const [isPaused, setIsPaused] = useState(false);
   const [filterCards, setFilterCards] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeftState, setScrollLeftState] = useState(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollRef.current) return;
+    setIsDragging(true);
+    setIsPaused(true);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeftState(scrollRef.current.scrollLeft);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    scrollRef.current.scrollLeft = scrollLeftState - walk;
+  };
+
+  const handleMouseUpOrLeave = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      setIsPaused(false);
+      setTimeout(() => {
+        if (scrollRef.current) {
+          const el = scrollRef.current;
+          const children = Array.from(el.children) as HTMLElement[];
+          if (children.length === 0) return;
+          const containerLeft = el.scrollLeft;
+          let closestIndex = 0;
+          let minDistance = Infinity;
+
+          children.forEach((child, idx) => {
+            const dist = Math.abs(child.offsetLeft - el.offsetLeft - containerLeft);
+            if (dist < minDistance) {
+              minDistance = dist;
+              closestIndex = idx;
+            }
+          });
+          handleScrollTo(closestIndex);
+        }
+      }, 50);
+    }
+  };
 
   const handleScrollTo = useCallback((index: number) => {
     if (scrollRef.current) {
@@ -84,8 +130,7 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
     let isMounted = true;
     async function fetchFilters() {
       try {
-        const res = await fetch('/api/home/filters');
-        const data = await res.json();
+        const data = await getHomeFilters();
         if (data.success && isMounted) {
           const mappedCards = [
             {
@@ -93,7 +138,7 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
               icon: Heart,
               title: 'Shop by occasion',
               subtitle: 'Find the right pick for the moment',
-              tags: data.occasions.map((o: string) => ({
+              tags: (data.occasions || []).filter((o: any): o is string => typeof o === 'string').map((o: string) => ({
                 label: o,
                 filterType: 'occasion',
                 filterVal: o
@@ -104,7 +149,7 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
               icon: LayoutGrid,
               title: 'Shop for the weather',
               subtitle: 'Seasonal picks, just right',
-              tags: data.weathers.map((w: string) => ({
+              tags: (data.weathers || []).filter((w: any): w is string => typeof w === 'string').map((w: string) => ({
                 label: w,
                 filterType: 'weather',
                 filterVal: w
@@ -115,7 +160,7 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
               icon: Scissors,
               title: 'Shop by material',
               subtitle: 'Cotton, silk, linen and more',
-              tags: data.materials.map((m: string) => ({
+              tags: (data.materials || []).filter((m: any): m is string => typeof m === 'string').map((m: string) => ({
                 label: m,
                 filterType: 'material',
                 filterVal: m
@@ -126,10 +171,10 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
               icon: Sparkles,
               title: 'Shop by category',
               subtitle: 'What kind of product are you looking for?',
-              tags: data.categories.map((c: any) => ({
-                label: c.name,
+              tags: (data.categories || []).map((c: any) => ({
+                label: c.name || '',
                 filterType: 'category',
-                filterVal: c.name
+                filterVal: c.name || ''
               }))
             }
           ];
@@ -239,7 +284,13 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
         {/* Single Line Scrollable Container */}
         <div
           ref={scrollRef}
-          className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory no-scrollbar py-2 px-1"
+          className={`flex gap-4 overflow-x-auto no-scrollbar py-2 px-1 ${
+            isDragging ? 'cursor-grabbing select-none' : 'cursor-grab scroll-smooth snap-x snap-mandatory'
+          }`}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUpOrLeave}
+          onMouseLeave={handleMouseUpOrLeave}
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {isLoading ? (
@@ -284,7 +335,10 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
                     </div>
 
                     {/* Tags Pill List */}
-                    <div className="flex flex-wrap gap-2 pt-3">
+                    <div 
+                      className="flex gap-2 pt-3 overflow-x-auto no-scrollbar whitespace-nowrap scroll-smooth flex-nowrap pb-1"
+                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    >
                       {card.tags && card.tags.length > 0 ? (
                         card.tags.map((tag: any) => {
                           const isTagActive =
@@ -293,7 +347,7 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
                             <button
                               key={tag.label}
                               onClick={() => handleTagClick(tag.filterType, tag.filterVal)}
-                              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer active:scale-95 ${
+                              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer active:scale-95 flex-shrink-0 ${
                                 isTagActive
                                   ? 'bg-[#9B050B] text-[#FFFBF0] shadow-xs'
                                   : 'bg-[#FFFBF0] hover:bg-[#F2C76E]/20 border border-[#F2C76E]/60 text-[#0C163A] hover:text-[#9B050B]'

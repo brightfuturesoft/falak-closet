@@ -10,13 +10,40 @@ import { Logo } from '@/components/ui/Logo';
 interface OrderReceiptModalProps {
   order: OrderRecord | null;
   onClose: () => void;
+  onRefreshOrders?: () => void;
 }
 
-export function OrderReceiptModal({ order, onClose }: OrderReceiptModalProps) {
+export function OrderReceiptModal({ order, onClose, onRefreshOrders }: OrderReceiptModalProps) {
+  const [isUpdatingPayment, setIsUpdatingPayment] = React.useState(false);
+  const [paymentMsg, setPaymentMsg] = React.useState<string | null>(null);
+
   if (!order) return null;
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleUpdatePayment = async (status: string) => {
+    setIsUpdatingPayment(true);
+    setPaymentMsg(null);
+    try {
+      const { updateOrderPaymentStatus } = await import('@/actions/orderActions');
+      const res = await updateOrderPaymentStatus(order.id, status);
+      if (res.success) {
+        setPaymentMsg(`Success: Payment marked as ${status}!`);
+        order.paymentStatus = status;
+        if (status === 'Verified') {
+          order.status = 'Processing';
+        }
+        if (onRefreshOrders) onRefreshOrders();
+      } else {
+        setPaymentMsg(`Error: ${res.error || 'Failed to update payment status'}`);
+      }
+    } catch (e: any) {
+      setPaymentMsg(`Error: ${e.message || 'An error occurred'}`);
+    } finally {
+      setIsUpdatingPayment(false);
+    }
   };
 
   return (
@@ -129,6 +156,70 @@ export function OrderReceiptModal({ order, onClose }: OrderReceiptModalProps) {
               <p className="text-stone-600">{order.shippingAddress.fullAddress || order.shippingAddress.street || 'Dhaka, Bangladesh'}</p>
             </div>
           </div>
+
+          {/* bKash Payment Details & Verification Controls for Admin */}
+          {order.paymentMethod === 'bKash' && (
+            <div className="p-4 bg-pink-50/50 border border-pink-100 rounded-2xl space-y-3 text-xs print:bg-white print:border-stone-200">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-stone-500 tracking-wider">
+                    bKash Payment Verification
+                  </span>
+                  <div className="flex flex-wrap items-center gap-3 mt-1">
+                    <p className="font-mono text-stone-700">
+                      Sender Number: <strong className="text-stone-900 select-all">{order.bkashSenderNumber || 'N/A'}</strong>
+                    </p>
+                    <p className="font-mono text-stone-700">
+                      Transaction ID (TrxID): <strong className="text-stone-900 select-all font-bold uppercase">{order.bkashTrxId || 'N/A'}</strong>
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-1 text-left sm:text-right">
+                  <span className="text-[10px] uppercase font-bold text-stone-500 tracking-wider block">
+                    Payment Status
+                  </span>
+                  <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border mt-1 ${
+                    order.paymentStatus === 'Verified'
+                      ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                      : order.paymentStatus === 'Failed'
+                      ? 'bg-rose-100 text-rose-800 border-rose-300'
+                      : 'bg-amber-100 text-amber-800 border-amber-300 animate-pulse'
+                  }`}>
+                    {order.paymentStatus || 'Pending Review'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Admin Action Buttons (Hidden when printing invoice) */}
+              <div className="pt-2 border-t border-pink-100 flex flex-col sm:flex-row items-center justify-between gap-3 print:hidden">
+                <p className="text-[10px] text-stone-500 italic">
+                  Validate the Transaction ID in your bKash merchant app before verifying.
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={isUpdatingPayment || order.paymentStatus === 'Failed'}
+                    onClick={() => handleUpdatePayment('Failed')}
+                    className="px-3.5 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 font-bold text-xs rounded-xl transition-all cursor-pointer disabled:opacity-40"
+                  >
+                    Reject Payment
+                  </button>
+                  <button
+                    disabled={isUpdatingPayment || order.paymentStatus === 'Verified'}
+                    onClick={() => handleUpdatePayment('Verified')}
+                    className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-40"
+                  >
+                    Verify Payment
+                  </button>
+                </div>
+              </div>
+
+              {paymentMsg && (
+                <div className="p-2 bg-white rounded-lg border border-pink-200 text-[10px] text-stone-700 font-bold text-center">
+                  {paymentMsg}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Itemized Table */}
           <div className="space-y-3">

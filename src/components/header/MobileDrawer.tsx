@@ -15,18 +15,19 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
   const [categoriesList, setCategoriesList] = useState<Category[]>(INITIAL_CATEGORIES);
 
   useEffect(() => {
-    fetch('/api/categories')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && Array.isArray(data.categories)) {
-          setCategoriesList(data.categories);
-        } else {
+    import('@/actions/categoryActions').then(({ getCategories }) => {
+      getCategories()
+        .then((data) => {
+          if (data.success && Array.isArray(data.categories)) {
+            setCategoriesList(data.categories as any);
+          } else {
+            setCategoriesList(getStoredCategories());
+          }
+        })
+        .catch(() => {
           setCategoriesList(getStoredCategories());
-        }
-      })
-      .catch(() => {
-        setCategoriesList(getStoredCategories());
-      });
+        });
+    });
   }, []);
 
   if (!isOpen) return null;

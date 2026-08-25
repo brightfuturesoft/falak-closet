@@ -2,8 +2,22 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product, PRODUCTS } from '@/data/products';
-import { PROMOTIONS, Promotion } from '@/data/promotions';
 import { sendNewOrderNotification } from '@/lib/socketClient';
+
+export interface Promotion {
+  id?: string;
+  _id?: string;
+  code: string;
+  discountType: string;
+  discountValue: number;
+  minSpend: number;
+  maxDiscount?: number;
+  usageLimit?: number;
+  usedCount?: number;
+  expiryDate: string;
+  status: string;
+  discountPercentage?: number; // legacy compatibility fallback
+}
 
 export interface CartItem {
   product: Product;
@@ -36,6 +50,9 @@ export interface OrderRecord {
   };
   deliveryMethod?: string;
   paymentMethod?: string;
+  paymentStatus?: string;
+  bkashSenderNumber?: string;
+  bkashTrxId?: string;
   trackingNumber?: string;
   estimatedDelivery?: string;
 }
@@ -49,7 +66,7 @@ interface CartContextType {
   cartCount: number;
   subtotal: number;
   appliedPromo: Promotion | null;
-  applyPromoCode: (code: string) => { success: boolean; message: string };
+  applyPromoCode: (code: string) => Promise<{ success: boolean; message: string }>;
   removePromoCode: () => void;
   discountAmount: number;
   shippingFee: number;
@@ -78,6 +95,9 @@ interface CartContextType {
   getOrderById: (orderId: string) => OrderRecord | undefined;
   getOrdersByPhone: (phone: string) => OrderRecord[];
   refreshOrdersFromApi: () => Promise<void>;
+  deliveryCity: string;
+  setDeliveryCity: (city: string) => void;
+  systemSettings: any;
 }
 
 const FREE_SHIPPING_MIN = 100;
@@ -91,6 +111,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
 
+  const [deliveryCity, setDeliveryCity] = useState<string>('Dhaka');
+  const [systemSettings, setSystemSettings] = useState<any>({
+    deliveryFeeInsideDhaka: 60,
+    deliveryFeeOutsideDhaka: 120,
+    freeShippingMinSpend: 3000,
+    adminBkashNumber: '01700000000'
+  });
+
+  useEffect(() => {
+    import('@/actions/settingsActions').then(({ getSystemSettings }) => {
+      getSystemSettings().then((res) => {
+        if (res.success && res.settings) {
+          setSystemSettings(res.settings);
+        }
+      });
+    });
+  }, []);
+
   // Dynamic Database Products State
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
@@ -99,10 +137,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const refreshProductsFromApi = async () => {
     setIsLoadingProducts(true);
     try {
-      const res = await fetch('/api/products');
-      const data = await res.json();
+      const { getProducts } = await import('@/actions/productActions');
+      const data = await getProducts();
       if (data.products) {
-        setProducts(data.products);
+        setProducts(data.products as any);
       }
     } catch {
       setProducts([]);
@@ -123,10 +161,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Load orders from API & localStorage
   const refreshOrdersFromApi = async () => {
     try {
-      const res = await fetch('/api/orders');
-      const data = await res.json();
+      const { getOrders } = await import('@/actions/orderActions');
+      const data = await getOrders();
       if (data.orders) {
-        setOrders(data.orders);
+        setOrders(data.orders as any);
         localStorage.setItem('falak_orders', JSON.stringify(data.orders));
         return;
       }
@@ -240,20 +278,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     0
   );
 
-  const applyPromoCode = (code: string) => {
+  const applyPromoCode = async (code: string) => {
     const cleanCode = code.trim().toUpperCase();
-    const found = PROMOTIONS.find((p) => p.code === cleanCode);
-    if (!found) {
-      return { success: false, message: 'Invalid promo code. Please try FLASH25 or HIJAB15.' };
+    try {
+      const { validatePromotion } = await import('@/actions/orderActions');
+      const res = (await validatePromotion({ code: cleanCode, cartSubtotal: subtotal })) as any;
+      if (res.success && res.promotion) {
+        setAppliedPromo(res.promotion);
+        return { success: true, message: res.message || `Coupon ${cleanCode} applied successfully!` };
+      } else {
+        return { success: false, message: res.error || 'Invalid promo code.' };
+      }
+    } catch (err: any) {
+      console.error('applyPromoCode error:', err);
+      return { success: false, message: 'Failed to validate coupon code.' };
     }
-    if (found.minSpend && subtotal < found.minSpend) {
-      return {
-        success: false,
-        message: `Minimum spend of $${found.minSpend} required for code ${found.code}.`
-      };
-    }
-    setAppliedPromo(found);
-    return { success: true, message: `Coupon ${found.code} applied successfully!` };
   };
 
   const removePromoCode = () => {
@@ -261,12 +300,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   let discountAmount = 0;
-  if (appliedPromo && appliedPromo.discountPercentage > 0) {
-    discountAmount = (subtotal * appliedPromo.discountPercentage) / 100;
+  if (appliedPromo) {
+    if (appliedPromo.discountType === 'percentage' || (appliedPromo as any).discountPercentage > 0) {
+      const pct = appliedPromo.discountValue || (appliedPromo as any).discountPercentage || 0;
+      discountAmount = (subtotal * pct) / 100;
+      if (appliedPromo.maxDiscount && discountAmount > appliedPromo.maxDiscount) {
+        discountAmount = appliedPromo.maxDiscount;
+      }
+    } else if (appliedPromo.discountType === 'fixed') {
+      discountAmount = appliedPromo.discountValue || 0;
+    }
   }
 
-  const freeShippingProgress = Math.min(100, (subtotal / FREE_SHIPPING_MIN) * 100);
-  const shippingFee = subtotal >= FREE_SHIPPING_MIN || subtotal === 0 ? 0 : 15.0;
+  const minSpend = systemSettings?.freeShippingMinSpend ?? 3000;
+  const freeShippingProgress = Math.min(100, (subtotal / minSpend) * 100);
+
+  const isDhaka = deliveryCity.trim().toLowerCase().includes('dhaka');
+  const baseShippingFee = isDhaka 
+    ? (systemSettings?.deliveryFeeInsideDhaka ?? 60) 
+    : (systemSettings?.deliveryFeeOutsideDhaka ?? 120);
+
+  const shippingFee = subtotal >= minSpend || subtotal === 0 ? 0 : baseShippingFee;
   const totalAmount = Math.max(0, subtotal - discountAmount + shippingFee);
 
   const toggleWishlist = (product: Product) => {
@@ -299,13 +353,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       estimatedDelivery: '3-5 Business Days'
     };
 
-    // Post to API (MongoDB)
+    // Post using Server Action
     try {
-      await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newOrder)
-      });
+      const { createOrder } = await import('@/actions/orderActions');
+      await createOrder(newOrder);
     } catch (e) {
       console.warn('API post fallback to local state:', e);
     }
@@ -345,8 +396,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         discountAmount,
         shippingFee,
         totalAmount,
-        freeShippingThreshold: FREE_SHIPPING_MIN,
+        freeShippingThreshold: systemSettings?.freeShippingMinSpend ?? 3000,
         freeShippingProgress,
+        deliveryCity,
+        setDeliveryCity,
+        systemSettings,
         wishlist,
         toggleWishlist,
         isInWishlist,

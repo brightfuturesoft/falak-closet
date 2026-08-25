@@ -64,9 +64,18 @@ export function CartDrawer() {
     0
   );
 
-  const selectedDiscountAmount = appliedPromo
-    ? Math.round((selectedSubtotal * appliedPromo.discountPercentage) / 100)
-    : 0;
+  let selectedDiscountAmount = 0;
+  if (appliedPromo) {
+    if (appliedPromo.discountType === 'percentage' || (appliedPromo as any).discountPercentage > 0) {
+      const pct = appliedPromo.discountValue || (appliedPromo as any).discountPercentage || 0;
+      selectedDiscountAmount = Math.round((selectedSubtotal * pct) / 100);
+      if (appliedPromo.maxDiscount && selectedDiscountAmount > appliedPromo.maxDiscount) {
+        selectedDiscountAmount = appliedPromo.maxDiscount;
+      }
+    } else if (appliedPromo.discountType === 'fixed') {
+      selectedDiscountAmount = appliedPromo.discountValue || 0;
+    }
+  }
 
   const selectedShippingFee = selectedSubtotal === 0 ? 0 : selectedSubtotal >= freeShippingThreshold ? 0 : 120;
   const selectedTotalAmount = selectedSubtotal - selectedDiscountAmount + selectedShippingFee;

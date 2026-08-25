@@ -68,11 +68,11 @@ export default function CartClient() {
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [promoMessage, setPromoMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const handleApplyPromo = (e: React.FormEvent) => {
+  const handleApplyPromo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!promoCodeInput.trim()) return;
 
-    const res = applyPromoCode(promoCodeInput.trim());
+    const res = await applyPromoCode(promoCodeInput.trim());
     if (res.success) {
       setPromoMessage({ type: 'success', text: res.message });
       setPromoCodeInput('');

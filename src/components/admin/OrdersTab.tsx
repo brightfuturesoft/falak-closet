@@ -211,10 +211,29 @@ export function OrdersTab({
                   <td className="py-4 font-mono font-bold text-stone-900 whitespace-nowrap">
                     {formatCurrency(order.total)}
                   </td>
-                  <td className="py-4 text-stone-600 text-[11px]">
-                    <span className="px-2 py-0.5 bg-stone-100 border border-stone-200 rounded-md font-mono font-medium text-stone-800">
-                      {order.paymentMethod || 'Cash on Delivery'}
-                    </span>
+                  <td className="py-4 text-stone-600 text-[11px] space-y-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="px-2 py-0.5 bg-stone-100 border border-stone-200 rounded-md font-mono font-medium text-stone-800 whitespace-nowrap">
+                        {order.paymentMethod || 'Cash on Delivery'}
+                      </span>
+                      {order.paymentMethod === 'bKash' && (
+                        <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold border whitespace-nowrap ${
+                          order.paymentStatus === 'Verified'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : order.paymentStatus === 'Failed'
+                            ? 'bg-rose-50 text-rose-700 border-rose-200'
+                            : 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse'
+                        }`}>
+                          {order.paymentStatus || 'Pending Review'}
+                        </span>
+                      )}
+                    </div>
+                    {order.paymentMethod === 'bKash' && (
+                      <div className="text-[10px] text-stone-500 font-mono space-y-0.5">
+                        <p><span className="text-stone-400">Trx:</span> <span className="select-all font-bold">{order.bkashTrxId}</span></p>
+                        <p><span className="text-stone-400">Sender:</span> <span className="select-all">{order.bkashSenderNumber}</span></p>
+                      </div>
+                    )}
                   </td>
                   <td className="py-4">
                     <select
