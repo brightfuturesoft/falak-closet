@@ -12,11 +12,12 @@ import {
   Settings,
   ShieldAlert,
   FolderTree,
-  LogOut
+  LogOut,
+  Image
 } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 
-export type AdminTabType = 'overview' | 'orders' | 'products' | 'categories' | 'promotions' | 'customers' | 'analytics' | 'security' | 'settings';
+export type AdminTabType = 'overview' | 'orders' | 'products' | 'categories' | 'promotions' | 'customers' | 'analytics' | 'security' | 'settings' | 'hero';
 
 interface AdminSidebarProps {
   activeTab: AdminTabType;
@@ -86,6 +87,13 @@ export function AdminSidebar({
           {promosCount}
         </span>
       ) : null
+    },
+    {
+      id: 'hero' as AdminTabType,
+      href: '/admin/hero',
+      label: 'Hero Slider Banners',
+      icon: Image,
+      badge: null
     },
     {
       id: 'customers' as AdminTabType,

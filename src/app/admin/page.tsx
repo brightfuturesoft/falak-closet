@@ -14,6 +14,7 @@ import { CustomersTab } from '@/components/admin/CustomersTab';
 import { AnalyticsTab } from '@/components/admin/AnalyticsTab';
 import { SecurityTab } from '@/components/admin/SecurityTab';
 import { SettingsTab } from '@/components/admin/SettingsTab';
+import { HeroTab } from '@/components/admin/HeroTab';
 import { ProductFormModal } from '@/components/admin/ProductFormModal';
 import { OrderReceiptModal } from '@/components/admin/OrderReceiptModal';
 import { PromoFormModal } from '@/components/admin/PromoFormModal';
@@ -59,9 +60,11 @@ function AdminDashboardContent() {
       setActiveTab('analytics');
     } else if (pathname.includes('/admin/settings')) {
       setActiveTab('settings');
+    } else if (pathname.includes('/admin/hero')) {
+      setActiveTab('hero');
     } else {
       const tabParam = searchParams.get('tab');
-      if (tabParam && ['overview', 'orders', 'products', 'promotions', 'customers', 'security', 'analytics', 'settings'].includes(tabParam)) {
+      if (tabParam && ['overview', 'orders', 'products', 'categories', 'promotions', 'customers', 'security', 'analytics', 'settings', 'hero'].includes(tabParam)) {
         setActiveTab(tabParam as AdminTabType);
       } else {
         setActiveTab('overview');
@@ -609,6 +612,10 @@ function AdminDashboardContent() {
               isSeeding={isSeeding}
               seedResult={seedResult}
             />
+          )}
+
+          {activeTab === 'hero' && (
+            <HeroTab addToast={addToast} />
           )}
         </main>
       </div>

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 
-const HERO_SLIDES = [
+const STATIC_SLIDES = [
   {
     id: 1,
     tag: 'FRESH OFFERS',
@@ -27,22 +27,47 @@ const HERO_SLIDES = [
 ];
 
 export function HeroCarousel() {
+  const [slides, setSlides] = useState<any[]>(STATIC_SLIDES);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
-    }, 6000);
-    return () => clearInterval(timer);
+    async function loadSlides() {
+      try {
+        const res = await fetch('/api/hero-slides');
+        const data = await res.json();
+        if (data.success && data.slides && data.slides.length > 0) {
+          setSlides(data.slides.map((s: any, idx: number) => ({
+            id: s._id || s.id || idx,
+            tag: s.tag,
+            title: s.title,
+            subtitle: s.subtitle,
+            ctaText: s.ctaText,
+            ctaLink: s.ctaLink,
+            image: s.image
+          })));
+        }
+      } catch (err) {
+        console.error('Failed to load dynamic hero slides:', err);
+      }
+    }
+    loadSlides();
   }, []);
 
-  const handleNext = () => setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
-  const handlePrev = () => setCurrentSlide((prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
+  useEffect(() => {
+    if (slides.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [slides.length]);
+
+  const handleNext = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
+  const handlePrev = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
 
   return (
     <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-4 sm:my-6">
       <div className="relative h-[320px] sm:h-[400px] lg:h-[440px] rounded-3xl overflow-hidden shadow-md">
-        {HERO_SLIDES.map((slide, idx) => (
+        {slides.map((slide, idx) => (
           <div
             key={slide.id}
             className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
@@ -93,36 +118,40 @@ export function HeroCarousel() {
         ))}
 
         {/* Top-Right Arrow Buttons */}
-        <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
-          <button
-            onClick={handlePrev}
-            className="p-2 rounded-lg bg-[#0C163A]/60 hover:bg-[#0C163A] text-[#F2C76E] backdrop-blur-xs transition-all cursor-pointer border border-[#F2C76E]/30"
-            aria-label="Previous slide"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button
-            onClick={handleNext}
-            className="p-2 rounded-lg bg-[#0C163A]/60 hover:bg-[#0C163A] text-[#F2C76E] backdrop-blur-xs transition-all cursor-pointer border border-[#F2C76E]/30"
-            aria-label="Next slide"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
+        {slides.length > 1 && (
+          <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
+            <button
+              onClick={handlePrev}
+              className="p-2 rounded-lg bg-[#0C163A]/60 hover:bg-[#0C163A] text-[#F2C76E] backdrop-blur-xs transition-all cursor-pointer border border-[#F2C76E]/30"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleNext}
+              className="p-2 rounded-lg bg-[#0C163A]/60 hover:bg-[#0C163A] text-[#F2C76E] backdrop-blur-xs transition-all cursor-pointer border border-[#F2C76E]/30"
+              aria-label="Next slide"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         {/* Bottom-Right Pagination Dots */}
-        <div className="absolute bottom-4 right-6 z-30 flex items-center gap-2">
-          {HERO_SLIDES.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentSlide(idx)}
-              className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                currentSlide === idx ? 'w-6 bg-[#F2C76E]' : 'w-2 bg-white/60 hover:bg-white'
-              }`}
-              aria-label={`Go to slide ${idx + 1}`}
-            />
-          ))}
-        </div>
+        {slides.length > 1 && (
+          <div className="absolute bottom-4 right-6 z-30 flex items-center gap-2">
+            {slides.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentSlide(idx)}
+                className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                  currentSlide === idx ? 'w-6 bg-[#F2C76E]' : 'w-2 bg-white/60 hover:bg-white'
+                }`}
+                aria-label={`Go to slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
