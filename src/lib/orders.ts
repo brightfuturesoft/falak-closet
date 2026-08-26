@@ -87,6 +87,7 @@ export function serializeOrder(row: OrderRow) {
     paymentSenderNumber: opt(row.paymentSenderNumber),
     paymentTrxId: opt(row.paymentTrxId),
     paymentStatus: opt(row.paymentStatus),
+    promoCode: opt(row.promoCode),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -172,5 +173,6 @@ export function buildOrderData(body: Raw): Prisma.OrderCreateInput {
     ...(toStr(body.paymentSenderNumber) ? { paymentSenderNumber: toStr(body.paymentSenderNumber) } : {}),
     ...(toStr(body.paymentTrxId) ? { paymentTrxId: toStr(body.paymentTrxId) } : {}),
     ...(toStr(body.paymentStatus) ? { paymentStatus: toStr(body.paymentStatus) } : {}),
+    ...(toStr(body.promoCode) ? { promoCode: toStr(body.promoCode) } : {}),
   };
 }

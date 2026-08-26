@@ -19,7 +19,12 @@ export default function CheckoutClient() {
     selectedSubAreaId,
     setSelectedZone,
     selectedZoneName,
-    selectedSubAreaName
+    selectedSubAreaName,
+    appliedCoupon,
+    applyPromoCode,
+    removePromoCode,
+    promoNotice,
+    totalAmount
   } = useCart();
   const { trackEvent } = useAnalytics();
 
@@ -135,38 +140,20 @@ export default function CheckoutClient() {
 
   // Promo Code State
   const [promoCodeInput, setPromoCodeInput] = useState('');
-  const [appliedPromoCode, setAppliedPromoCode] = useState('');
-  const [appliedDiscountAmount, setAppliedDiscountAmount] = useState(0);
   const [isValidatingPromo, setIsValidatingPromo] = useState(false);
   const [promoFeedback, setPromoFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-
-  const activeDiscount = appliedDiscountAmount > 0 ? appliedDiscountAmount : discountAmount;
-  const activeTotalAmount = Math.max(0, subtotal - activeDiscount + shippingFee);
 
   const handleApplyPromoCode = async () => {
     if (!promoCodeInput.trim()) return;
     setIsValidatingPromo(true);
     setPromoFeedback(null);
 
-    try {
-      const res = await fetch('/api/promotions/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: promoCodeInput.trim(), cartSubtotal: subtotal })
-      });
-      const data = await res.json();
-
-      if (!data.success) {
-        setAppliedDiscountAmount(0);
-        setAppliedPromoCode('');
-        setPromoFeedback({ type: 'error', message: data.error || 'Invalid promo code' });
-      } else {
-        setAppliedDiscountAmount(data.calculatedDiscount || 0);
-        setAppliedPromoCode(data.code);
-        setPromoFeedback({ type: 'success', message: data.message });
-      }
-    } catch {
-      setPromoFeedback({ type: 'error', message: 'Failed to validate promo code.' });
+    const res = await applyPromoCode(promoCodeInput.trim());
+    if (res.success) {
+      setPromoFeedback({ type: 'success', message: res.message });
+      setPromoCodeInput('');
+    } else {
+      setPromoFeedback({ type: 'error', message: res.message });
     }
     setIsValidatingPromo(false);
   };
@@ -207,19 +194,21 @@ export default function CheckoutClient() {
         paymentSenderNumber?: string;
         paymentTrxId?: string;
         paymentStatus?: string;
+        promoCode?: string;
       } = {
         items: cart,
         subtotal,
-        discount: activeDiscount,
+        discount: discountAmount,
         shippingFee,
-        total: activeTotalAmount,
+        total: totalAmount,
         shippingAddress: formData,
         deliveryMethod: selectedZoneName + (selectedSubAreaName ? ` - ${selectedSubAreaName}` : ''),
         paymentMethod,
         userEmail,
         userIp,
         deliveryZone: selectedZoneName,
-        deliverySubArea: selectedSubAreaName || undefined
+        deliverySubArea: selectedSubAreaName || undefined,
+        promoCode: appliedCoupon?.code || undefined
       };
 
       if (paymentMethod === 'bKash Send Money (Manual)') {
@@ -565,24 +554,39 @@ export default function CheckoutClient() {
             </div>
 
             {/* Promo Code Voucher Input */}
-            <div className="pt-2">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Enter Promo Code (e.g. EID2026)"
-                  value={promoCodeInput}
-                  onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
-                  className="flex-1 px-3.5 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono font-bold uppercase text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670]"
-                />
-                <button
-                  type="button"
-                  onClick={handleApplyPromoCode}
-                  disabled={isValidatingPromo || !promoCodeInput.trim()}
-                  className="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {isValidatingPromo ? 'Checking...' : 'Apply'}
-                </button>
-              </div>
+            <div className="pt-2 space-y-2">
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between p-3 px-4 bg-emerald-55 border border-emerald-250 rounded-2xl text-xs font-semibold text-emerald-800">
+                  <span className="flex items-center gap-1.5 font-bold uppercase">
+                    🎟 {appliedCoupon.code} — −৳{discountAmount}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={removePromoCode}
+                    className="text-stone-400 hover:text-stone-700 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Enter Promo Code (e.g. EID2026)"
+                    value={promoCodeInput}
+                    onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
+                    className="flex-1 px-3.5 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono font-bold uppercase text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670]"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyPromoCode}
+                    disabled={isValidatingPromo || !promoCodeInput.trim()}
+                    className="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {isValidatingPromo ? 'Checking...' : 'Apply'}
+                  </button>
+                </div>
+              )}
               {promoFeedback && (
                 <p
                   className={`text-[11px] font-bold mt-1.5 ${
@@ -592,6 +596,11 @@ export default function CheckoutClient() {
                   {promoFeedback.message}
                 </p>
               )}
+              {promoNotice && (
+                <p className="text-[11px] font-bold text-amber-600 mt-1.5">
+                  ⚠️ {promoNotice}
+                </p>
+              )}
             </div>
 
             <div className="pt-3 border-t border-pink-100 space-y-2 text-xs text-stone-600">
@@ -599,10 +608,10 @@ export default function CheckoutClient() {
                 <span>Subtotal</span>
                 <span className="font-bold text-stone-900">৳ {subtotal}</span>
               </div>
-              {activeDiscount > 0 && (
-                <div className="flex justify-between text-[#D92670]">
-                  <span>Promo Discount {appliedPromoCode ? `(${appliedPromoCode})` : ''}</span>
-                  <span className="font-bold">-৳ {activeDiscount}</span>
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-emerald-600 font-bold">
+                  <span>Discount Applied ({appliedCoupon?.code})</span>
+                  <span>-৳ {discountAmount}</span>
                 </div>
               )}
               <div className="flex justify-between">
@@ -613,7 +622,7 @@ export default function CheckoutClient() {
               </div>
               <div className="flex justify-between text-base font-bold text-stone-900 pt-2 border-t border-pink-100">
                 <span>Total</span>
-                <span className="text-[#D92670] text-xl font-extrabold">৳ {activeTotalAmount}</span>
+                <span className="text-[#D92670] text-xl font-extrabold">৳ {totalAmount}</span>
               </div>
             </div>
 
@@ -653,7 +662,7 @@ export default function CheckoutClient() {
               <div className="bg-pink-50/50 border border-pink-100 p-4 rounded-2xl flex items-center justify-between">
                 <div>
                   <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Amount to Pay</p>
-                  <p className="text-2xl font-black text-[#E2136E] font-mono">৳ {activeTotalAmount}</p>
+                  <p className="text-2xl font-black text-[#E2136E] font-mono">৳ {totalAmount}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Reference</p>
@@ -693,7 +702,7 @@ export default function CheckoutClient() {
                     <>
                       <li>Dial *247# or open the bKash App.</li>
                       <li>Choose &quot;Send Money&quot; and enter our number.</li>
-                      <li>Enter amount: ৳{activeTotalAmount}.</li>
+                      <li>Enter amount: ৳{totalAmount}.</li>
                       <li>Use your phone number as reference.</li>
                       <li>Confirm transaction and copy the Transaction ID.</li>
                     </>

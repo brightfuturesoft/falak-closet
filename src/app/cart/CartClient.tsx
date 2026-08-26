@@ -14,9 +14,10 @@ export default function CartClient() {
     updateQuantity,
     clearCart,
     subtotal,
-    appliedPromo,
+    appliedCoupon,
     applyPromoCode,
     removePromoCode,
+    promoNotice,
     discountAmount,
     shippingFee,
     totalAmount,
@@ -68,19 +69,24 @@ export default function CartClient() {
 
   // Promo Form Input
   const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
   const [promoMessage, setPromoMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const handleApplyPromo = (e: React.FormEvent) => {
+  const handleApplyPromo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!promoCodeInput.trim()) return;
+    if (!promoCodeInput.trim() || isValidatingPromo) return;
 
-    const res = applyPromoCode(promoCodeInput.trim());
+    setIsValidatingPromo(true);
+    setPromoMessage(null);
+
+    const res = await applyPromoCode(promoCodeInput.trim());
     if (res.success) {
       setPromoMessage({ type: 'success', text: res.message });
       setPromoCodeInput('');
     } else {
       setPromoMessage({ type: 'error', text: res.message });
     }
+    setIsValidatingPromo(false);
   };
 
   // Calculate totals for selected items
@@ -305,10 +311,10 @@ export default function CartClient() {
                 <Tag className="w-3.5 h-3.5 text-[#D92670]" /> Promo Voucher Code
               </label>
 
-              {appliedPromo ? (
-                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between text-xs">
+              {appliedCoupon ? (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between text-xs font-semibold text-emerald-800">
                   <div>
-                    <span className="font-mono font-bold text-emerald-800 uppercase">{appliedPromo.code}</span>
+                    <span className="font-mono font-bold text-emerald-800 uppercase">🎟 {appliedCoupon.code}</span>
                     <p className="text-[10px] text-emerald-600">Saved {formatCurrency(discountAmount)}</p>
                   </div>
                   <button onClick={removePromoCode} className="text-xs text-rose-600 hover:underline font-bold">
@@ -326,16 +332,23 @@ export default function CartClient() {
                   />
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs rounded-full transition-colors cursor-pointer"
+                    disabled={isValidatingPromo || !promoCodeInput.trim()}
+                    className="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs rounded-full transition-colors cursor-pointer disabled:opacity-50"
                   >
-                    Apply
+                    {isValidatingPromo ? 'Checking...' : 'Apply'}
                   </button>
                 </form>
               )}
 
               {promoMessage && (
-                <p className={`text-[11px] font-bold ${promoMessage.type === 'success' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                <p className={`text-[11px] font-bold ${promoMessage.type === 'success' ? 'text-emerald-600' : 'text-[#D92670]'}`}>
                   {promoMessage.text}
+                </p>
+              )}
+
+              {promoNotice && (
+                <p className="text-[11px] font-bold text-amber-600 mt-1">
+                  ⚠️ {promoNotice}
                 </p>
               )}
             </div>
@@ -348,8 +361,8 @@ export default function CartClient() {
               </div>
 
               {discountAmount > 0 && (
-                <div className="flex justify-between text-emerald-700 font-bold">
-                  <span>Discount Applied:</span>
+                <div className="flex justify-between text-emerald-600 font-bold">
+                  <span>Discount ({appliedCoupon?.code || 'Applied'}):</span>
                   <span className="font-mono">-{formatCurrency(discountAmount)}</span>
                 </div>
               )}

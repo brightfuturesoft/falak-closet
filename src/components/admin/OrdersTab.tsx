@@ -225,6 +225,11 @@ export function OrdersTab({
                     <p className="text-[10px] text-stone-500 truncate max-w-[140px]">
                       {order.items.map((i) => i.product?.name || (i as { name?: string }).name || 'Modest Fashion Item').join(', ')}
                     </p>
+                    {order.promoCode && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-250 rounded text-[9px] font-bold uppercase mt-1 font-mono">
+                        🎟 {order.promoCode}
+                      </span>
+                    )}
                   </td>
                   <td className="py-4 font-mono font-bold text-stone-900 whitespace-nowrap">
                     {formatCurrency(order.total)}

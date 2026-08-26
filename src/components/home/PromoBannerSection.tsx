@@ -1,5 +1,8 @@
 'use client';
 
+// TODO: Migrate this section to dynamic backend-loaded banners using getActiveBanners()
+// once home page routing allows server component props.
+
 import React from 'react';
 import Link from 'next/link';
 import { Tag, Sparkles, Truck, ShieldCheck, ArrowRight } from 'lucide-react';

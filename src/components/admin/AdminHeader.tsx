@@ -86,6 +86,10 @@ export function AdminHeader({
     delivery: {
       title: 'Delivery Zones & Pricing',
       subtitle: 'Manage administrative shipping zones, sub-areas, and location-based shipping fees.'
+    },
+    banners: {
+      title: 'Live Promotion Banners',
+      subtitle: 'Manage seasonal campaigns, flash sales, and storefront promotional assets.'
     }
   };
 

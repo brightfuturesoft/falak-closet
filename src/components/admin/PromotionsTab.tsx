@@ -21,12 +21,45 @@ export function PromotionsTab({
   onDeletePromo
 }: PromotionsTabProps) {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'All' | 'Active' | 'Expired' | 'Disabled'>('All');
+
+  const isExpired = (promo: PromoVoucherData) => {
+    return promo.expiryDate && new Date(promo.expiryDate) < new Date();
+  };
 
   const handleCopy = (code: string) => {
-    navigator.clipboard.writeText(code);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code);
+    } else {
+      const textarea = document.createElement('textarea');
+      textarea.value = code;
+      textarea.style.position = 'fixed';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+      } catch (err) {
+        console.error('Fallback copy failed', err);
+      }
+      document.body.removeChild(textarea);
+    }
     setCopiedCode(code);
     setTimeout(() => setCopiedCode(null), 2000);
   };
+
+  const filteredPromotions = promotions.filter((promo) => {
+    const expired = isExpired(promo);
+    if (filter === 'Active') {
+      return promo.status === 'Active' && !expired;
+    }
+    if (filter === 'Expired') {
+      return promo.status === 'Expired' || (promo.status === 'Active' && expired);
+    }
+    if (filter === 'Disabled') {
+      return promo.status === 'Disabled';
+    }
+    return true;
+  });
 
   return (
     <div className="space-y-6 text-stone-900">
@@ -51,19 +84,50 @@ export function PromotionsTab({
         </button>
       </div>
 
+      {/* Filter Chips */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 text-xs font-bold scrollbar-none">
+        {(['All', 'Active', 'Expired', 'Disabled'] as const).map((tab) => {
+          const count =
+            tab === 'All'
+              ? promotions.length
+              : tab === 'Active'
+              ? promotions.filter((p) => p.status === 'Active' && !isExpired(p)).length
+              : tab === 'Expired'
+              ? promotions.filter((p) => p.status === 'Expired' || (p.status === 'Active' && isExpired(p))).length
+              : promotions.filter((p) => p.status === 'Disabled').length;
+
+          return (
+            <button
+              key={tab}
+              onClick={() => setFilter(tab)}
+              className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                filter === tab
+                  ? 'bg-stone-900 text-white shadow-sm font-bold'
+                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200 border border-stone-200'
+              }`}
+            >
+              <span>{tab}</span>
+              <span className="text-[10px] font-mono opacity-80">({count})</span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Promotions Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {promotions.map((promo) => {
+        {filteredPromotions.map((promo) => {
           const promoId = promo._id || promo.id || promo.code;
           const isActive = promo.status === 'Active';
+          const expired = isExpired(promo);
+          const hasReachedLimit = promo.usageLimit > 0 && (promo.usedCount ?? 0) >= promo.usageLimit;
 
           return (
             <div
               key={promoId}
               className={`bg-white dark:bg-stone-900 rounded-3xl border p-6 shadow-xs space-y-4 relative overflow-hidden transition-all flex flex-col justify-between ${
-                isActive
+                isActive && !expired && !hasReachedLimit
                   ? 'border-stone-200 dark:border-stone-800 hover:border-amber-500/50'
-                  : 'border-red-200 dark:border-red-900/50 opacity-80'
+                  : 'border-red-200 dark:border-red-900/50 opacity-80 bg-stone-50/50'
               }`}
             >
               <div className="space-y-3">
@@ -80,20 +144,38 @@ export function PromotionsTab({
                     )}
                   </span>
 
-                  <span
-                    className={`text-[10px] font-mono font-bold flex items-center gap-1.5 px-2.5 py-0.5 rounded-full ${
-                      isActive
-                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200'
-                        : 'bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400 border border-stone-200'
-                    }`}
-                  >
+                  {isActive && expired ? (
                     <span
-                      className={`w-2 h-2 rounded-full ${
-                        isActive ? 'bg-emerald-500 animate-pulse' : 'bg-stone-400'
+                      className="text-[10px] font-mono font-bold flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-350 border border-rose-200 cursor-help"
+                      title="Past expiry date — auto-checked at redemption"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                      Expired (Auto)
+                    </span>
+                  ) : isActive && hasReachedLimit ? (
+                    <span
+                      className="text-[10px] font-mono font-bold flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-350 border border-amber-200 cursor-help"
+                      title="Coupon usage limit has been reached"
+                    >
+                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                      Limit Reached
+                    </span>
+                  ) : (
+                    <span
+                      className={`text-[10px] font-mono font-bold flex items-center gap-1.5 px-2.5 py-0.5 rounded-full ${
+                        isActive
+                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-350 border border-emerald-200'
+                          : 'bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400 border border-stone-200'
                       }`}
-                    />
-                    {promo.status}
-                  </span>
+                    >
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          isActive ? 'bg-emerald-500 animate-pulse' : 'bg-stone-400'
+                        }`}
+                      />
+                      {promo.status}
+                    </span>
+                  )}
                 </div>
 
                 <div>
@@ -104,6 +186,28 @@ export function PromotionsTab({
                     Min spend: <strong className="text-stone-900 dark:text-stone-200">{formatCurrency(promo.minSpend)}</strong>
                     {promo.maxDiscount && promo.maxDiscount > 0 ? ` | Cap: ${formatCurrency(promo.maxDiscount)}` : ''}
                   </p>
+                </div>
+
+                {/* Progress bar and usage metrics */}
+                <div className="space-y-1 pt-1">
+                  <div className="flex justify-between text-[11px] font-bold text-stone-500 dark:text-stone-400">
+                    <span>Usage Progress:</span>
+                    <span>
+                      {promo.usedCount ?? 0} / {promo.usageLimit === 0 ? 'Unlimited' : promo.usageLimit}
+                    </span>
+                  </div>
+                  <div className="w-full bg-stone-100 dark:bg-stone-800 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-amber-500 h-1.5 rounded-full transition-all"
+                      style={{
+                        width: `${
+                          promo.usageLimit === 0
+                            ? 0
+                            : Math.min(100, (((promo.usedCount ?? 0) / promo.usageLimit) * 100))
+                        }%`
+                      }}
+                    />
+                  </div>
                 </div>
 
                 {/* Promo Code Box */}
@@ -171,11 +275,11 @@ export function PromotionsTab({
           );
         })}
 
-        {promotions.length === 0 && (
+        {filteredPromotions.length === 0 && (
           <div className="col-span-full py-16 text-center text-stone-500 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800">
             <Tag className="w-10 h-10 mx-auto text-stone-400 mb-2" />
             <p className="font-bold text-stone-700 dark:text-stone-300">No promo vouchers found.</p>
-            <p className="text-xs text-stone-400 mt-1">Click "Create New Voucher" to add your first promotion.</p>
+            <p className="text-xs text-stone-400 mt-1">Click "Create New Voucher" or adjust your filters.</p>
           </div>
         )}
       </div>

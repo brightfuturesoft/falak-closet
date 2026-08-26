@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { evaluatePromotion } from '@/lib/promotions';
 
 // POST /api/promotions/validate  body: { code, cartSubtotal }
 export async function POST(req: Request) {
@@ -22,56 +23,21 @@ export async function POST(req: Request) {
       );
     }
 
-    if (promo.status !== 'Active') {
+    const evaluation = evaluatePromotion(promo, subtotal);
+
+    if (!evaluation.isValid) {
       return NextResponse.json(
-        { success: false, error: `Promo code "${cleanCode}" is no longer active.` },
+        { success: false, error: evaluation.error },
         { status: 400 }
       );
     }
-
-    if (promo.expiryDate && new Date(promo.expiryDate) < new Date()) {
-      return NextResponse.json(
-        { success: false, error: `Promo code "${cleanCode}" has expired.` },
-        { status: 400 }
-      );
-    }
-
-    if (promo.usageLimit > 0 && promo.usedCount >= promo.usageLimit) {
-      return NextResponse.json(
-        { success: false, error: `Promo code "${cleanCode}" has reached its usage limit.` },
-        { status: 400 }
-      );
-    }
-
-    if (subtotal < promo.minSpend) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Minimum spend of ৳${promo.minSpend.toLocaleString()} required for promo code "${cleanCode}".`,
-        },
-        { status: 400 }
-      );
-    }
-
-    let calculatedDiscount: number;
-    if (promo.discountType === 'percentage') {
-      calculatedDiscount = (subtotal * promo.discountValue) / 100;
-      if (promo.maxDiscount > 0) {
-        calculatedDiscount = Math.min(calculatedDiscount, promo.maxDiscount);
-      }
-    } else {
-      calculatedDiscount = promo.discountValue;
-    }
-
-    // Never discount more than the cart is worth.
-    calculatedDiscount = Math.min(calculatedDiscount, subtotal);
 
     return NextResponse.json({
       success: true,
       code: promo.code,
       discountType: promo.discountType,
       discountValue: promo.discountValue,
-      calculatedDiscount,
+      calculatedDiscount: evaluation.calculatedDiscount,
       message: `Promo code "${cleanCode}" applied successfully!`,
     });
   } catch (err) {

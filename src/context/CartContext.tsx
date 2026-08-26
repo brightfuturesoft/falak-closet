@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product } from '@/data/products';
-import { PROMOTIONS, Promotion } from '@/data/promotions';
+import { AppliedCoupon } from '@/data/promotions';
 import { sendNewOrderNotification } from '@/lib/socketClient';
 
 export interface CartItem {
@@ -59,6 +59,7 @@ export interface OrderRecord {
   paymentStatus?: string;
   deliveryZone?: string;
   deliverySubArea?: string;
+  promoCode?: string;
 }
 
 interface CartContextType {
@@ -69,9 +70,10 @@ interface CartContextType {
   clearCart: () => void;
   cartCount: number;
   subtotal: number;
-  appliedPromo: Promotion | null;
-  applyPromoCode: (code: string) => { success: boolean; message: string };
+  appliedCoupon: AppliedCoupon | null;
+  applyPromoCode: (code: string) => Promise<{ success: boolean; message: string }>;
   removePromoCode: () => void;
+  promoNotice: string | null;
   discountAmount: number;
   shippingFee: number;
   totalAmount: number;
@@ -128,7 +130,8 @@ export function CartProvider({
 }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<Product[]>([]);
-  const [appliedPromo, setAppliedPromo] = useState<Promotion | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [promoNotice, setPromoNotice] = useState<string | null>(null);
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
 
@@ -235,6 +238,9 @@ export function CartProvider({
 
       const savedWishlist = localStorage.getItem('falak_wishlist');
       if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
+
+      const savedCoupon = localStorage.getItem('falak_coupon');
+      if (savedCoupon) setAppliedCoupon(JSON.parse(savedCoupon));
     } catch { }
 
     refreshOrdersFromApi();
@@ -258,6 +264,8 @@ export function CartProvider({
       localStorage.setItem('falak_orders', JSON.stringify(orders));
     } catch { }
   }, [orders]);
+
+  // Relocated coupon effects to be after subtotal/discountAmount declarations below
 
   const addToCart = (product: Product, color: string, size: string, quantity = 1) => {
     setCart((prev) => {
@@ -316,7 +324,8 @@ export function CartProvider({
 
   const clearCart = () => {
     setCart([]);
-    setAppliedPromo(null);
+    setAppliedCoupon(null);
+    setPromoNotice(null);
   };
 
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
@@ -325,30 +334,102 @@ export function CartProvider({
     0
   );
 
-  const applyPromoCode = (code: string) => {
+  const applyPromoCode = async (code: string): Promise<{ success: boolean; message: string }> => {
     const cleanCode = code.trim().toUpperCase();
-    const found = PROMOTIONS.find((p) => p.code === cleanCode);
-    if (!found) {
-      return { success: false, message: 'Invalid promo code. Please try FLASH25 or HIJAB15.' };
+    if (!cleanCode) return { success: false, message: 'Promo code is required.' };
+
+    try {
+      const res = await fetch('/api/promotions/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: cleanCode, cartSubtotal: subtotal }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setAppliedCoupon({
+          code: data.code,
+          discountType: data.discountType,
+          discountValue: data.discountValue,
+          calculatedDiscount: data.calculatedDiscount,
+        });
+        setPromoNotice(null);
+        return { success: true, message: data.message || `Coupon ${data.code} applied successfully!` };
+      } else {
+        return { success: false, message: data.error || 'Invalid promo code.' };
+      }
+    } catch (err) {
+      console.error('Failed to validate promo code:', err);
+      return { success: false, message: 'Could not verify code — please try again.' };
     }
-    if (found.minSpend && subtotal < found.minSpend) {
-      return {
-        success: false,
-        message: `Minimum spend of $${found.minSpend} required for code ${found.code}.`
-      };
-    }
-    setAppliedPromo(found);
-    return { success: true, message: `Coupon ${found.code} applied successfully!` };
   };
 
   const removePromoCode = () => {
-    setAppliedPromo(null);
+    setAppliedCoupon(null);
+    setPromoNotice(null);
   };
 
-  let discountAmount = 0;
-  if (appliedPromo && appliedPromo.discountPercentage > 0) {
-    discountAmount = (subtotal * appliedPromo.discountPercentage) / 100;
-  }
+  const discountAmount = appliedCoupon ? Math.min(appliedCoupon.calculatedDiscount, subtotal) : 0;
+
+  useEffect(() => {
+    try {
+      if (appliedCoupon) {
+        localStorage.setItem('falak_coupon', JSON.stringify(appliedCoupon));
+      } else {
+        localStorage.removeItem('falak_coupon');
+      }
+    } catch { }
+  }, [appliedCoupon]);
+
+  // Stale promo guard: re-validate the coupon silently when subtotal changes
+  useEffect(() => {
+    if (!appliedCoupon) return;
+
+    if (cart.length === 0 || subtotal === 0) {
+      const oldCode = appliedCoupon.code;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setAppliedCoupon(null);
+      setPromoNotice(`Code ${oldCode} removed — cart is empty`);
+      return;
+    }
+
+    let isMounted = true;
+    const revalidate = async () => {
+      try {
+        const res = await fetch('/api/promotions/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: appliedCoupon.code, cartSubtotal: subtotal }),
+        });
+        const data = await res.json();
+        if (!isMounted) return;
+
+        if (data.success) {
+          if (data.calculatedDiscount !== appliedCoupon.calculatedDiscount) {
+            setAppliedCoupon({
+              code: data.code,
+              discountType: data.discountType,
+              discountValue: data.discountValue,
+              calculatedDiscount: data.calculatedDiscount,
+            });
+          }
+        } else {
+          const oldCode = appliedCoupon.code;
+          setAppliedCoupon(null);
+          setPromoNotice(`Code ${oldCode} removed — ${data.error || 'cart no longer meets the requirements'}`);
+        }
+      } catch (err) {
+        console.error('Silent promo revalidation failed:', err);
+      }
+    };
+
+    revalidate();
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal, appliedCoupon?.code]);
 
   // Sum quantities by product ID
   const quantitiesByProductId: Record<string, number> = {};
@@ -430,24 +511,36 @@ export function CartProvider({
       estimatedDelivery: '3-5 Business Days'
     };
 
+    let finalOrder = newOrder;
+
     // Post to API (MongoDB)
     try {
-      await fetch('/api/orders', {
+      const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newOrder)
       });
+      const data = await res.json();
+      if (data.success && data.order) {
+        finalOrder = {
+          ...data.order,
+          items: newOrder.items // keep the client-side items structure
+        };
+        if (data.warning) {
+          alert(data.warning);
+        }
+      }
     } catch (e) {
       console.warn('API post fallback to local state:', e);
     }
 
-    setOrders((prev) => [newOrder, ...prev]);
+    setOrders((prev) => [finalOrder, ...prev]);
     clearCart();
 
     // Real-Time Socket Notification to Admin
-    sendNewOrderNotification(newOrder);
+    sendNewOrderNotification(finalOrder);
 
-    return newOrder;
+    return finalOrder;
   };
 
   const getOrderById = (orderId: string) => {
@@ -470,9 +563,10 @@ export function CartProvider({
         clearCart,
         cartCount,
         subtotal,
-        appliedPromo,
+        appliedCoupon,
         applyPromoCode,
         removePromoCode,
+        promoNotice,
         discountAmount,
         shippingFee,
         totalAmount,

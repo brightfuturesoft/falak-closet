@@ -17,7 +17,8 @@ export function CartDrawer() {
     subtotal,
     freeShippingThreshold,
     freeShippingProgress,
-    appliedPromo,
+    appliedCoupon,
+    removePromoCode,
     discountAmount,
     shippingFee,
     totalAmount,
@@ -66,12 +67,17 @@ export function CartDrawer() {
     0
   );
 
-  const selectedDiscountAmount = appliedPromo
-    ? Math.round((selectedSubtotal * appliedPromo.discountPercentage) / 100)
+  const selectedDiscountAmount = appliedCoupon
+    ? Math.min(
+        appliedCoupon.discountType === 'percentage'
+          ? Math.round((selectedSubtotal * appliedCoupon.discountValue) / 100)
+          : appliedCoupon.discountValue,
+        selectedSubtotal
+      )
     : 0;
 
   const selectedShippingFee = selectedSubtotal === 0 ? 0 : selectedSubtotal >= freeShippingThreshold ? 0 : 120;
-  const selectedTotalAmount = selectedSubtotal - selectedDiscountAmount + selectedShippingFee;
+  const selectedTotalAmount = Math.max(0, selectedSubtotal - selectedDiscountAmount + selectedShippingFee);
 
   const remainingForFreeShipping = Math.max(0, freeShippingThreshold - selectedSubtotal);
 
@@ -285,12 +291,17 @@ export function CartDrawer() {
         {/* Drawer Summary & Actions */}
         {cart.length > 0 && (
           <div className="p-4 border-t border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950/80 space-y-3">
-            {appliedPromo && (
-              <div className="flex items-center justify-between text-xs bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 p-2 rounded-lg border border-emerald-200/50">
-                <span className="flex items-center gap-1.5 font-medium">
-                  <Tag className="w-3.5 h-3.5" /> Code: {appliedPromo.code} ({appliedPromo.discountPercentage}% OFF)
+            {appliedCoupon && (
+              <div className="flex items-center justify-between text-xs bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 p-2 rounded-lg border border-emerald-200/50">
+                <span className="flex items-center gap-1.5 font-bold uppercase">
+                  🎟 {appliedCoupon.code} — −{formatCurrency(selectedDiscountAmount)}
                 </span>
-                <span className="font-bold">-{formatCurrency(selectedDiscountAmount)}</span>
+                <button
+                  onClick={removePromoCode}
+                  className="text-stone-400 hover:text-stone-700 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
             )}
 
@@ -302,8 +313,8 @@ export function CartDrawer() {
                 </span>
               </div>
               {selectedDiscountAmount > 0 && (
-                <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
-                  <span>Discount</span>
+                <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
+                  <span>Discount ({appliedCoupon?.code})</span>
                   <span className="font-mono font-semibold">-{formatCurrency(selectedDiscountAmount)}</span>
                 </div>
               )}

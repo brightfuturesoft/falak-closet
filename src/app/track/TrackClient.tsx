@@ -338,9 +338,11 @@ function TrackContent() {
                 </div>
 
                 {activeOrder.discount !== undefined && activeOrder.discount > 0 && (
-                  <div className="flex justify-between text-[#D92670]">
-                    <span className="text-stone-500">Promo Discount:</span>
-                    <span className="font-mono font-bold">-{formatCurrency(activeOrder.discount)}</span>
+                  <div className="flex justify-between text-emerald-600 font-bold">
+                    <span>
+                      {activeOrder.promoCode ? `Coupon ${activeOrder.promoCode}` : 'Promo Discount'}:
+                    </span>
+                    <span className="font-mono">-{formatCurrency(activeOrder.discount)}</span>
                   </div>
                 )}
 

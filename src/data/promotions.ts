@@ -1,14 +1,14 @@
 /**
  * Two distinct things live in this file:
  *
- * - `Promotion` / `PROMOTIONS` — marketing **banners** for /live-promotions.
- *   Presentation only; never written to the database.
+ * - `DEFAULT_BANNERS` — the seed payload for the `PromotionBanner` table,
+ *   which manages marketing **banners** for /live-promotions. The storefront reads
+ *   these banners dynamically from the database.
  * - `Coupon` / `DEFAULT_COUPONS` — the seed payload for the `Promotion` table,
  *   i.e. real redeemable **discount codes** validated at checkout.
  *
- * They are not interchangeable. Writing a banner into the coupon collection is
- * what the old /api/seed route did, and it produced records that
- * /api/promotions/validate could not read.
+ * They are not interchangeable. Banners and coupons have different schemas
+ * and live in separate database collections to prevent validation bugs.
  */
 
 export interface Promotion {
@@ -88,6 +88,13 @@ export interface Coupon {
   status: 'Active' | 'Expired' | 'Disabled';
 }
 
+export interface AppliedCoupon {
+  code: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  calculatedDiscount: number; // snapshot at validation time
+}
+
 export const DEFAULT_COUPONS: Coupon[] = [
   {
     code: 'EID2026',
@@ -121,5 +128,65 @@ export const DEFAULT_COUPONS: Coupon[] = [
     usedCount: 0,
     expiryDate: '2026-09-30',
     status: 'Active'
+  }
+];
+
+export interface DefaultBanner {
+  title: string;
+  subtitle: string;
+  discountBadge: string;
+  code: string | null;
+  bannerImage: string;
+  categoryFilter?: string | null;
+  minSpend?: number | null;
+  isFlashSale: boolean;
+  flashSaleHoursOffset?: number;
+  flashSaleDaysOffset?: number;
+  terms: string;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export const DEFAULT_BANNERS: DefaultBanner[] = [
+  {
+    title: 'Eid & Monsoon Flash Sale',
+    subtitle: 'Flat 25% Off across all Embroidered Abayas & Velvet Kaftans',
+    discountBadge: 'FLAT 25% OFF',
+    code: 'FLASH25',
+    bannerImage: 'https://images.unsplash.com/photo-1583391733956-6c78276477e2?auto=format&fit=crop&w=1200&q=80',
+    categoryFilter: 'Abayas',
+    minSpend: null,
+    isFlashSale: true,
+    flashSaleHoursOffset: 12,
+    terms: 'Valid on selected abayas & kaftans. Cannot be combined with other coupons.',
+    isActive: true,
+    sortOrder: 0
+  },
+  {
+    title: 'Hijab Bundle Bonanza',
+    subtitle: 'Buy 2 Premium Chiffon Hijabs & Get 15% Instant Cashback',
+    discountBadge: '15% OFF BUNDLE',
+    code: 'HIJAB15',
+    bannerImage: 'https://images.unsplash.com/photo-1609357605129-26f69add5d6e?auto=format&fit=crop&w=1200&q=80',
+    categoryFilter: 'Hijabs & Dupattas',
+    minSpend: 30,
+    isFlashSale: false,
+    flashSaleDaysOffset: 3,
+    terms: 'Applies automatically when 2 or more hijabs are added to cart.',
+    isActive: true,
+    sortOrder: 1
+  },
+  {
+    title: 'Free Worldwide Express Shipping',
+    subtitle: 'Enjoy complementary VIP doorstep delivery on all orders over $100',
+    discountBadge: 'FREE SHIPPING',
+    code: 'FREESHIP100',
+    bannerImage: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=1200&q=80',
+    minSpend: 100,
+    isFlashSale: false,
+    flashSaleDaysOffset: 7,
+    terms: 'Valid globally for standard express shipping.',
+    isActive: true,
+    sortOrder: 2
   }
 ];

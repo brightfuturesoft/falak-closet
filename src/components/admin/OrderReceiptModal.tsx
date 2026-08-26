@@ -187,6 +187,12 @@ export function OrderReceiptModal({ order, onClose }: OrderReceiptModalProps) {
                 <span>Subtotal:</span>
                 <span className="text-stone-900">{formatCurrency(order.subtotal || order.total - 120)}</span>
               </div>
+              {order.promoCode && order.discount > 0 && (
+                <div className="flex justify-between text-emerald-600 font-bold">
+                  <span>Coupon {order.promoCode} —</span>
+                  <span>-{formatCurrency(order.discount)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-stone-500">
                 <span>Delivery Charge:</span>
                 <span className="text-stone-900">{formatCurrency(order.shippingFee || 120)}</span>

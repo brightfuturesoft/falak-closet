@@ -196,6 +196,19 @@ export const getProductSlugs = unstable_cache(
   { tags: [PRODUCTS_TAG], revalidate: 3600 }
 );
 
+/** Fetch products tagged as isFlashSale. Cached and tagged under PRODUCTS_TAG. */
+export const getFlashSaleProducts = unstable_cache(
+  async (): Promise<Product[]> => {
+    const rows = await prisma.product.findMany({
+      where: { isFlashSale: true },
+      orderBy: { createdAt: 'desc' }
+    });
+    return rows.map(serializeProduct);
+  },
+  ['products:flash-sale'],
+  { tags: [PRODUCTS_TAG], revalidate: 3600 }
+);
+
 /**
  * `getProducts()` that reports failure instead of throwing.
  *

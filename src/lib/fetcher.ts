@@ -119,6 +119,7 @@ export async function fetchCategories(opts?: { noCache?: boolean }): Promise<Cat
  * the tag is declared here so both sides import the same string.
  */
 export const PRODUCTS_TAG = 'products';
+export const PROMOTION_BANNERS_TAG = 'promotion-banners';
 
 export interface ProductsResponse {
   success: boolean;

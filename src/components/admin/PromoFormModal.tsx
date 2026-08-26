@@ -12,6 +12,7 @@ export interface PromoVoucherData {
   minSpend: number;
   maxDiscount?: number;
   usageLimit: number;
+  usedCount?: number;
   expiryDate: string;
   status: 'Active' | 'Expired' | 'Disabled';
 }
