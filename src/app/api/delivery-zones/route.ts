@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { prisma } from '@/lib/prisma';
+import { DELIVERY_ZONES_TAG } from '@/lib/fetcher';
 
 function errorMessage(err: unknown) {
   return err instanceof Error ? err.message : 'Server error';
+}
+
+/** Bust the cached zone reads (shipping page) after any zone write. */
+function bustZoneCache() {
+  revalidateTag(DELIVERY_ZONES_TAG, 'max');
+  revalidatePath('/shipping');
 }
 
 const DEFAULT_ZONES = [
@@ -97,7 +105,9 @@ export async function POST(req: Request) {
         data: { subAreas: { push: newSub } },
       });
 
-      return NextResponse.json({ success: true, message: 'Sub-area created', zone: updated });
+      bustZoneCache();
+
+    return NextResponse.json({ success: true, message: 'Sub-area created', zone: updated });
     }
 
     // Create Main Zone
@@ -116,6 +126,8 @@ export async function POST(req: Request) {
         subAreas: []
       }
     });
+
+    bustZoneCache();
 
     return NextResponse.json({ success: true, message: 'Delivery zone created', zone }, { status: 201 });
   } catch (err) {
@@ -165,7 +177,9 @@ export async function PUT(req: Request) {
         data: { subAreas: updatedSubs }
       });
 
-      return NextResponse.json({ success: true, message: 'Sub-area updated', zone: updated });
+      bustZoneCache();
+
+    return NextResponse.json({ success: true, message: 'Sub-area updated', zone: updated });
     }
 
     // Update main zone
@@ -186,6 +200,8 @@ export async function PUT(req: Request) {
       where: { id },
       data: updateData
     });
+
+    bustZoneCache();
 
     return NextResponse.json({ success: true, message: 'Delivery zone updated', zone: updated });
   } catch (err) {
@@ -221,10 +237,14 @@ export async function DELETE(req: Request) {
         data: { subAreas: filteredSubs }
       });
 
-      return NextResponse.json({ success: true, message: 'Sub-area deleted' });
+      bustZoneCache();
+
+    return NextResponse.json({ success: true, message: 'Sub-area deleted' });
     }
 
     await prisma.deliveryZone.delete({ where: { id } });
+    bustZoneCache();
+
     return NextResponse.json({ success: true, message: 'Delivery zone deleted' });
   } catch (err) {
     console.error('[DELETE /api/delivery-zones]', err);

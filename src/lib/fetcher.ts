@@ -121,6 +121,8 @@ export async function fetchCategories(opts?: { noCache?: boolean }): Promise<Cat
 export const PRODUCTS_TAG = 'products';
 export const PROMOTION_BANNERS_TAG = 'promotion-banners';
 export const HERO_SLIDES_TAG = 'hero-slides';
+export const DELIVERY_ZONES_TAG = 'delivery-zones';
+export const SITE_SETTINGS_TAG = 'site-settings';
 
 export interface ProductsResponse {
   success: boolean;
