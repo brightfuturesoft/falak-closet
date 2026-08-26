@@ -409,7 +409,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           </div>
 
           {/* Pricing Box */}
-          <div className="p-5 bg-[#FFF0F6] rounded-3xl border border-pink-200/80 shadow-xs flex items-center justify-between">
+          <div className="p-5 bg-[#FFF0F6] rounded-3xl border border-pink-200/80 shadow-xs flex items-center justify-between flex-col md:flex-row gap-y-2 md:gap-y-0">
             <div>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-extrabold text-stone-900">
