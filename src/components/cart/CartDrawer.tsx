@@ -23,7 +23,10 @@ export function CartDrawer() {
     shippingFee,
     totalAmount,
     quantityFreeDelivery,
-    selectedZoneName
+    selectedZoneName,
+    selectedZoneId,
+    selectedSubAreaId,
+    deliveryZones
   } = useCart();
 
   // Item selection state inside drawer
@@ -76,7 +79,13 @@ export function CartDrawer() {
       )
     : 0;
 
-  const selectedShippingFee = selectedSubtotal === 0 ? 0 : selectedSubtotal >= freeShippingThreshold ? 0 : 120;
+  // Zone charge for the currently selected delivery area — same source of truth
+  // the checkout uses (the old 120 here silently disagreed with admin zone rates).
+  const drawerZone = deliveryZones.find((z) => z.id === selectedZoneId);
+  const drawerSubArea = drawerZone?.subAreas?.find((s) => s.id === selectedSubAreaId);
+  const zoneBaseFee = drawerSubArea?.charge ?? drawerZone?.charge ?? 60;
+
+  const selectedShippingFee = selectedSubtotal === 0 || selectedSubtotal >= freeShippingThreshold ? 0 : zoneBaseFee;
   const selectedTotalAmount = Math.max(0, selectedSubtotal - selectedDiscountAmount + selectedShippingFee);
 
   const remainingForFreeShipping = Math.max(0, freeShippingThreshold - selectedSubtotal);
