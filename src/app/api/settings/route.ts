@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { prisma } from '@/lib/prisma';
+import { SITE_SETTINGS_TAG } from '@/lib/fetcher';
 
 function errorMessage(err: unknown) {
   return err instanceof Error ? err.message : 'Server error';
@@ -100,6 +102,11 @@ export async function POST(req: Request) {
       update: { value },
       create: { key, value }
     });
+
+    // Cached server reads (shipping page, future SSR consumers) must not
+    // serve the previous value, and the shipping page shows the threshold.
+    revalidateTag(SITE_SETTINGS_TAG, 'max');
+    revalidatePath('/shipping');
 
     return NextResponse.json({ success: true, message: 'Settings saved', setting });
   } catch (err) {
