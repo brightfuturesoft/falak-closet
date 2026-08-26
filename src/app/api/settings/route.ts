@@ -6,6 +6,12 @@ function errorMessage(err: unknown) {
 }
 
 const DEFAULT_SETTINGS = {
+  // Free-delivery amount threshold read by CartContext on the storefront.
+  // currencySymbol is stored for records — display formatting is ৳ BDT only.
+  store: {
+    freeShippingThreshold: 100,
+    currencySymbol: '৳ BDT'
+  },
   payment: {
     bkashNumber: '01700000000',
     bkashAccountType: 'Personal',
@@ -56,6 +62,25 @@ export async function GET(req: Request) {
 
 // ─── POST /api/settings ───────────────────────────────────────────────────────
 // body: { key, value }
+function validateSettingValue(key: string, value: unknown): string | null {
+  if (typeof value !== 'object' || value === null) return 'Value must be an object';
+
+  if (key === 'store') {
+    const store = value as Record<string, unknown>;
+    if (store.freeShippingThreshold !== undefined) {
+      const threshold = Number(store.freeShippingThreshold);
+      if (!Number.isFinite(threshold) || threshold < 0) {
+        return 'Free delivery threshold must be a non-negative number';
+      }
+    }
+    if (store.currencySymbol !== undefined && typeof store.currencySymbol !== 'string') {
+      return 'Currency symbol must be text';
+    }
+  }
+
+  return null;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -63,6 +88,11 @@ export async function POST(req: Request) {
 
     if (!key || !value) {
       return NextResponse.json({ success: false, error: 'Key and value are required' }, { status: 400 });
+    }
+
+    const validationError = validateSettingValue(key, value);
+    if (validationError) {
+      return NextResponse.json({ success: false, error: validationError }, { status: 400 });
     }
 
     const setting = await prisma.siteSetting.upsert({

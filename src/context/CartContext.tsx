@@ -114,6 +114,8 @@ interface CartContextType {
   refreshOrdersFromApi: () => Promise<void>;
 }
 
+// Fallback while (or if) the /api/settings read never lands — the admin's
+// configured value replaces this at runtime (see fetchStoreSettings).
 const FREE_SHIPPING_MIN = 100;
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -139,6 +141,23 @@ export function CartProvider({
   const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [selectedSubAreaId, setSelectedSubAreaId] = useState<string | null>(null);
+
+  // Admin-configured free delivery threshold (Settings → Store Configuration).
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState(FREE_SHIPPING_MIN);
+
+  const fetchStoreSettings = async () => {
+    try {
+      const res = await fetch('/api/settings?key=store');
+      const data = await res.json();
+      const threshold = data?.setting?.value?.freeShippingThreshold;
+      if (data.success && typeof threshold === 'number' && threshold >= 0) {
+        setFreeShippingThreshold(threshold);
+      }
+    } catch (e) {
+      // Keep the built-in fallback — checkout must not hinge on this read.
+      console.error('Failed to fetch store settings:', e);
+    }
+  };
 
   const fetchDeliveryZones = async () => {
     try {
@@ -245,6 +264,7 @@ export function CartProvider({
 
     refreshOrdersFromApi();
     fetchDeliveryZones();
+    fetchStoreSettings();
   }, []);
 
   useEffect(() => {
@@ -476,8 +496,8 @@ export function CartProvider({
 
   const baseFee = activeSubArea?.charge ?? activeZone?.charge ?? 60; // fallback charge
 
-  const freeShippingProgress = Math.min(100, (subtotal / FREE_SHIPPING_MIN) * 100);
-  const isFreeDelivery = subtotal >= FREE_SHIPPING_MIN || (quantityFreeDelivery?.unlocked === true);
+  const freeShippingProgress = Math.min(100, (subtotal / freeShippingThreshold) * 100);
+  const isFreeDelivery = subtotal >= freeShippingThreshold || (quantityFreeDelivery?.unlocked === true);
   const shippingFee = subtotal === 0 || isFreeDelivery ? 0 : baseFee;
   const totalAmount = Math.max(0, subtotal - discountAmount + shippingFee);
 
@@ -570,7 +590,7 @@ export function CartProvider({
         discountAmount,
         shippingFee,
         totalAmount,
-        freeShippingThreshold: FREE_SHIPPING_MIN,
+        freeShippingThreshold,
         freeShippingProgress,
         deliveryZones,
         selectedZoneId,

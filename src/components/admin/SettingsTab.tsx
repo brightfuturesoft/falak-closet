@@ -18,9 +18,10 @@ export function SettingsTab({
   isSeeding,
   seedResult
 }: SettingsTabProps) {
-  const [currencySymbol, setCurrencySymbol] = useState('৳ BDT');
-  const [freeShippingThreshold, setFreeShippingThreshold] = useState(5000);
-  const [savedSuccess, setSavedSuccess] = useState(false);
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState(100);
+  const [isSavingStore, setIsSavingStore] = useState(false);
+  const [storeSavedSuccess, setStoreSavedSuccess] = useState(false);
+  const [storeError, setStoreError] = useState<string | null>(null);
 
   // bKash manual payment settings state
   const [bkashNumber, setBkashNumber] = useState('');
@@ -44,10 +45,6 @@ export function SettingsTab({
       console.error('Failed to load bkash settings:', e);
     }
   };
-
-  useEffect(() => {
-    fetchBkashSettings();
-  }, []);
 
   const handleSaveBkashSettings = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,10 +84,57 @@ export function SettingsTab({
     }
   };
 
-  const handleSaveSettings = (e: React.FormEvent) => {
+  // ── Store configuration (free delivery threshold) — real /api/settings persistence ──
+  const fetchStoreSettings = async () => {
+    try {
+      const res = await fetch('/api/settings?key=store');
+      const data = await res.json();
+      if (data.success && data.setting) {
+        const val = data.setting.value;
+        if (typeof val.freeShippingThreshold === 'number' && val.freeShippingThreshold >= 0) {
+          setFreeShippingThreshold(val.freeShippingThreshold);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load store settings:', e);
+    }
+  };
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3000);
+    if (!Number.isFinite(freeShippingThreshold) || freeShippingThreshold < 0) {
+      setStoreError('Free delivery threshold must be a non-negative number.');
+      return;
+    }
+
+    setIsSavingStore(true);
+    setStoreError(null);
+    setStoreSavedSuccess(false);
+
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: 'store',
+          value: {
+            freeShippingThreshold,
+            currencySymbol: '৳ BDT'
+          }
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStoreSavedSuccess(true);
+        setTimeout(() => setStoreSavedSuccess(false), 3000);
+      } else {
+        setStoreError(data.error || 'Failed to save settings.');
+      }
+    } catch {
+      setStoreError('Network error — failed to save settings.');
+    } finally {
+      setIsSavingStore(false);
+    }
   };
 
   // ── One-time base64 → Cloudinary migration ─────────────────────────────
@@ -106,6 +150,12 @@ export function SettingsTab({
     const ext = blob.type.split('/')[1] || 'jpg';
     return new File([blob], `legacy-${Date.now()}.${ext}`, { type: blob.type });
   };
+
+  // Load both settings blocks once on mount (functions are declared above).
+  useEffect(() => {
+    fetchBkashSettings();
+    fetchStoreSettings();
+  }, []);
 
   const handleMigrateImages = async () => {
     if (isMigrating) return; // in-flight guard against double-runs
@@ -263,45 +313,48 @@ export function SettingsTab({
             <Settings className="w-5 h-5 text-stone-900" />
             <span>Store Configuration</span>
           </h3>
-          <p className="text-xs text-stone-500">Manage currency formatting and free shipping threshold.</p>
+          <p className="text-xs text-stone-500">
+            Free delivery rules for the storefront cart & checkout. Prices display in ৳ BDT.
+          </p>
         </div>
 
-        {savedSuccess && (
+        {storeSavedSuccess && (
           <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-bold flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>Store configuration updated successfully!</span>
+            <span>Threshold saved — new carts pick it up on their next visit.</span>
+          </div>
+        )}
+
+        {storeError && (
+          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 font-bold">
+            {storeError}
           </div>
         )}
 
         <form onSubmit={handleSaveSettings} className="space-y-4 text-xs">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="font-bold text-stone-700">Default Store Currency</label>
-              <input
-                type="text"
-                value={currencySymbol}
-                onChange={(e) => setCurrencySymbol(e.target.value)}
-                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="font-bold text-stone-700">Free Shipping Threshold (৳ BDT)</label>
-              <input
-                type="number"
-                value={freeShippingThreshold}
-                onChange={(e) => setFreeShippingThreshold(Number(e.target.value))}
-                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900"
-              />
-            </div>
+          <div className="space-y-1.5">
+            <label className="font-bold text-stone-700">Free Delivery Threshold (৳ BDT)</label>
+            <input
+              type="number"
+              min={0}
+              required
+              value={freeShippingThreshold}
+              onChange={(e) => setFreeShippingThreshold(Number(e.target.value))}
+              className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 font-mono focus:outline-none focus:ring-1 focus:ring-stone-900"
+            />
+            <p className="text-[10px] text-stone-500">
+              Orders at or above this subtotal get free delivery (zone charges are waived). Applies
+              on top of per-product “Buy X → Free Delivery” rules.
+            </p>
           </div>
 
           <div className="pt-2">
             <button
               type="submit"
-              className="px-5 py-2.5 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs rounded-xl transition-all shadow-sm cursor-pointer"
+              disabled={isSavingStore}
+              className="px-5 py-2.5 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50"
             >
-              Save Configuration
+              {isSavingStore ? 'Saving…' : 'Save Configuration'}
             </button>
           </div>
         </form>
