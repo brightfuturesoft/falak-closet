@@ -145,6 +145,9 @@ type ProductReview {
   date             String
   comment          String
   verifiedPurchase Boolean
+  // 'pending' | 'approved'. Absent/null = approved — every review written
+  // before the moderation flow stays visible (Mongoose-era optional rule).
+  status           String?
 }
 
 model Product {

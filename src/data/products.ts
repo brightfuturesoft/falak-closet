@@ -24,6 +24,8 @@ export interface Review {
   date: string;
   comment: string;
   verifiedPurchase: boolean;
+  /** Moderation state — absent (legacy/seed data) counts as approved. */
+  status?: 'pending' | 'approved';
 }
 
 export type CategoryType = typeof CATEGORIES[number] | 'Abayas' | 'Hijabs & Dupattas' | 'Modest Dresses' | 'Co-ord Sets' | 'Luxury Tunics' | 'Accessories' | 'Dress' | 'HIJAB';

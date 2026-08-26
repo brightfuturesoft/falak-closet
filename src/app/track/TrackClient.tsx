@@ -394,6 +394,17 @@ function TrackContent() {
                         )}
                         <span className="font-mono text-stone-600 font-bold">Qty: {item.quantity}</span>
                       </div>
+
+                      {activeOrder.status === 'Delivered' && item.product?.slug && (
+                        <div className="pt-1">
+                          <Link
+                            href={`/product/${item.product.slug}?writeReview=true`}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#D92670] hover:bg-[#C2185B] text-white text-[10px] font-bold rounded-lg transition-colors shadow-xs"
+                          >
+                            Write a Review
+                          </Link>
+                        </div>
+                      )}
                     </div>
                   </div>
 

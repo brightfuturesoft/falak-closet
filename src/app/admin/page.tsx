@@ -12,6 +12,7 @@ import { CategoriesTab } from '@/components/admin/CategoriesTab';
 import { PromotionsTab } from '@/components/admin/PromotionsTab';
 import { PromotionBannersTab } from '@/components/admin/PromotionBannersTab';
 import { HeroSlidesTab } from '@/components/admin/HeroSlidesTab';
+import { ReviewsTab } from '@/components/admin/ReviewsTab';
 import { CustomersTab } from '@/components/admin/CustomersTab';
 import { AnalyticsTab } from '@/components/admin/AnalyticsTab';
 import { SecurityTab } from '@/components/admin/SecurityTab';
@@ -103,9 +104,11 @@ function AdminDashboardContent() {
       setActiveTab('banners');
     } else if (pathname.includes('/admin/hero')) {
       setActiveTab('hero');
+    } else if (pathname.includes('/admin/reviews')) {
+      setActiveTab('reviews');
     } else {
       const tabParam = searchParams.get('tab');
-      if (tabParam && ['overview', 'orders', 'products', 'categories', 'promotions', 'customers', 'security', 'analytics', 'settings', 'delivery', 'banners', 'hero'].includes(tabParam)) {
+      if (tabParam && ['overview', 'orders', 'products', 'categories', 'promotions', 'customers', 'security', 'analytics', 'settings', 'delivery', 'banners', 'hero', 'reviews'].includes(tabParam)) {
         setActiveTab(tabParam as AdminTabType);
       } else {
         setActiveTab('overview');
@@ -651,6 +654,9 @@ function AdminDashboardContent() {
           )}
           {activeTab === 'hero' && (
             <HeroSlidesTab />
+          )}
+          {activeTab === 'reviews' && (
+            <ReviewsTab />
           )}
         </main>
       </div>
