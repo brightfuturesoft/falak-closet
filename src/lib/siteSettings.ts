@@ -18,6 +18,28 @@ export interface StoreSettings {
   currencySymbol: string;
 }
 
+export interface SiteIdentity {
+  contactPhone: string;
+  contactEmail: string;
+  address: string;
+  /** Plain @handle or full https URL — empty string = hidden. */
+  whatsapp: string;
+  instagram: string;
+  facebook: string;
+  youtube: string;
+}
+
+/** Matches DEFAULT_SETTINGS['site'] in /api/settings. */
+export const EMPTY_SITE_IDENTITY: SiteIdentity = {
+  contactPhone: '',
+  contactEmail: '',
+  address: '',
+  whatsapp: '',
+  instagram: '',
+  facebook: '',
+  youtube: ''
+};
+
 function parseStore(value: unknown): StoreSettings {
   const store = (value ?? {}) as Record<string, unknown>;
   const threshold = Number(store.freeShippingThreshold);
@@ -48,5 +70,38 @@ export async function getStoreSettingsSafe(): Promise<StoreSettings> {
   } catch (err) {
     console.error('[settings] store read failed:', err);
     return parseStore(null);
+  }
+}
+
+function parseIdentity(value: unknown): SiteIdentity {
+  const site = (value ?? {}) as Record<string, unknown>;
+  const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
+  return {
+    contactPhone: str(site.contactPhone),
+    contactEmail: str(site.contactEmail),
+    address: str(site.address),
+    whatsapp: str(site.whatsapp),
+    instagram: str(site.instagram),
+    facebook: str(site.facebook),
+    youtube: str(site.youtube),
+  };
+}
+
+export const getSiteIdentity = unstable_cache(
+  async (): Promise<SiteIdentity> => {
+    const row = await prisma.siteSetting.findUnique({ where: { key: 'site' } });
+    return parseIdentity(row?.value);
+  },
+  ['settings:site'],
+  { tags: [SITE_SETTINGS_TAG], revalidate: 3600 }
+);
+
+/** `getSiteIdentity()` with built-in fallback (all-empty identity). */
+export async function getSiteIdentitySafe(): Promise<SiteIdentity> {
+  try {
+    return await getSiteIdentity();
+  } catch (err) {
+    console.error('[settings] site identity read failed:', err);
+    return EMPTY_SITE_IDENTITY;
   }
 }

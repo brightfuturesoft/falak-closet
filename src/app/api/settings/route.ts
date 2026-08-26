@@ -14,6 +14,17 @@ const DEFAULT_SETTINGS = {
     freeShippingThreshold: 100,
     currencySymbol: '৳ BDT'
   },
+  // Contact details + social profiles shown in the footer and fed to the
+  // Organization JSON-LD schema. Empty string = feature hidden.
+  site: {
+    contactPhone: '',
+    contactEmail: '',
+    address: '',
+    whatsapp: '',
+    instagram: '',
+    facebook: '',
+    youtube: ''
+  },
   payment: {
     bkashNumber: '01700000000',
     bkashAccountType: 'Personal',
@@ -80,6 +91,24 @@ function validateSettingValue(key: string, value: unknown): string | null {
     }
   }
 
+  if (key === 'site') {
+    const site = value as Record<string, unknown>;
+    for (const [field, raw] of Object.entries(site)) {
+      if (typeof raw !== 'string') return `Site field "${field}" must be text`;
+      const v = raw.trim();
+      if (['whatsapp', 'instagram', 'facebook', 'youtube'].includes(field)) {
+        // Social profiles may be full URLs, @handles, or phone digits — but
+        // never javascript: or other schemes.
+        if (v && v.includes(':') && !/^https?:\/\//i.test(v)) {
+          return `Social link "${field}" must be an https:// URL or plain handle`;
+        }
+      }
+      if (field === 'contactEmail' && v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+        return 'Contact email does not look valid';
+      }
+    }
+  }
+
   return null;
 }
 
@@ -107,6 +136,9 @@ export async function POST(req: Request) {
     // serve the previous value, and the shipping page shows the threshold.
     revalidateTag(SITE_SETTINGS_TAG, 'max');
     revalidatePath('/shipping');
+    // The root layout renders the footer + Organization JSON-LD from these
+    // settings — 'layout' scope refreshes every page that shares it.
+    revalidatePath('/', 'layout');
 
     return NextResponse.json({ success: true, message: 'Settings saved', setting });
   } catch (err) {
