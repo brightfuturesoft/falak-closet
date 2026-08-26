@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { PromotionBanner } from '@/lib/promotionBanners';
+import { ImageUploader } from '@/components/ui/ImageUploader';
 
 function toDatetimeLocal(isoString: string | null): string {
   if (!isoString) return '';
@@ -483,13 +484,28 @@ export function PromotionBannersTab() {
                 <label className="text-xs font-bold uppercase tracking-wider text-stone-700">
                   Banner Image URL
                 </label>
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/... or /images/..."
-                  value={formData.bannerImage}
-                  onChange={(e) => setFormData({ ...formData, bannerImage: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670]"
-                />
+                <div className="flex flex-col sm:flex-row sm:items-start gap-2">
+                  <input
+                    type="url"
+                    placeholder="https://images.unsplash.com/... or /images/..."
+                    value={formData.bannerImage}
+                    onChange={(e) => setFormData({ ...formData, bannerImage: e.target.value })}
+                    className="flex-1 px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670]"
+                  />
+                  <ImageUploader
+                    folder="banners"
+                    label="Upload to Cloudinary"
+                    maxSizeMb={5}
+                    onUploaded={(results) => {
+                      if (results[0]?.url) {
+                        setFormData((prev) => ({ ...prev, bannerImage: results[0].url }));
+                      }
+                    }}
+                  />
+                </div>
+                <p className="text-[10px] text-stone-400">
+                  Paste a URL or upload directly — uploads land in Cloudinary and fill this field.
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

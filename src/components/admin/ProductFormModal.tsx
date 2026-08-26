@@ -28,6 +28,7 @@ import { useCategories } from '@/lib/useCategories';
 import { FASHION_COLORS_50, autoDetectColor, getColorNameFromHex, ColorOption } from '@/data/colors';
 import { formatCurrency } from '@/lib/utils';
 import { ImageColorPickerModal } from './ImageColorPickerModal';
+import { uploadImages, deleteCloudinaryImage, cloudinaryPublicIdFromUrl } from '@/lib/cloudinary';
 
 export interface DetailedColorVariation {
   id: string;
@@ -115,6 +116,8 @@ export function ProductFormModal({
   // Interactive Eyedropper Modal State
   const [eyedropperImageUrl, setEyedropperImageUrl] = useState<string | null>(null);
   const [eyedropperTargetColorId, setEyedropperTargetColorId] = useState<string | null>(null);
+  // Color variation currently uploading photos to Cloudinary (null = none).
+  const [uploadingColorId, setUploadingColorId] = useState<string | null>(null);
 
   const handleOpenEyedropperForColor = (colorId: string, imgUrl: string) => {
     setEyedropperTargetColorId(colorId);
@@ -340,23 +343,25 @@ export function ProductFormModal({
     ]);
   };
 
-  // Upload images specifically for a Color Variation
-  const handleColorFileUpload = (colorId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  // Upload images for a Color Variation → Cloudinary (used to be base64 → MongoDB bloat)
+  const handleColorFileUpload = async (colorId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          const newImg = event.target.result as string;
-          setColorVariations((prev) =>
-            prev.map((c) => (c.id === colorId ? { ...c, images: [...c.images, newImg] } : c))
-          );
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    setUploadingColorId(colorId);
+    try {
+      const results = await uploadImages(Array.from(files), 'products');
+      const urls = results.map((r) => r.url);
+      setColorVariations((prev) =>
+        prev.map((c) => (c.id === colorId ? { ...c, images: [...c.images, ...urls] } : c))
+      );
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Image upload failed.');
+    } finally {
+      setUploadingColorId(null);
+      // Reset so picking the same file again re-triggers onChange.
+      e.target.value = '';
+    }
   };
 
   // Add Image URL to a specific Color Variation
@@ -369,6 +374,14 @@ export function ProductFormModal({
 
   // Remove image from specific Color Variation
   const handleRemoveColorImage = (colorId: string, imgIdx: number) => {
+    // Read from the current snapshot so the cleanup side-effect stays outside
+    // the state updater (React StrictMode replays updaters in dev).
+    const removed = colorVariations.find((c) => c.id === colorId)?.images[imgIdx];
+    const publicId = removed ? cloudinaryPublicIdFromUrl(removed) : null;
+    if (publicId?.startsWith('falak-closet/')) {
+      deleteCloudinaryImage(publicId);
+    }
+
     setColorVariations((prev) =>
       prev.map((c) => {
         if (c.id !== colorId) return c;
@@ -831,6 +844,14 @@ export function ProductFormModal({
                           {/* Left: Rounded Square Image Thumbnail & Uploader */}
                           <div className="col-span-12 sm:col-span-4 space-y-2">
                             <div className="relative aspect-square w-full rounded-2xl border-2 border-dashed border-stone-400 bg-stone-50 overflow-hidden flex flex-col items-center justify-center text-center group/img hover:border-stone-900 transition-all">
+                              {uploadingColorId === colorVar.id && (
+                                <div className="absolute inset-0 z-20 bg-stone-900/60 flex flex-col items-center justify-center gap-2">
+                                  <span className="w-8 h-8 border-3 border-stone-300 border-t-white rounded-full animate-spin" />
+                                  <span className="text-[11px] font-black text-white font-mono uppercase tracking-wider">
+                                    Uploading to Cloud…
+                                  </span>
+                                </div>
+                              )}
                               {colorVar.images.length > 0 ? (
                                 <>
                                   <Image

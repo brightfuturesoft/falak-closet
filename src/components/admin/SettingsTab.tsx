@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Settings, Database, RefreshCw, CheckCircle2, KeyRound } from 'lucide-react';
+import { Settings, Database, RefreshCw, CheckCircle2, KeyRound, CloudUpload } from 'lucide-react';
+import { uploadImages } from '@/lib/cloudinary';
+import type { Product } from '@/data/products';
 
 interface SettingsTabProps {
   dbSource: string;
@@ -89,6 +91,111 @@ export function SettingsTab({
     e.preventDefault();
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 3000);
+  };
+
+  // ── One-time base64 → Cloudinary migration ─────────────────────────────
+  // Products saved before the Cloudinary integration may still carry base64
+  // `data:` image strings (MongoDB bloat). This utility re-uploads them and
+  // rewrites the URLs. Idempotent — already-remote URLs are skipped.
+  const [isMigrating, setIsMigrating] = useState(false);
+  const [migrationSummary, setMigrationSummary] = useState<string | null>(null);
+
+  const dataUrlToFile = async (dataUrl: string): Promise<File> => {
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    const ext = blob.type.split('/')[1] || 'jpg';
+    return new File([blob], `legacy-${Date.now()}.${ext}`, { type: blob.type });
+  };
+
+  const handleMigrateImages = async () => {
+    if (isMigrating) return; // in-flight guard against double-runs
+    if (
+      !confirm(
+        'Upload every embedded (base64) product image to Cloudinary and replace the stored URLs?\nAlready-remote images are skipped. This may take a while.'
+      )
+    )
+      return;
+
+    setIsMigrating(true);
+    setMigrationSummary(null);
+    let productsTouched = 0;
+    let imagesMoved = 0;
+    const failures: string[] = [];
+
+    try {
+      const res = await fetch('/api/products');
+      const data = await res.json();
+      const products: Product[] = data.products || [];
+
+      for (const product of products) {
+        const hasLegacy =
+          product.images.some((i) => i.startsWith('data:')) ||
+          product.colors.some((c) => (c.images || []).some((i) => i.startsWith('data:'))) ||
+          (product.variations || []).some((v) => (v.imageUrl || '').startsWith('data:'));
+        if (!hasLegacy) continue;
+
+        try {
+          let moved = 0;
+
+          // Legacy rows duplicate the SAME data URL across images, colors and
+          // variations[].imageUrl — upload each unique image once and reuse it.
+          const urlCache = new Map<string, string>();
+          const migrateUrl = async (url: string): Promise<string> => {
+            if (!url.startsWith('data:')) return url;
+            const cached = urlCache.get(url);
+            if (cached) return cached;
+            const [uploaded] = await uploadImages(await dataUrlToFile(url), 'products/migrated');
+            urlCache.set(url, uploaded.url);
+            moved++;
+            return uploaded.url;
+          };
+
+          const mainImages: string[] = [];
+          for (const img of product.images) {
+            mainImages.push(await migrateUrl(img));
+          }
+
+          const colors = [];
+          for (const color of product.colors) {
+            const colorImages: string[] = [];
+            for (const img of color.images || []) {
+              colorImages.push(await migrateUrl(img));
+            }
+            colors.push({ ...color, images: colorImages });
+          }
+
+          const variations = [];
+          for (const variation of product.variations || []) {
+            variations.push({
+              ...variation,
+              ...(variation.imageUrl ? { imageUrl: await migrateUrl(variation.imageUrl) } : {}),
+            });
+          }
+
+          const update = await fetch(`/api/products/${product.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ images: mainImages, colors, variations }),
+          });
+          if (!update.ok) throw new Error(`HTTP ${update.status}`);
+
+          productsTouched++;
+          imagesMoved += moved;
+        } catch (err) {
+          console.warn('[migration] product failed:', product.name, err);
+          failures.push(product.name);
+        }
+      }
+
+      setMigrationSummary(
+        `Done — ${imagesMoved} image(s) moved across ${productsTouched} product(s).` +
+          (failures.length ? ` Failed: ${failures.join(', ')}.` : '')
+      );
+    } catch {
+      setMigrationSummary('Migration failed — could not load the product list.');
+    } finally {
+      setIsMigrating(false);
+    }
   };
 
   return (
@@ -272,6 +379,44 @@ export function SettingsTab({
             </button>
           </div>
         </form>
+      </div>
+
+      {/* Cloudinary Image Migration */}
+      <div className="p-6 bg-white rounded-3xl border border-stone-200 shadow-sm space-y-6">
+        <div className="pb-4 border-b border-stone-200">
+          <h3 className="font-serif font-bold text-lg text-stone-900 flex items-center gap-2">
+            <CloudUpload className="w-5 h-5 text-[#9B050B]" />
+            <span>Cloudinary Image Storage</span>
+          </h3>
+          <p className="text-xs text-stone-500">
+            New uploads already go to Cloudinary. Use this once to move old embedded (base64)
+            product photos out of MongoDB.
+          </p>
+        </div>
+
+        <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <p className="font-bold text-stone-900 text-xs">Migrate Product Images to Cloudinary</p>
+            <p className="text-[11px] text-stone-500">
+              Idempotent — products whose images are already remote URLs are skipped.
+            </p>
+          </div>
+
+          <button
+            onClick={handleMigrateImages}
+            disabled={isMigrating}
+            className="px-4 py-2.5 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs rounded-xl transition-all shadow-sm flex items-center gap-2 cursor-pointer whitespace-nowrap disabled:opacity-50"
+          >
+            <CloudUpload className={`w-4 h-4 ${isMigrating ? 'animate-bounce' : ''}`} />
+            <span>{isMigrating ? 'Migrating…' : 'Start Migration'}</span>
+          </button>
+        </div>
+
+        {migrationSummary && (
+          <div className="p-3.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-800 font-bold">
+            {migrationSummary}
+          </div>
+        )}
       </div>
 
       {/* Admin Security Credentials Card */}

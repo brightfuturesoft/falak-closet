@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { SmartImage } from '@/components/ui/SmartImage';
 import { Heart, ShoppingBag } from 'lucide-react';
 import { Product } from '@/data/products';
 import { useCart } from '@/context/CartContext';
@@ -80,7 +80,7 @@ export function ProductCard({ product, selectedColor, variationCode }: ProductCa
       {/* Top Image Container */}
       <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-stone-100">
         <Link href={productUrl} className="block relative w-full h-full">
-          <Image
+          <SmartImage
             src={currentImage}
             alt={product?.name}
             fill

@@ -56,9 +56,11 @@ export interface Product {
   stock: number;
   images: string[];
   variations?: ProductVariation[];
-  description: string;
-  features: string[];
-  careInstructions: string[];
+  /** Optional because list payloads (serializeProductCard) omit the prose —
+   *  only the full single-doc read (getProductBySlugOrId) guarantees them. */
+  description?: string;
+  features?: string[];
+  careInstructions?: string[];
   reviewsList?: Review[];
   freeDeliveryQuantity?: number;
   /** ISO strings — Prisma `Date`s are serialized in `src/lib/products.ts` so they can cross to the client. */
