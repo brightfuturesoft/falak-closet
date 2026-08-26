@@ -309,3 +309,21 @@ model PromotionBanner {
   @@index([isActive])
 }
 
+// Home page hero carousel slides. Admin-managed (CRUD via /api/hero-slides),
+// read by the storefront through the cached lib in src/lib/heroSlides.ts.
+model HeroSlide {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  tag       String   @default("") // small uppercase kicker, e.g. "FRESH OFFERS"
+  title     String // the H1 line
+  subtitle  String   @default("")
+  ctaText   String   @default("Shop Now")
+  ctaLink   String   @default("/shop") // internal path or absolute URL
+  image     String // Cloudinary delivery URL
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+

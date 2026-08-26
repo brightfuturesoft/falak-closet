@@ -90,6 +90,10 @@ export function AdminHeader({
     banners: {
       title: 'Live Promotion Banners',
       subtitle: 'Manage seasonal campaigns, flash sales, and storefront promotional assets.'
+    },
+    hero: {
+      title: 'Hero Carousel Slides',
+      subtitle: 'Manage the home page banner slider — slides, images, CTAs, and order.'
     }
   };
 

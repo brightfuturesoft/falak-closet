@@ -4,49 +4,44 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import type { HeroSlideView } from '@/lib/heroSlides';
 
-const HERO_SLIDES = [
-  {
-    id: 1,
-    tag: 'FRESH OFFERS',
-    title: 'Style picks for every plan',
-    subtitle: 'Discover clothing deals, curated collections, and easy checkout in one place.',
-    ctaText: 'View Offers',
-    ctaLink: '/live-promotions',
-    image: 'https://images.unsplash.com/photo-1583391733956-6c78276477e2?auto=format&fit=crop&w=1600&q=85'
-  },
-  {
-    id: 2,
-    tag: 'SEASONAL DEALS',
-    title: 'New looks with better prices',
-    subtitle: 'Explore timely offers across clothes, fabrics, accessories, and more.',
-    ctaText: 'Shop Deals',
-    ctaLink: '/shop',
-    image: 'https://images.unsplash.com/photo-1563178406-4cdc2923acbc?auto=format&fit=crop&w=1600&q=85'
-  }
-];
+interface HeroCarouselProps {
+  /** Active slides, fetched server-side (see src/lib/heroSlides.ts). */
+  slides: HeroSlideView[];
+}
 
-export function HeroCarousel() {
+export function HeroCarousel({ slides }: HeroCarouselProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
+  // Autoplay pauses on hover/focus so a reader can dwell on a slide.
   useEffect(() => {
+    if (isPaused || slides.length < 2) return;
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, []);
+  }, [isPaused, slides.length]);
 
-  const handleNext = () => setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
-  const handlePrev = () => setCurrentSlide((prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
+  if (slides.length === 0) return null;
+
+  const safeIndex = Math.min(currentSlide, slides.length - 1);
+  const handleNext = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
+  const handlePrev = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
 
   return (
-    <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-4 sm:my-6">
+    <div
+      className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-4 sm:my-6"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       <div className="relative h-[320px] sm:h-[400px] lg:h-[440px] rounded-3xl overflow-hidden shadow-md">
-        {HERO_SLIDES.map((slide, idx) => (
+        {slides.map((slide, idx) => (
           <div
             key={slide.id}
             className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-              idx === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+              idx === safeIndex ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
             }`}
           >
             {/* Background Image */}
@@ -112,12 +107,12 @@ export function HeroCarousel() {
 
         {/* Bottom-Right Pagination Dots */}
         <div className="absolute bottom-4 right-6 z-30 flex items-center gap-2">
-          {HERO_SLIDES.map((_, idx) => (
+          {slides.map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrentSlide(idx)}
               className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                currentSlide === idx ? 'w-6 bg-[#F2C76E]' : 'w-2 bg-white/60 hover:bg-white'
+                safeIndex === idx ? 'w-6 bg-[#F2C76E]' : 'w-2 bg-white/60 hover:bg-white'
               }`}
               aria-label={`Go to slide ${idx + 1}`}
             />

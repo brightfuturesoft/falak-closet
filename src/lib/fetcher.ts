@@ -120,6 +120,7 @@ export async function fetchCategories(opts?: { noCache?: boolean }): Promise<Cat
  */
 export const PRODUCTS_TAG = 'products';
 export const PROMOTION_BANNERS_TAG = 'promotion-banners';
+export const HERO_SLIDES_TAG = 'hero-slides';
 
 export interface ProductsResponse {
   success: boolean;
