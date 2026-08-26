@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { formatCurrency } from '@/lib/utils';
+import { useDistrictOptions } from '@/lib/useDistrictOptions';
 
 /* ─────────────────────────────────────────────
    Types
@@ -25,12 +26,9 @@ type AuthMode = 'signin' | 'signup' | 'forgot';
 type ResetStep = 1 | 2;
 type ActiveTab = 'orders' | 'wishlist' | 'addresses';
 
-const DISTRICTS = [
-  'Dhaka', 'Chittagong', 'Rajshahi', 'Khulna', 'Sylhet',
-  'Barisal', 'Rangpur', 'Mymensingh', 'Comilla', 'Gazipur',
-  'Narayanganj', 'Tangail', 'Bogra', 'Jessore', 'Dinajpur',
-  'Cox\'s Bazar', 'Faridpur', 'Pabna', 'Brahmanbaria', 'Other'
-];
+/* District options now come from the admin-managed delivery zones via
+   useDistrictOptions() — the old hardcoded 20-item DISTRICTS array here kept
+   disagreeing with the zones checkout actually charges by. */
 
 /* ─────────────────────────────────────────────
    Small helpers
@@ -194,6 +192,9 @@ export default function AccountClient() {
   const [editDistrict, setEditDistrict] = useState('');
   const [editAddress, setEditAddress] = useState('');
   const [isSavingAddress, setIsSavingAddress] = useState(false);
+
+  // District names follow the admin's delivery zones (fallback inside the hook).
+  const { districts } = useDistrictOptions();
 
   /* Load saved user on mount */
   useEffect(() => {
@@ -607,7 +608,7 @@ export default function AccountClient() {
                       onChange={e => setEditDistrict(e.target.value)}
                       className="w-full px-4 py-2.5 bg-[#FFFBF0] border border-[#F2C76E]/70 rounded-xl text-[#0C163A] text-xs focus:outline-none focus:ring-2 focus:ring-[#9B050B]/25"
                     >
-                      {DISTRICTS.map(d => <option key={d}>{d}</option>)}
+                      {districts.map(d => <option key={d}>{d}</option>)}
                     </select>
                   </div>
                   <InputField label="Full Address" value={editAddress} onChange={setEditAddress} placeholder="House, road, area..." />
@@ -755,7 +756,7 @@ export default function AccountClient() {
                       disabled={isSigningUp}
                       className="w-full px-4 py-2.5 bg-[#FFFBF0] border border-[#F2C76E]/70 rounded-xl text-[#0C163A] text-xs focus:outline-none focus:ring-2 focus:ring-[#9B050B]/25 disabled:opacity-50"
                     >
-                      {DISTRICTS.map(d => <option key={d}>{d}</option>)}
+                      {districts.map(d => <option key={d}>{d}</option>)}
                     </select>
                   </div>
                   <InputField
