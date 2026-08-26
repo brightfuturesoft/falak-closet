@@ -92,6 +92,30 @@ export function serializeProduct(row: ProductRow): Product {
   };
 }
 
+/**
+ * Lighter mapping for LIST reads (shop grid, cart, search, layout seed).
+ *
+ * Strips the prose-heavy fields list surfaces never render — description,
+ * features, careInstructions, reviewsList. `variations` deliberately STAYS:
+ * SearchAutocomplete matches by variation color/size and uses imageUrl for
+ * thumbnails. Without this trim the whole catalog rides in one
+ * `unstable_cache` entry, and Next.js silently refuses to cache payloads
+ * over 2MB (uncatchable rejection logged as "items over 2MB can not be
+ * cached") — with prose included the catalog crossed that line.
+ *
+ * Full documents still come from `serializeProduct` via getProductBySlugOrId.
+ */
+export function serializeProductCard(row: ProductRow): Product {
+  const {
+    description: _description,
+    features: _features,
+    careInstructions: _careInstructions,
+    reviewsList: _reviewsList,
+    ...card
+  } = serializeProduct(row);
+  return card;
+}
+
 // ─── Reads ───────────────────────────────────────────────────────────────────
 
 export type ProductSort = 'newest' | 'price-low' | 'price-high' | 'rating' | 'name';
@@ -151,13 +175,25 @@ export async function queryProducts(query: ProductQuery = {}): Promise<Product[]
 }
 
 /**
- * Every product, newest first. Cached and tagged, so any mutation calling
- * revalidateTag(PRODUCTS_TAG, 'max') refreshes the storefront.
+ * Every product, newest first — as slim cards. Cached and tagged, so any
+ * mutation calling revalidateTag(PRODUCTS_TAG, 'max') refreshes the storefront.
  */
 export const getProducts = unstable_cache(
   async (): Promise<Product[]> => {
     const rows = await prisma.product.findMany({ orderBy: { createdAt: 'desc' } });
-    return rows.map(serializeProduct);
+    const products = rows.map(serializeProductCard);
+
+    // Next.js drops cache entries over 2MB with an uncatchable rejection —
+    // surface the problem here, where it is still actionable, instead of a
+    // mystery log line at the layout. 1.5MB leaves room to grow past the warn.
+    const bytes = Buffer.byteLength(JSON.stringify(products), 'utf8');
+    if (bytes > 1.5 * 1024 * 1024) {
+      console.warn(
+        `[products] cached catalog is ${(bytes / 1048576).toFixed(1)}MB — Next.js data cache caps at 2MB; migrate embedded images or trim serializeProductCard fields`
+      );
+    }
+
+    return products;
   },
   ['products:all'],
   { tags: [PRODUCTS_TAG], revalidate: 3600 }
@@ -203,7 +239,7 @@ export const getFlashSaleProducts = unstable_cache(
       where: { isFlashSale: true },
       orderBy: { createdAt: 'desc' }
     });
-    return rows.map(serializeProduct);
+    return rows.map(serializeProductCard);
   },
   ['products:flash-sale'],
   { tags: [PRODUCTS_TAG], revalidate: 3600 }

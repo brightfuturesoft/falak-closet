@@ -130,48 +130,52 @@ export function SettingsTab({
       for (const product of products) {
         const hasLegacy =
           product.images.some((i) => i.startsWith('data:')) ||
-          product.colors.some((c) => (c.images || []).some((i) => i.startsWith('data:')));
+          product.colors.some((c) => (c.images || []).some((i) => i.startsWith('data:'))) ||
+          (product.variations || []).some((v) => (v.imageUrl || '').startsWith('data:'));
         if (!hasLegacy) continue;
 
         try {
           let moved = 0;
 
+          // Legacy rows duplicate the SAME data URL across images, colors and
+          // variations[].imageUrl — upload each unique image once and reuse it.
+          const urlCache = new Map<string, string>();
+          const migrateUrl = async (url: string): Promise<string> => {
+            if (!url.startsWith('data:')) return url;
+            const cached = urlCache.get(url);
+            if (cached) return cached;
+            const [uploaded] = await uploadImages(await dataUrlToFile(url), 'products/migrated');
+            urlCache.set(url, uploaded.url);
+            moved++;
+            return uploaded.url;
+          };
+
           const mainImages: string[] = [];
           for (const img of product.images) {
-            if (img.startsWith('data:')) {
-              const [uploaded] = await uploadImages(
-                await dataUrlToFile(img),
-                'products/migrated'
-              );
-              mainImages.push(uploaded.url);
-              moved++;
-            } else {
-              mainImages.push(img);
-            }
+            mainImages.push(await migrateUrl(img));
           }
 
           const colors = [];
           for (const color of product.colors) {
             const colorImages: string[] = [];
             for (const img of color.images || []) {
-              if (img.startsWith('data:')) {
-                const [uploaded] = await uploadImages(
-                  await dataUrlToFile(img),
-                  'products/migrated'
-                );
-                colorImages.push(uploaded.url);
-                moved++;
-              } else {
-                colorImages.push(img);
-              }
+              colorImages.push(await migrateUrl(img));
             }
             colors.push({ ...color, images: colorImages });
+          }
+
+          const variations = [];
+          for (const variation of product.variations || []) {
+            variations.push({
+              ...variation,
+              ...(variation.imageUrl ? { imageUrl: await migrateUrl(variation.imageUrl) } : {}),
+            });
           }
 
           const update = await fetch(`/api/products/${product.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ images: mainImages, colors }),
+            body: JSON.stringify({ images: mainImages, colors, variations }),
           });
           if (!update.ok) throw new Error(`HTTP ${update.status}`);
 

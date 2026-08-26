@@ -31,14 +31,15 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   const searchParams = useSearchParams();
   const colorQueryParam = searchParams.get('color');
   const router = useRouter();
-  const { addToCart, toggleWishlist, isInWishlist, getProductBySlug, products } = useCart();
+  const { addToCart, toggleWishlist, isInWishlist, products } = useCart();
   const { trackEvent } = useAnalytics();
   const { showToast } = useToast();
 
   // The server resolved this product (and 404'd if it did not exist), so it is
-  // always defined. The context copy only wins when it is fresher — e.g. after
-  // an admin edit triggers a client-side catalog refresh.
-  const product: Product = getProductBySlug(initialProduct.slug) || initialProduct;
+  // always the FULL document — description, features, reviews. Context copies
+  // come from the slim card list (see serializeProductCard) and would lose the
+  // prose, so the server doc is used as-is.
+  const product: Product = initialProduct;
 
   const colorsList = product?.colors && product.colors.length > 0
     ? product.colors
