@@ -27,7 +27,7 @@ export default async function ShippingPolicyPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       <div className="border-b border-stone-200 dark:border-stone-800 pb-4">
         <span className="text-xs font-bold text-amber-600 uppercase tracking-wider">Logistics & Express Delivery</span>
-        <h1 className="font-serif text-3xl font-bold text-stone-900 dark:text-stone-100 mt-1">
+        <h1 className="font-serif text-3xl font-bold text-stone-900  mt-1">
           Shipping & Delivery Policy
         </h1>
         <p className="text-xs text-stone-500 mt-1">
@@ -35,9 +35,9 @@ export default async function ShippingPolicyPage() {
         </p>
       </div>
 
-      <div className="prose dark:prose-invert text-xs sm:text-sm text-stone-700 dark:text-stone-300 space-y-6 leading-relaxed">
+      <div className="prose dark:prose-invert text-xs sm:text-sm text-stone-700  space-y-6 leading-relaxed">
         {/* Zone rates — rendered from the admin-managed Delivery Zones config */}
-        <section className="p-6 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800 space-y-4">
+        <section className="p-6 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200  space-y-4">
           <h2 className="font-serif font-bold text-base text-amber-600 flex items-center gap-2">
             <Truck className="w-5 h-5" /> 1. Delivery Zones, Charges & Speeds
           </h2>
@@ -93,7 +93,7 @@ export default async function ShippingPolicyPage() {
 
         {/* Free delivery threshold — from Store Configuration settings */}
         <section className="space-y-2">
-          <h3 className="font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
+          <h3 className="font-bold text-stone-900 flex items-center gap-2">
             <BadgeCheck className="w-4 h-4 text-emerald-600" /> 2. Free Delivery
           </h3>
           <p>
@@ -104,7 +104,7 @@ export default async function ShippingPolicyPage() {
         </section>
 
         <section className="space-y-2">
-          <h3 className="font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
+          <h3 className="font-bold text-stone-900 flex items-center gap-2">
             <Clock className="w-4 h-4 text-amber-600" /> 3. Processing & Dispatch Timeline
           </h3>
           <p>
@@ -115,7 +115,7 @@ export default async function ShippingPolicyPage() {
         </section>
 
         <section className="space-y-2">
-          <h3 className="font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
+          <h3 className="font-bold text-stone-900 flex items-center gap-2">
             <PackageCheck className="w-4 h-4 text-amber-600" /> 4. Payment on Delivery
           </h3>
           <p>
