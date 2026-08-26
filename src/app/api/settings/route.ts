@@ -25,6 +25,21 @@ const DEFAULT_SETTINGS = {
     facebook: '',
     youtube: ''
   },
+  // Home "Why Choose Us" cards. `icon` must be one of the whitelist in
+  // src/components/home/ValuePropsSection.tsx.
+  'value-props': [
+    { icon: 'award', title: 'Premium Nida & Silk Fabrics', description: 'Crafted with imported Korean Nida, pure Dubai silk, and breathable airy cotton fabrics.' },
+    { icon: 'shield', title: '100% Authentic Modest Cut', description: 'Generous flared silhouettes, full-length hemlines, and modest wrist coverage for effortless modesty.' },
+    { icon: 'truck', title: 'Fast Doorstep BD Delivery', description: 'Swift 2-3 day express courier delivery across all 64 districts in Bangladesh.' },
+    { icon: 'rotate', title: '30-Day Easy Exchange', description: 'Hassle-free size replacement and item exchange guarantee within 30 days.' }
+  ],
+  // Slim top-of-page bar. Empty message or isActive:false = hidden.
+  announcement: {
+    message: '',
+    link: '',
+    linkLabel: '',
+    isActive: false
+  },
   payment: {
     bkashNumber: '01700000000',
     bkashAccountType: 'Personal',
@@ -106,6 +121,29 @@ function validateSettingValue(key: string, value: unknown): string | null {
       if (field === 'contactEmail' && v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
         return 'Contact email does not look valid';
       }
+    }
+  }
+
+  if (key === 'value-props') {
+    if (!Array.isArray(value)) return 'Value props must be a list';
+    if (value.length > 8) return 'Keep the value props list to at most 8 items';
+    for (const item of value as unknown[]) {
+      if (typeof item !== 'object' || item === null) return 'Each value prop must be an object';
+      const p = item as Record<string, unknown>;
+      if (typeof p.title !== 'string' || !p.title.trim()) return 'Every value prop needs a title';
+      if (typeof p.description !== 'string') return 'Value prop descriptions must be text';
+      if (p.icon !== undefined && typeof p.icon !== 'string') return 'Value prop icon must be text';
+    }
+  }
+
+  if (key === 'announcement') {
+    const a = value as Record<string, unknown>;
+    if (a.message !== undefined && typeof a.message !== 'string') return 'Announcement message must be text';
+    if (a.linkLabel !== undefined && typeof a.linkLabel !== 'string') return 'Announcement link label must be text';
+    if (a.isActive !== undefined && typeof a.isActive !== 'boolean') return 'Announcement active flag must be true/false';
+    const link = typeof a.link === 'string' ? a.link.trim() : '';
+    if (link && !link.startsWith('/') && !/^https?:\/\//i.test(link)) {
+      return 'Announcement link must be an internal path (/...) or an http(s) URL';
     }
   }
 

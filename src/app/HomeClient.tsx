@@ -12,6 +12,7 @@ import { AllProductsSection } from '@/components/home/AllProductsSection';
 import { ValuePropsSection } from '@/components/home/ValuePropsSection';
 import type { HeroSlideView } from '@/lib/heroSlides';
 import type { PromotionBanner } from '@/lib/promotionBanners';
+import type { ValuePropItem } from '@/lib/siteSettings';
 
 /**
  * The interactive half of the home page — everything that needs `useCart` or
@@ -20,10 +21,12 @@ import type { PromotionBanner } from '@/lib/promotionBanners';
  */
 export default function HomeClient({
   heroSlides,
-  promoBanner
+  promoBanner,
+  valueProps
 }: {
   heroSlides: HeroSlideView[];
   promoBanner: PromotionBanner | null;
+  valueProps: ValuePropItem[];
 }) {
   const { products, isLoadingProducts, productsError, refreshProductsFromApi } = useCart();
   const [selectedFilter, setSelectedFilter] = useState<{ type: string; val: string } | null>(null);
@@ -141,7 +144,7 @@ export default function HomeClient({
       )}
 
       {/* 7. WHY CHOOSE FALAK CLOSET Value Showcase */}
-      <ValuePropsSection />
+      <ValuePropsSection items={valueProps} />
     </div>
   );
 }

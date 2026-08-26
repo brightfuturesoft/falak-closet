@@ -1,6 +1,7 @@
 import HomeClient from './HomeClient';
 import { getActiveSlidesSafe } from '@/lib/heroSlides';
 import { getActiveBannersSafe } from '@/lib/promotionBanners';
+import { getValuePropsSafe } from '@/lib/siteSettings';
 
 /**
  * Thin server shell for the home page. It fetches the hero slides and the top
@@ -9,9 +10,10 @@ import { getActiveBannersSafe } from '@/lib/promotionBanners';
  * so both land in the initial server-rendered HTML.
  */
 export default async function HomePage() {
-  const [{ slides }, banners] = await Promise.all([
+  const [{ slides }, banners, valueProps] = await Promise.all([
     getActiveSlidesSafe(),
     getActiveBannersSafe(),
+    getValuePropsSafe(),
   ]);
-  return <HomeClient heroSlides={slides} promoBanner={banners[0] ?? null} />;
+  return <HomeClient heroSlides={slides} promoBanner={banners[0] ?? null} valueProps={valueProps} />;
 }

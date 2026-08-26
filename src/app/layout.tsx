@@ -8,7 +8,8 @@ import { Header } from '@/components/header/Header';
 import { Footer } from '@/components/footer/Footer';
 import { MobileBottomNav } from '@/components/header/MobileBottomNav';
 import { getOrganizationSchema, getWebSiteSchema } from '@/lib/schema';
-import { getSiteIdentitySafe } from '@/lib/siteSettings';
+import { getSiteIdentitySafe, getAnnouncementSafe } from '@/lib/siteSettings';
+import { AnnouncementBar } from '@/components/header/AnnouncementBar';
 import { FacebookPixel } from '@/components/analytics/FacebookPixel';
 import { getProductsSafe } from '@/lib/products';
 
@@ -105,6 +106,7 @@ export default async function RootLayout({
   // Admin-configured contact identity (Settings → Site Identity) feeds both
   // the Organization JSON-LD and the Footer — one source, cached & tagged.
   const siteIdentity = await getSiteIdentitySafe();
+  const announcement = await getAnnouncementSafe();
   const orgSchema = getOrganizationSchema(siteIdentity);
   const webSiteSchema = getWebSiteSchema();
 
@@ -135,6 +137,7 @@ export default async function RootLayout({
           <ToastProvider>
             <CartProvider initialProducts={products} initialProductsError={productsError}>
               <div className="flex flex-col min-h-screen">
+                <AnnouncementBar announcement={announcement} />
                 <Header />
                 <main className="flex-1">{children}</main>
                 <Footer identity={siteIdentity} />
