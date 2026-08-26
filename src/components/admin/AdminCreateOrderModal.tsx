@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   X,
   Plus,
@@ -22,7 +22,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import Image from 'next/image';
-import { Product, PRODUCTS } from '@/data/products';
+import { Product } from '@/data/products';
 import { CartItem, OrderRecord } from '@/context/CartContext';
 import { formatCurrency } from '@/lib/utils';
 
@@ -37,7 +37,9 @@ export function AdminCreateOrderModal({
   isOpen,
   onClose,
   onOrderCreated,
-  productsList = PRODUCTS
+  // Empty, not the seed array: a POS that can ring up demo products would create
+  // real orders for items the store does not stock.
+  productsList = []
 }: AdminCreateOrderModalProps) {
   // POS Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -64,6 +66,7 @@ export function AdminCreateOrderModal({
   const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery (COD)');
   const [orderStatus, setOrderStatus] = useState<OrderRecord['status']>('Processing');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Extract color name helper
   const getColorName = (c: any): string => {
@@ -72,17 +75,24 @@ export function AdminCreateOrderModal({
     return 'Default';
   };
 
+  // The modal stays mounted while closed, so a failure from the previous ticket
+  // would still be on screen when the operator opens it for the next customer.
+  useEffect(() => {
+    if (isOpen) setSubmitError(null);
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  // Filter products by category and search query
-  const categories = ['All', 'Abayas', 'Hijabs & Dupattas', 'Modest Dresses', 'Co-ord Sets', 'Luxury Tunics'];
+  // Filter products by category and search query. Chips come from the catalog
+  // in hand — a hardcoded list hid every product in a newly added category.
+  const categories = ['All', ...Array.from(new Set(productsList.map((p) => p.category).filter(Boolean)))];
   const filteredProducts = productsList.filter((p) => {
     if (selectedCategory !== 'All' && p.category !== selectedCategory) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       const matchName = p.name.toLowerCase().includes(q);
-      const matchCode = p.code.toLowerCase().includes(q);
-      const matchMat = p.material.toLowerCase().includes(q);
+      const matchCode = (p.code || '').toLowerCase().includes(q);
+      const matchMat = (p.material || '').toLowerCase().includes(q);
       if (!matchName && !matchCode && !matchMat) return false;
     }
     return true;
@@ -162,6 +172,7 @@ export function AdminCreateOrderModal({
     }
 
     setIsSubmitting(true);
+    setSubmitError(null);
 
     const randomNum = Math.floor(10000 + Math.random() * 90000);
     const orderId = `FLK-POS-${randomNum}`;
@@ -191,16 +202,31 @@ export function AdminCreateOrderModal({
       estimatedDelivery: '2-3 Business Days'
     };
 
-    // Save to Database API
+    // Save to Database API. The POS used to ignore the response and print a
+    // receipt regardless — a ticket handed to a paying customer for an order
+    // that was never stored.
     try {
-      await fetch('/api/orders', {
+      const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newPOSOrder)
       });
-    } catch { }
+      const body = await res.json().catch(() => null);
 
-    onOrderCreated(newPOSOrder);
+      if (!res.ok || !body?.success) {
+        setSubmitError(body?.error || `Could not save the order (HTTP ${res.status}). Nothing was charged.`);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Hand back the stored record, so the receipt shows the persisted order.
+      onOrderCreated({ ...newPOSOrder, ...body.order });
+    } catch (err) {
+      setSubmitError((err as Error).message || 'Network error — the order was not saved.');
+      setIsSubmitting(false);
+      return;
+    }
+
     setIsSubmitting(false);
     onClose();
   };
@@ -508,6 +534,14 @@ export function AdminCreateOrderModal({
                   </span>
                 </div>
 
+                {/* Save failure — shown here rather than swallowed, since the
+                    next thing this button does is print a customer invoice. */}
+                {submitError && (
+                  <div className="px-3 py-2.5 rounded-2xl bg-red-950/60 border border-red-800 text-red-200 text-[11px] font-bold">
+                    {submitError}
+                  </div>
+                )}
+
                 {/* Primary Action Button */}
                 <button
                   type="submit"
@@ -515,7 +549,7 @@ export function AdminCreateOrderModal({
                   className="w-full py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-stone-950 font-extrabold text-sm uppercase tracking-wider rounded-2xl shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   <Printer className="w-4 h-4" />
-                  <span>PAY & PRINT INVOICE</span>
+                  <span>{isSubmitting ? 'SAVING ORDER…' : 'PAY & PRINT INVOICE'}</span>
                 </button>
               </div>
             </form>

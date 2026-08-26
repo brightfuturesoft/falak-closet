@@ -12,7 +12,8 @@ import {
   Minus,
   Star
 } from 'lucide-react';
-import { Product, CATEGORIES } from '@/data/products';
+import { Product } from '@/data/products';
+import { useCategories } from '@/lib/useCategories';
 import { formatCurrency } from '@/lib/utils';
 
 interface ProductsTabProps {
@@ -33,14 +34,39 @@ export function ProductsTab({
   searchQuery
 }: ProductsTabProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>('All');
   const [stockFilter, setStockFilter] = useState<string>('All');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
   const [localQuery, setLocalQuery] = useState('');
+
+  // Managed categories, plus any category a product actually carries — so a
+  // product whose category was later renamed or deleted stays reachable here
+  // instead of disappearing behind a pill that no longer exists.
+  const { categories: managedCategories } = useCategories();
+  const categoryPills = React.useMemo(() => {
+    const names = managedCategories.map((c) => c.name);
+    const fromProducts = products.map((p) => p.category).filter(Boolean);
+    return Array.from(new Set([...names, ...fromProducts]));
+  }, [managedCategories, products]);
+
+  // Subcategories of the selected category, from the products in view.
+  const subCategoryPills = React.useMemo(() => {
+    if (selectedCategory === 'All') return [];
+    const managed = managedCategories
+      .find((c) => c.name === selectedCategory)
+      ?.subCategories.map((s) => s.name) ?? [];
+    const fromProducts = products
+      .filter((p) => p.category === selectedCategory)
+      .map((p) => p.subCategory)
+      .filter((s): s is string => Boolean(s));
+    return Array.from(new Set([...managed, ...fromProducts]));
+  }, [managedCategories, products, selectedCategory]);
 
   const activeSearch = searchQuery || localQuery;
 
   const filteredProducts = products.filter((p) => {
     if (selectedCategory !== 'All' && p.category !== selectedCategory) return false;
+    if (selectedSubCategory !== 'All' && p.subCategory !== selectedSubCategory) return false;
     const stock = p.stock ?? 10;
     if (stockFilter === 'Low' && stock >= 5) return false;
     if (stockFilter === 'Out' && stock > 0) return false;
@@ -50,12 +76,13 @@ export function ProductsTab({
       const q = activeSearch.toLowerCase().trim();
       const matchName = p.name.toLowerCase().includes(q);
       const matchCategory = p.category.toLowerCase().includes(q);
+      const matchCode = (p.code || '').toLowerCase().includes(q);
       const matchMaterial = (p.material || '').toLowerCase().includes(q);
       const matchWork = (p.workType || '').toLowerCase().includes(q);
       const matchColor = p.colors?.some((c) => c.name.toLowerCase().includes(q) || (c.hex && c.hex.toLowerCase().includes(q)));
       const matchVar = p.variations?.some((v) => v.colorName.toLowerCase().includes(q) || (v.colorHex && v.colorHex.toLowerCase().includes(q)) || (v.size && v.size.toLowerCase() === q));
-      
-      if (!matchName && !matchCategory && !matchMaterial && !matchWork && !matchColor && !matchVar) return false;
+
+      if (!matchName && !matchCategory && !matchCode && !matchMaterial && !matchWork && !matchColor && !matchVar) return false;
     }
     return true;
   });
@@ -67,12 +94,15 @@ export function ProductsTab({
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           {/* Category Filter Pills */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto text-xs font-bold scrollbar-none">
-            {['All', ...CATEGORIES].map((cat) => {
+            {['All', ...categoryPills].map((cat) => {
               const count = cat === 'All' ? products.length : products.filter((p) => p.category === cat).length;
               return (
                 <button
                   key={cat}
-                  onClick={() => setSelectedCategory(cat)}
+                  onClick={() => {
+                    setSelectedCategory(cat);
+                    setSelectedSubCategory('All');
+                  }}
                   className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
                     selectedCategory === cat
                       ? 'bg-stone-900 text-white shadow-sm font-bold'
@@ -120,6 +150,33 @@ export function ProductsTab({
             </button>
           </div>
         </div>
+
+        {/* Subcategory pills — only meaningful once a category is picked */}
+        {subCategoryPills.length > 0 && (
+          <div className="flex items-center gap-1.5 overflow-x-auto pt-2 border-t border-stone-200 text-[11px] font-bold scrollbar-none">
+            <span className="text-stone-500 font-medium whitespace-nowrap pr-1">Subcategory:</span>
+            {['All', ...subCategoryPills].map((sub) => {
+              const count =
+                sub === 'All'
+                  ? products.filter((p) => p.category === selectedCategory).length
+                  : products.filter((p) => p.category === selectedCategory && p.subCategory === sub).length;
+              return (
+                <button
+                  key={sub}
+                  onClick={() => setSelectedSubCategory(sub)}
+                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                    selectedSubCategory === sub
+                      ? 'bg-stone-800 text-white shadow-sm'
+                      : 'bg-stone-100 text-stone-700 hover:bg-stone-200 border border-stone-200'
+                  }`}
+                >
+                  <span>{sub}</span>
+                  <span className="text-[10px] font-mono opacity-80">({count})</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Secondary Filter: Search & Stock Filter */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-stone-200 text-xs">

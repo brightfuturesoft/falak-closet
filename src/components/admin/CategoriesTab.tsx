@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   FolderTree,
   Plus,
@@ -21,18 +21,24 @@ import {
   AlertTriangle,
   RefreshCw
 } from 'lucide-react';
-import { Category, SubCategory, getStoredCategories, saveStoredCategories } from '@/data/categories';
-import { PRODUCTS, Product } from '@/data/products';
+import { Category, SubCategory } from '@/data/categories';
+import { useCategories, notifyCategoriesUpdated } from '@/lib/useCategories';
+import { Product } from '@/data/products';
 
 interface CategoriesTabProps {
   products?: Product[];
   onRefreshProducts?: () => Promise<void>;
 }
 
-export function CategoriesTab({ products = PRODUCTS, onRefreshProducts }: CategoriesTabProps) {
-  const [categories, setCategories] = useState<Category[]>([]);
+// `products` defaults to empty, never to the seed array: a per-category count
+// backed by demo data would tell the admin a category is in use when it is not.
+export function CategoriesTab({ products = [], onRefreshProducts }: CategoriesTabProps) {
+  const { categories, isLoading, error: loadError, reload: loadCategories } = useCategories();
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+
+  /** Error from the most recent create/update/delete, shown in-place. */
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Modal States
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -71,30 +77,37 @@ export function CategoriesTab({ products = PRODUCTS, onRefreshProducts }: Catego
     { name: 'Gift', icon: Gift, label: 'Accessories' }
   ];
 
-  // Fetch Categories & Calculate Product Counts
-  const loadCategories = async () => {
-    setIsLoading(true);
+  /**
+   * Single write path to /api/categories. `fetch` resolves for 4xx/5xx too, so the
+   * response body has to be inspected — otherwise a rejected write looks like a success.
+   */
+  const mutateCategories = async (
+    init: RequestInit & { url?: string }
+  ): Promise<boolean> => {
+    const { url = '/api/categories', ...requestInit } = init;
+    setIsSaving(true);
+    setActionError(null);
+
     try {
-      const res = await fetch('/api/categories');
-      const data = await res.json();
-      if (data.success && Array.isArray(data.categories)) {
-        setCategories(data.categories);
-        saveStoredCategories(data.categories);
-      } else {
-        const stored = getStoredCategories();
-        setCategories(stored);
+      const res = await fetch(url, requestInit);
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data?.success) {
+        setActionError(data?.error ?? `Request failed (HTTP ${res.status})`);
+        return false;
       }
-    } catch {
-      const stored = getStoredCategories();
-      setCategories(stored);
+
+      await loadCategories();
+      notifyCategoriesUpdated();
+      await onRefreshProducts?.();
+      return true;
+    } catch (err) {
+      setActionError((err as Error).message || 'Network error — category not saved');
+      return false;
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
-
-  useEffect(() => {
-    loadCategories();
-  }, []);
 
   // Filter Categories by Search Query
   const filteredCategories = categories.filter((cat) => {
@@ -132,6 +145,7 @@ export function CategoriesTab({ products = PRODUCTS, onRefreshProducts }: Catego
         isFeatured: true
       });
     }
+    setActionError(null);
     setIsCategoryModalOpen(true);
   };
 
@@ -155,6 +169,7 @@ export function CategoriesTab({ products = PRODUCTS, onRefreshProducts }: Catego
         description: ''
       });
     }
+    setActionError(null);
     setIsSubcategoryModalOpen(true);
   };
 
@@ -172,43 +187,17 @@ export function CategoriesTab({ products = PRODUCTS, onRefreshProducts }: Catego
       isFeatured: catFormData.isFeatured
     };
 
-    try {
-      if (editingCategory) {
-        await fetch('/api/categories', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...payload, isSubcategory: false })
-        });
-      } else {
-        await fetch('/api/categories', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...payload, action: 'create_category' })
-        });
-      }
-      await loadCategories();
-      setIsCategoryModalOpen(false);
-    } catch {
-      // Local storage fallback
-      let updated: Category[];
-      if (editingCategory) {
-        updated = categories.map((c) => (c.id === editingCategory.id ? { ...c, ...payload, id: c.id } : c));
-      } else {
-        const newCat: Category = {
-          id: `cat-${Date.now()}`,
-          name: payload.name,
-          slug: payload.slug,
-          icon: payload.icon,
-          description: payload.description,
-          isFeatured: payload.isFeatured,
-          subCategories: []
-        };
-        updated = [...categories, newCat];
-      }
-      setCategories(updated);
-      saveStoredCategories(updated);
-      setIsCategoryModalOpen(false);
-    }
+    const ok = await mutateCategories({
+      method: editingCategory ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(
+        editingCategory
+          ? { ...payload, isSubcategory: false }
+          : { ...payload, action: 'create_category' }
+      )
+    });
+
+    if (ok) setIsCategoryModalOpen(false);
   };
 
   // Handle Save Subcategory
@@ -224,72 +213,40 @@ export function CategoriesTab({ products = PRODUCTS, onRefreshProducts }: Catego
       description: subFormData.description.trim()
     };
 
-    try {
-      if (editingSubcategory) {
-        await fetch('/api/categories', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...payload, isSubcategory: true })
-        });
-      } else {
-        await fetch('/api/categories', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...payload, action: 'create_subcategory' })
-        });
-      }
-      await loadCategories();
-      setIsSubcategoryModalOpen(false);
-    } catch {
-      // Local fallback
-      const updated = categories.map((cat) => {
-        if (cat.id !== subFormData.parentCategoryId) return cat;
+    const ok = await mutateCategories({
+      method: editingSubcategory ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(
+        editingSubcategory
+          ? { ...payload, isSubcategory: true }
+          : { ...payload, action: 'create_subcategory' }
+      )
+    });
 
-        if (editingSubcategory) {
-          const newSubs = cat.subCategories.map((s) => (s.id === editingSubcategory.sub.id ? { ...s, name: payload.name, slug: payload.slug, description: payload.description } : s));
-          return { ...cat, subCategories: newSubs };
-        } else {
-          const newSub: SubCategory = {
-            id: `sub-${Date.now()}`,
-            name: payload.name,
-            slug: payload.slug,
-            description: payload.description
-          };
-          return { ...cat, subCategories: [...cat.subCategories, newSub] };
-        }
-      });
-      setCategories(updated);
-      saveStoredCategories(updated);
-      setIsSubcategoryModalOpen(false);
-    }
+    if (ok) setIsSubcategoryModalOpen(false);
   };
 
   // Handle Delete Confirmation
   const handleConfirmDelete = async () => {
     if (!deletingTarget) return;
 
-    try {
-      await fetch(`/api/categories?id=${deletingTarget.id}&isSubcategory=${deletingTarget.isSubcategory}`, {
-        method: 'DELETE'
-      });
-      await loadCategories();
-    } catch {
-      // Fallback local delete
-      if (deletingTarget.isSubcategory) {
-        const updated = categories.map((cat) => ({
-          ...cat,
-          subCategories: cat.subCategories.filter((s) => s.id !== deletingTarget.id)
-        }));
-        setCategories(updated);
-        saveStoredCategories(updated);
-      } else {
-        const updated = categories.filter((c) => c.id !== deletingTarget.id);
-        setCategories(updated);
-        saveStoredCategories(updated);
-      }
-    } finally {
-      setDeletingTarget(null);
-    }
+    const params = new URLSearchParams({
+      id: deletingTarget.id,
+      type: deletingTarget.isSubcategory ? 'subcategory' : 'category'
+    });
+    if (deletingTarget.parentId) params.set('parentId', deletingTarget.parentId);
+
+    const ok = await mutateCategories({
+      url: `/api/categories?${params.toString()}`,
+      method: 'DELETE'
+    });
+
+    if (ok) setDeletingTarget(null);
+  };
+
+  /** One-click seed of INITIAL_CATEGORIES for a fresh database. */
+  const handleSeedDefaults = async () => {
+    await mutateCategories({ url: '/api/categories/seed', method: 'POST' });
   };
 
   return (
@@ -338,6 +295,26 @@ export function CategoriesTab({ products = PRODUCTS, onRefreshProducts }: Catego
           </button>
         </div>
       </div>
+
+      {/* Error Banner — load or mutation failure */}
+      {(loadError || actionError) && (
+        <div className="flex items-start gap-3 p-4 bg-rose-50 border border-rose-200 rounded-2xl">
+          <AlertTriangle className="w-4 h-4 text-rose-600 mt-0.5 flex-shrink-0" />
+          <div className="flex-1 text-xs">
+            <p className="font-bold text-rose-900">
+              {actionError ? 'Could not save changes' : 'Could not load categories'}
+            </p>
+            <p className="text-rose-700 mt-0.5 font-mono">{actionError || loadError}</p>
+          </div>
+          <button
+            onClick={() => setActionError(null)}
+            className="p-1 text-rose-500 hover:text-rose-800 cursor-pointer"
+            title="Dismiss"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Overview Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -525,6 +502,34 @@ export function CategoriesTab({ products = PRODUCTS, onRefreshProducts }: Catego
         })}
       </div>
 
+      {/* Empty States */}
+      {!isLoading && categories.length === 0 && !loadError && (
+        <div className="p-10 bg-white border border-dashed border-stone-300 rounded-3xl text-center space-y-3">
+          <FolderTree className="w-8 h-8 text-stone-300 mx-auto" />
+          <div>
+            <h3 className="font-bold text-sm text-stone-900">No categories in the database yet</h3>
+            <p className="text-xs text-stone-500 mt-1">
+              Create your first category, or seed the six default Falak Closet categories to get started.
+            </p>
+          </div>
+          <button
+            onClick={handleSeedDefaults}
+            disabled={isSaving}
+            className="px-5 py-2.5 bg-stone-900 hover:bg-stone-800 disabled:opacity-50 text-white font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer disabled:cursor-not-allowed"
+          >
+            {isSaving ? 'Seeding…' : 'Seed Default Categories'}
+          </button>
+        </div>
+      )}
+
+      {!isLoading && categories.length > 0 && filteredCategories.length === 0 && (
+        <div className="p-10 bg-white border border-dashed border-stone-300 rounded-3xl text-center">
+          <p className="text-xs text-stone-500">
+            No categories match <span className="font-bold text-stone-900">&ldquo;{searchQuery}&rdquo;</span>.
+          </p>
+        </div>
+      )}
+
       {/* 1. Category Modal (Create / Edit) */}
       {isCategoryModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
@@ -604,9 +609,10 @@ export function CategoriesTab({ products = PRODUCTS, onRefreshProducts }: Catego
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#9B050B] hover:bg-[#B8000A] text-white font-extrabold rounded-xl shadow-md"
+                  disabled={isSaving}
+                  className="px-5 py-2 bg-[#9B050B] hover:bg-[#B8000A] disabled:opacity-50 disabled:cursor-not-allowed text-white font-extrabold rounded-xl shadow-md cursor-pointer"
                 >
-                  {editingCategory ? 'Update Category' : 'Save Category'}
+                  {isSaving ? 'Saving…' : editingCategory ? 'Update Category' : 'Save Category'}
                 </button>
               </div>
             </form>
@@ -695,9 +701,10 @@ export function CategoriesTab({ products = PRODUCTS, onRefreshProducts }: Catego
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#9B050B] hover:bg-[#B8000A] text-white font-extrabold rounded-xl shadow-md"
+                  disabled={isSaving}
+                  className="px-5 py-2 bg-[#9B050B] hover:bg-[#B8000A] disabled:opacity-50 disabled:cursor-not-allowed text-white font-extrabold rounded-xl shadow-md cursor-pointer"
                 >
-                  {editingSubcategory ? 'Update Subcategory' : 'Save Subcategory'}
+                  {isSaving ? 'Saving…' : editingSubcategory ? 'Update Subcategory' : 'Save Subcategory'}
                 </button>
               </div>
             </form>
@@ -731,9 +738,10 @@ export function CategoriesTab({ products = PRODUCTS, onRefreshProducts }: Catego
               </button>
               <button
                 onClick={handleConfirmDelete}
-                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs rounded-xl shadow-md"
+                disabled={isSaving}
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-extrabold text-xs rounded-xl shadow-md cursor-pointer"
               >
-                Delete
+                {isSaving ? 'Deleting…' : 'Delete'}
               </button>
             </div>
           </div>

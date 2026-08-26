@@ -1,141 +1,179 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/db';
-import { PromotionModel } from '@/models/Promotion';
+import { Prisma, type DiscountType, type PromotionStatus } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import { DEFAULT_COUPONS } from '@/data/promotions';
 
-const DEFAULT_PROMOTIONS = [
-  {
-    id: 'promo-1',
-    code: 'EID2026',
-    discountType: 'percentage' as const,
-    discountValue: 15,
-    minSpend: 2500,
-    maxDiscount: 1000,
-    usageLimit: 500,
-    usedCount: 142,
-    expiryDate: '2026-06-30',
-    status: 'Active' as const
-  },
-  {
-    id: 'promo-2',
-    code: 'FALAK10',
-    discountType: 'percentage' as const,
-    discountValue: 10,
-    minSpend: 1500,
-    maxDiscount: 500,
-    usageLimit: 1000,
-    usedCount: 689,
-    expiryDate: '2026-12-31',
-    status: 'Active' as const
-  },
-  {
-    id: 'promo-3',
-    code: 'WELCOME500',
-    discountType: 'fixed' as const,
-    discountValue: 500,
-    minSpend: 3500,
-    maxDiscount: 500,
-    usageLimit: 200,
-    usedCount: 95,
-    expiryDate: '2026-09-30',
-    status: 'Active' as const
-  }
-];
+function errorMessage(err: unknown) {
+  return err instanceof Error ? err.message : 'Server error';
+}
 
-// READ All Promotions
+const DISCOUNT_TYPES: DiscountType[] = ['percentage', 'fixed'];
+const STATUSES: PromotionStatus[] = ['Active', 'Expired', 'Disabled'];
+
+function asDiscountType(value: unknown): DiscountType | undefined {
+  return DISCOUNT_TYPES.includes(value as DiscountType) ? (value as DiscountType) : undefined;
+}
+
+function asStatus(value: unknown): PromotionStatus | undefined {
+  return STATUSES.includes(value as PromotionStatus) ? (value as PromotionStatus) : undefined;
+}
+
+function normalizeCode(value: unknown): string {
+  return String(value ?? '').trim().toUpperCase();
+}
+
+/** Match on ObjectId when one was supplied, else on the (unique) code. */
+function whereFor(id: unknown, code: unknown): Prisma.PromotionWhereUniqueInput | null {
+  const objectId = String(id ?? '').trim();
+  if (/^[0-9a-fA-F]{24}$/.test(objectId)) return { id: objectId };
+
+  const normalized = normalizeCode(code);
+  return normalized ? { code: normalized } : null;
+}
+
+// ─── GET /api/promotions ─────────────────────────────────────────────────────
 export async function GET() {
   try {
-    await connectToDatabase();
-    const promotions = await PromotionModel.find({}).sort({ createdAt: -1 });
+    const existing = await prisma.promotion.findMany({ orderBy: { createdAt: 'desc' } });
 
-    if (promotions.length === 0) {
-      // Seed default promotions if database is empty
-      await PromotionModel.insertMany(DEFAULT_PROMOTIONS);
-      return NextResponse.json({ success: true, promotions: DEFAULT_PROMOTIONS });
+    // First run: give the admin something to edit rather than an empty table.
+    if (existing.length === 0) {
+      await prisma.promotion.createMany({ data: DEFAULT_COUPONS });
+      const seeded = await prisma.promotion.findMany({ orderBy: { createdAt: 'desc' } });
+      return NextResponse.json({ success: true, promotions: seeded, seeded: seeded.length });
     }
 
-    return NextResponse.json({ success: true, promotions });
-  } catch (error) {
-    return NextResponse.json({ success: true, promotions: DEFAULT_PROMOTIONS, source: 'offline' });
+    return NextResponse.json({ success: true, promotions: existing });
+  } catch (err) {
+    // No fall-back-to-defaults here: pretending the defaults are live records
+    // hides an outage and invites the admin to "edit" rows that do not exist.
+    console.error('[GET /api/promotions]', err);
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch promotions' },
+      { status: 500 }
+    );
   }
 }
 
-// CREATE New Promotion
+// ─── POST /api/promotions ────────────────────────────────────────────────────
 export async function POST(req: Request) {
   try {
-    await connectToDatabase();
     const body = await req.json();
-    const { code, discountType, discountValue, minSpend, maxDiscount, usageLimit, expiryDate, status } = body;
+    const code = normalizeCode(body.code);
+    const discountValue = Number(body.discountValue);
 
-    if (!code || !discountValue) {
-      return NextResponse.json({ success: false, error: 'Promo code and discount value are required' }, { status: 400 });
+    if (!code || !Number.isFinite(discountValue) || discountValue <= 0) {
+      return NextResponse.json(
+        { success: false, error: 'Promo code and a positive discount value are required' },
+        { status: 400 }
+      );
     }
 
-    const newPromo = await PromotionModel.create({
-      code: code.toUpperCase().trim(),
-      discountType: discountType || 'percentage',
-      discountValue: Number(discountValue),
-      minSpend: Number(minSpend) || 0,
-      maxDiscount: Number(maxDiscount) || 0,
-      usageLimit: Number(usageLimit) || 100,
-      usedCount: 0,
-      expiryDate: expiryDate || '2026-12-31',
-      status: status || 'Active'
+    const clash = await prisma.promotion.findUnique({ where: { code } });
+    if (clash) {
+      return NextResponse.json(
+        { success: false, error: `Promo code ${code} already exists` },
+        { status: 409 }
+      );
+    }
+
+    const promotion = await prisma.promotion.create({
+      data: {
+        code,
+        discountType: asDiscountType(body.discountType) ?? 'percentage',
+        discountValue,
+        minSpend: Number(body.minSpend) || 0,
+        maxDiscount: Number(body.maxDiscount) || 0,
+        usageLimit: Number(body.usageLimit) || 100,
+        usedCount: 0,
+        expiryDate: String(body.expiryDate || '2026-12-31'),
+        status: asStatus(body.status) ?? 'Active',
+      },
     });
 
-    return NextResponse.json({ success: true, promotion: newPromo });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { success: true, message: 'Promotion created', promotion },
+      { status: 201 }
+    );
+  } catch (err) {
+    console.error('[POST /api/promotions]', err);
+    return NextResponse.json({ success: false, error: errorMessage(err) }, { status: 500 });
   }
 }
 
-// UPDATE Existing Promotion
+// ─── PATCH /api/promotions ───────────────────────────────────────────────────
 export async function PATCH(req: Request) {
   try {
-    await connectToDatabase();
     const body = await req.json();
-    const { id, code, discountType, discountValue, minSpend, maxDiscount, usageLimit, expiryDate, status } = body;
+    const where = whereFor(body.id ?? body._id, body.code);
 
-    if (!code && !id) {
-      return NextResponse.json({ success: false, error: 'Promo code or ID required' }, { status: 400 });
+    if (!where) {
+      return NextResponse.json(
+        { success: false, error: 'Promo code or ID required' },
+        { status: 400 }
+      );
     }
 
-    const filter = id ? { _id: id } : { code: code.toUpperCase().trim() };
-    const updateData: any = {};
+    const existing = await prisma.promotion.findUnique({ where });
+    if (!existing) {
+      return NextResponse.json({ success: false, error: 'Promotion not found' }, { status: 404 });
+    }
 
-    if (code) updateData.code = code.toUpperCase().trim();
-    if (discountType) updateData.discountType = discountType;
-    if (discountValue !== undefined) updateData.discountValue = Number(discountValue);
-    if (minSpend !== undefined) updateData.minSpend = Number(minSpend);
-    if (maxDiscount !== undefined) updateData.maxDiscount = Number(maxDiscount);
-    if (usageLimit !== undefined) updateData.usageLimit = Number(usageLimit);
-    if (expiryDate) updateData.expiryDate = expiryDate;
-    if (status) updateData.status = status;
+    const data: Prisma.PromotionUpdateInput = {};
+    const code = normalizeCode(body.code);
+    if (code && code !== existing.code) {
+      const clash = await prisma.promotion.findUnique({ where: { code } });
+      if (clash && clash.id !== existing.id) {
+        return NextResponse.json(
+          { success: false, error: `Promo code ${code} already exists` },
+          { status: 409 }
+        );
+      }
+      data.code = code;
+    }
 
-    const updated = await PromotionModel.findOneAndUpdate(filter, updateData, { new: true });
+    const discountType = asDiscountType(body.discountType);
+    if (discountType) data.discountType = discountType;
 
-    return NextResponse.json({ success: true, promotion: updated });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
+    const status = asStatus(body.status);
+    if (status) data.status = status;
+
+    if (body.discountValue !== undefined) data.discountValue = Number(body.discountValue) || 0;
+    if (body.minSpend !== undefined) data.minSpend = Number(body.minSpend) || 0;
+    if (body.maxDiscount !== undefined) data.maxDiscount = Number(body.maxDiscount) || 0;
+    if (body.usageLimit !== undefined) data.usageLimit = Number(body.usageLimit) || 0;
+    if (body.expiryDate) data.expiryDate = String(body.expiryDate);
+
+    const promotion = await prisma.promotion.update({ where: { id: existing.id }, data });
+    return NextResponse.json({ success: true, message: 'Promotion updated', promotion });
+  } catch (err) {
+    console.error('[PATCH /api/promotions]', err);
+    return NextResponse.json({ success: false, error: errorMessage(err) }, { status: 500 });
   }
 }
 
-// DELETE Promotion
+// ─── DELETE /api/promotions?id=...&code=... ──────────────────────────────────
 export async function DELETE(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const code = searchParams.get('code');
-    const id = searchParams.get('id');
+    const where = whereFor(searchParams.get('id'), searchParams.get('code'));
 
-    if (!code && !id) {
-      return NextResponse.json({ success: false, error: 'Promo code or ID required for deletion' }, { status: 400 });
+    if (!where) {
+      return NextResponse.json(
+        { success: false, error: 'Promo code or ID required for deletion' },
+        { status: 400 }
+      );
     }
 
-    await connectToDatabase();
-    const filter = id ? { _id: id } : { code: code?.toUpperCase().trim() };
-    await PromotionModel.deleteOne(filter);
+    const existing = await prisma.promotion.findUnique({ where });
+    if (!existing) {
+      return NextResponse.json({ success: false, error: 'Promotion not found' }, { status: 404 });
+    }
 
+    await prisma.promotion.delete({ where: { id: existing.id } });
     return NextResponse.json({ success: true, message: 'Promotion deleted successfully' });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
+  } catch (err) {
+    console.error('[DELETE /api/promotions]', err);
+    return NextResponse.json({ success: false, error: errorMessage(err) }, { status: 500 });
   }
 }

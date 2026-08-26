@@ -1,0 +1,256 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mongodb"
+    url      = env("DATABASE_URL")
+}
+
+// Fields added after the Mongoose era are declared OPTIONAL rather than given a
+// @default: on MongoDB, Prisma throws when a *required* field is missing from an
+// existing document, and @default only applies on write. Optional keeps every
+// document written by the old driver readable. List fields are safe either way
+// (absent → []).
+
+type CartItem {
+    productId     String
+    selectedColor String
+    selectedSize  String
+    quantity      Int
+}
+
+model User {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+
+    email       String @unique
+    phone       String
+    name        String
+    district    String @default("Dhaka")
+    fullAddress String @default("")
+
+    passwordHash String @default("")
+    resetOtp     String @default("")
+
+    cart     CartItem[]
+    wishlist String[]
+
+    ip        String  @default("")
+    isBlocked Boolean @default(false)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+
+model BlockedIp {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  ip        String   @unique
+  reason    String   @default("Security Violation / Suspicious Activity")
+  blockedBy String   @default("Administrator")
+  blockedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Category ────────────────────────────────────────────────────────────────
+
+type SubCategory {
+  id          String
+  name        String
+  slug        String
+  description String  @default("")
+}
+
+model Category {
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+
+  name          String
+  slug          String        @unique
+  icon          String        @default("Tag")
+  description   String        @default("")
+  image         String        @default("")
+  isFeatured    Boolean       @default(false)
+  sortOrder     Int           @default(0)
+
+  subCategories SubCategory[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([isFeatured])
+}
+
+// ─── Promotion (discount coupon) ─────────────────────────────────────────────
+// Not to be confused with the marketing *banners* in src/data/promotions.ts.
+
+enum DiscountType {
+  percentage
+  fixed
+}
+
+
+enum PromotionStatus {
+  Active
+  Expired
+  Disabled
+}
+
+model Promotion {
+  id            String          @id @default(auto()) @map("_id") @db.ObjectId
+
+  code          String          @unique
+  discountType  DiscountType    @default(percentage)
+  discountValue Float
+  minSpend      Float           @default(0)
+  maxDiscount   Float           @default(0)
+
+  usageLimit    Int             @default(100)
+  usedCount     Int             @default(0)
+
+  expiryDate    String          @default("2026-12-31")
+  status        PromotionStatus @default(Active)
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+// ─── Product ─────────────────────────────────────────────────────────────────
+
+type ProductColor {
+  name       String
+  hex        String
+  imageIndex Int?
+  images     String[]
+}
+
+// One row of the admin form's colour × size matrix.
+type ProductVariation {
+  id            String
+  colorName     String
+  colorHex      String
+  size          String
+  stock         Int
+  price         Float?
+  priceOverride Float?
+  imageUrl      String?
+}
+
+type ProductReview {
+  id               String
+  author           String
+  rating           Float
+  date             String
+  comment          String
+  verifiedPurchase Boolean
+}
+
+model Product {
+  id                 String             @id @default(auto()) @map("_id") @db.ObjectId
+
+  slug               String             @unique
+  name               String
+  code               String?
+
+  category           String
+  subCategory        String?
+
+  price              Float
+  originalPrice      Float
+
+  rating             Float              @default(4.8)
+  reviewCount        Int                @default(0)
+
+  isNew              Boolean?
+  isNewArrival       Boolean            @default(false)
+  isBestSeller       Boolean            @default(false)
+  isFlashSale        Boolean            @default(false)
+
+  discountPercentage Float              @default(0)
+
+  workType           String
+  occasion           String
+  material           String
+  weather            String?
+
+  colors             ProductColor[]
+  sizes              String[]
+  variations         ProductVariation[]
+
+  stock              Int                @default(10)
+
+  images             String[]
+
+  description        String
+
+  features           String[]
+  careInstructions   String[]
+  reviewsList        ProductReview[]
+
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@index([category])
+  @@index([subCategory])
+}
+
+// ─── Order ───────────────────────────────────────────────────────────────────
+
+type OrderItem {
+  product        Json
+  selectedColor  String
+  selectedSize   String
+  quantity       Int
+}
+
+// fullName/phone are the only fields the checkout always collects. The rest vary
+// by locale — this storefront sends district + fullAddress, not street/postalCode.
+type ShippingAddress {
+  fullName    String
+  phone       String
+  district    String?
+  fullAddress String?
+  street      String?
+  city        String?
+  country     String?
+  postalCode  String?
+}
+
+model Order {
+  id                String          @id @default(auto()) @map("_id") @db.ObjectId
+
+  // Customer-facing reference (FLK-12345). `id` is an ObjectId, so the number the
+  // app generates and lets people track by needs its own unique field.
+  orderNumber       String          @unique
+
+  date              String
+
+  items             OrderItem[]
+
+  subtotal          Float
+  discount          Float           @default(0)
+  shippingFee       Float           @default(0)
+  total             Float
+
+  // Deliberately a String, not an enum: the UI's own values include
+  // 'Quality Checked' and 'Out for Delivery' (Prisma enums cannot contain
+  // spaces) plus 'Pending' and 'Cancelled'.
+  status            String          @default("Processing")
+
+  shippingAddress   ShippingAddress
+
+  userEmail         String?
+  userIp            String?
+
+  deliveryMethod    String?
+  paymentMethod     String?
+  trackingNumber    String?
+  estimatedDelivery String?
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([status])
+}

@@ -1,3 +1,16 @@
+/**
+ * Two distinct things live in this file:
+ *
+ * - `Promotion` / `PROMOTIONS` — marketing **banners** for /live-promotions.
+ *   Presentation only; never written to the database.
+ * - `Coupon` / `DEFAULT_COUPONS` — the seed payload for the `Promotion` table,
+ *   i.e. real redeemable **discount codes** validated at checkout.
+ *
+ * They are not interchangeable. Writing a banner into the coupon collection is
+ * what the old /api/seed route did, and it produced records that
+ * /api/promotions/validate could not read.
+ */
+
 export interface Promotion {
   id: string;
   code: string;
@@ -58,5 +71,55 @@ export const PROMOTIONS: Promotion[] = [
     minSpend: 100,
     isFlashSale: false,
     terms: 'Valid globally for standard express shipping.'
+  }
+];
+
+// ─── Coupons (the `Promotion` table's seed payload) ──────────────────────────
+
+export interface Coupon {
+  code: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  minSpend: number;
+  maxDiscount: number;
+  usageLimit: number;
+  usedCount: number;
+  expiryDate: string; // 'YYYY-MM-DD'
+  status: 'Active' | 'Expired' | 'Disabled';
+}
+
+export const DEFAULT_COUPONS: Coupon[] = [
+  {
+    code: 'EID2026',
+    discountType: 'percentage',
+    discountValue: 15,
+    minSpend: 2500,
+    maxDiscount: 1000,
+    usageLimit: 500,
+    usedCount: 0,
+    expiryDate: '2026-06-30',
+    status: 'Active'
+  },
+  {
+    code: 'FALAK10',
+    discountType: 'percentage',
+    discountValue: 10,
+    minSpend: 1500,
+    maxDiscount: 500,
+    usageLimit: 1000,
+    usedCount: 0,
+    expiryDate: '2026-12-31',
+    status: 'Active'
+  },
+  {
+    code: 'WELCOME500',
+    discountType: 'fixed',
+    discountValue: 500,
+    minSpend: 3500,
+    maxDiscount: 500,
+    usageLimit: 200,
+    usedCount: 0,
+    expiryDate: '2026-09-30',
+    status: 'Active'
   }
 ];

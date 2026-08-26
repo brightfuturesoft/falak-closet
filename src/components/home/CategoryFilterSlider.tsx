@@ -1,12 +1,49 @@
 'use client';
 
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Heart, LayoutGrid, Scissors, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, LayoutGrid, Scissors, Sparkles, Layers3, ChevronLeft, ChevronRight } from 'lucide-react';
+import { INITIAL_CATEGORIES } from '@/data/categories';
+import { useCategories } from '@/lib/useCategories';
+import { useCart } from '@/context/CartContext';
+import type { Product } from '@/data/products';
 
 interface CategoryFilterSliderProps {
   onSelectFilter?: (type: string, value: string) => void;
   activeFilter?: { type: string; val: string } | null;
+}
+
+/** Max tag pills per card — beyond this the card gets a "+N more" pill. */
+const MAX_TAGS_PER_CARD = 4;
+
+interface FilterTag {
+  label: string;
+  filterType: string;
+  filterVal: string;
+}
+
+/**
+ * Distinct values of one product field, most common first.
+ *
+ * These pills used to be a hardcoded list ("CEY", "Ac Cotton", "+7 more"), so
+ * they advertised materials and seasons no product in the store carried — every
+ * one of those clicks filtered the home page down to nothing.
+ */
+function valuesOf(products: Product[], key: 'occasion' | 'weather' | 'material'): FilterTag[] {
+  const counts = new Map<string, { value: string; count: number }>();
+
+  products.forEach((p) => {
+    const raw = (p[key] || '').trim();
+    if (!raw) return;
+    const id = raw.toLowerCase();
+    const existing = counts.get(id);
+    if (existing) existing.count += 1;
+    else counts.set(id, { value: raw, count: 1 });
+  });
+
+  return Array.from(counts.values())
+    .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value))
+    .map(({ value }) => ({ label: value, filterType: key, filterVal: value }));
 }
 
 export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryFilterSliderProps) {
@@ -15,54 +52,108 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
   const [activeCardIndex, setActiveCardIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
-  const filterCards = [
-    {
-      id: 'occasion',
-      icon: Heart,
-      title: 'Shop by occasion',
-      subtitle: 'Find the right pick for the moment',
-      tags: [
-        { label: 'Party Wear', filterType: 'occasion', filterVal: 'Party Wear' },
-        { label: 'Casual Wear', filterType: 'occasion', filterVal: 'Casual Wear' },
-        { label: '+2 more', filterType: 'occasion', filterVal: 'Festive & Eid' }
-      ]
-    },
-    {
-      id: 'weather',
-      icon: LayoutGrid,
-      title: 'Shop for the weather',
-      subtitle: 'Seasonal picks, just right',
-      tags: [
-        { label: 'Summer', filterType: 'weather', filterVal: 'Summer' },
-        { label: 'Winter', filterType: 'weather', filterVal: 'Winter' },
-        { label: 'Festive', filterType: 'weather', filterVal: 'Festive' },
-        { label: 'Wedding', filterType: 'weather', filterVal: 'Wedding' }
-      ]
-    },
-    {
-      id: 'material',
-      icon: Scissors,
-      title: 'Shop by material',
-      subtitle: 'Cotton, silk, linen and more',
-      tags: [
-        { label: 'CEY', filterType: 'material', filterVal: 'CEY' },
-        { label: 'Ac Cotton', filterType: 'material', filterVal: 'Ac Cotton' },
-        { label: 'Airy Cotton', filterType: 'material', filterVal: 'Airy Cotton' },
-        { label: '+7 more', filterType: 'material', filterVal: 'Crinkle' }
-      ]
-    },
-    {
-      id: 'category',
-      icon: Sparkles,
-      title: 'Shop by category',
-      subtitle: 'What kind of product are you looking for?',
-      tags: [
-        { label: 'Dress', filterType: 'category', filterVal: 'Modest Dresses' },
-        { label: 'HIJAB', filterType: 'category', filterVal: 'Hijabs & Dupattas' },
-        { label: 'Accessories', filterType: 'category', filterVal: 'Accessories' }
-      ]
+  // Live taxonomy from MongoDB; seed data stands in while loading or if the API is down.
+  const { categories } = useCategories({ fallback: INITIAL_CATEGORIES });
+  const { products } = useCart();
+
+  const filterCards = useMemo(() => {
+    /** Cap the pill list, folding the overflow into a "+N more" that opens the first hidden value. */
+    const capTags = (tags: FilterTag[]): FilterTag[] => {
+      if (tags.length <= MAX_TAGS_PER_CARD) return tags;
+      const shown = tags.slice(0, MAX_TAGS_PER_CARD - 1);
+      const firstHidden = tags[MAX_TAGS_PER_CARD - 1];
+      return [
+        ...shown,
+        { ...firstHidden, label: `+${tags.length - shown.length} more` },
+      ];
+    };
+
+    // Featured categories lead, then the rest — matches the admin "Featured" toggle.
+    const sortedCategories = [...categories].sort(
+      (a, b) => Number(Boolean(b.isFeatured)) - Number(Boolean(a.isFeatured))
+    );
+
+    const categoryTags: FilterTag[] = sortedCategories.map((cat) => ({
+      label: cat.name,
+      filterType: 'category',
+      filterVal: cat.name,
+    }));
+
+    const subCategoryTags: FilterTag[] = sortedCategories
+      .flatMap((cat) => cat.subCategories ?? [])
+      .map((sub) => ({
+        label: sub.name,
+        filterType: 'subCategory',
+        filterVal: sub.name,
+      }));
+
+    const occasionTags = valuesOf(products, 'occasion');
+    const weatherTags = valuesOf(products, 'weather');
+    const materialTags = valuesOf(products, 'material');
+
+    // Every card is built from values the catalog actually contains, so no pill
+    // can lead to an empty result.
+    const cards: {
+      id: string;
+      icon: typeof Heart;
+      title: string;
+      subtitle: string;
+      tags: FilterTag[];
+    }[] = [];
+
+    if (occasionTags.length) {
+      cards.push({
+        id: 'occasion',
+        icon: Heart,
+        title: 'Shop by occasion',
+        subtitle: 'Find the right pick for the moment',
+        tags: capTags(occasionTags)
+      });
     }
-  ];
+
+    if (weatherTags.length) {
+      cards.push({
+        id: 'weather',
+        icon: LayoutGrid,
+        title: 'Shop for the weather',
+        subtitle: 'Seasonal picks, just right',
+        tags: capTags(weatherTags)
+      });
+    }
+
+    if (materialTags.length) {
+      cards.push({
+        id: 'material',
+        icon: Scissors,
+        title: 'Shop by material',
+        subtitle: 'Cotton, silk, linen and more',
+        tags: capTags(materialTags)
+      });
+    }
+
+    // Only render the taxonomy-driven cards once there is something to show.
+    if (categoryTags.length) {
+      cards.push({
+        id: 'category',
+        icon: Sparkles,
+        title: 'Shop by category',
+        subtitle: 'What kind of product are you looking for?',
+        tags: capTags(categoryTags)
+      });
+    }
+
+    if (subCategoryTags.length) {
+      cards.push({
+        id: 'subcategory',
+        icon: Layers3,
+        title: 'Shop by style',
+        subtitle: 'Browse the finer cuts and silhouettes',
+        tags: capTags(subCategoryTags)
+      });
+    }
+
+    return cards;
+  }, [categories, products]);
 
   const handleScrollTo = useCallback((index: number) => {
     if (scrollRef.current) {
@@ -89,7 +180,8 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
 
   // Continuous Auto-rotate timer (3.5 seconds per card)
   useEffect(() => {
-    if (isPaused) return;
+    // `% 0` is NaN, and one card has nowhere to rotate to.
+    if (isPaused || filterCards.length <= 1) return;
 
     const timer = setInterval(() => {
       setActiveCardIndex((prevIndex) => {
@@ -137,6 +229,9 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
     }
   };
 
+  // Nothing in the catalog to slice by yet — an empty carousel is just a gap.
+  if (filterCards.length === 0) return null;
+
   return (
     <section
       className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-6 sm:my-8 relative group"
@@ -180,15 +275,15 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
                   </div>
 
                   {/* Tags Pill List */}
-                  <div className="flex flex-wrap gap-2 pt-3">
+                  <div className="flex gap-2 pt-3 overflow-x-auto no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                     {card.tags.map((tag) => {
                       const isTagActive =
                         activeFilter?.type === tag.filterType && activeFilter?.val === tag.filterVal;
                       return (
                         <button
-                          key={tag.label}
+                          key={`${tag.filterType}-${tag.filterVal}-${tag.label}`}
                           onClick={() => handleTagClick(tag.filterType, tag.filterVal)}
-                          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer active:scale-95 ${
+                          className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer active:scale-95 ${
                             isTagActive
                               ? 'bg-[#9B050B] text-[#FFFBF0] shadow-xs'
                               : 'bg-[#FFFBF0] hover:bg-[#F2C76E]/20 border border-[#F2C76E]/60 text-[#0C163A] hover:text-[#9B050B]'

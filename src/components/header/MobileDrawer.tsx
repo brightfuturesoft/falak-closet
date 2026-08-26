@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { X, ShoppingBag, Flame, Tag, Truck, HelpCircle, ShieldCheck, Heart, User, ChevronDown } from 'lucide-react';
-import { CATEGORIES } from '@/data/products';
-import { Category, INITIAL_CATEGORIES, getStoredCategories } from '@/data/categories';
+import { INITIAL_CATEGORIES } from '@/data/categories';
+import { useCategories } from '@/lib/useCategories';
 import { useCart } from '@/context/CartContext';
 
 interface MobileDrawerProps {
@@ -12,22 +12,7 @@ interface MobileDrawerProps {
 
 export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
   const { wishlist } = useCart();
-  const [categoriesList, setCategoriesList] = useState<Category[]>(INITIAL_CATEGORIES);
-
-  useEffect(() => {
-    fetch('/api/categories')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && Array.isArray(data.categories)) {
-          setCategoriesList(data.categories);
-        } else {
-          setCategoriesList(getStoredCategories());
-        }
-      })
-      .catch(() => {
-        setCategoriesList(getStoredCategories());
-      });
-  }, []);
+  const { categories: categoriesList } = useCategories({ fallback: INITIAL_CATEGORIES });
 
   if (!isOpen) return null;
 

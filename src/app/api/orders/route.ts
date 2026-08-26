@@ -1,72 +1,104 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/db';
-import { OrderModel } from '@/models/Order';
-import { UserModel } from '@/models/User';
+import { prisma } from '@/lib/prisma';
+import { buildOrderData, serializeOrder, OrderValidationError } from '@/lib/orders';
 
+function errorMessage(err: unknown) {
+  return err instanceof Error ? err.message : 'Server error';
+}
+
+// ─── GET /api/orders ─────────────────────────────────────────────────────────
 export async function GET() {
   try {
-    await connectToDatabase();
-    const orders = await OrderModel.find({}).sort({ createdAt: -1 });
-    return NextResponse.json({ success: true, orders });
-  } catch (error) {
-    return NextResponse.json({ success: true, orders: [], source: 'offline' });
+    const orders = await prisma.order.findMany({ orderBy: { createdAt: 'desc' } });
+    return NextResponse.json({ success: true, orders: orders.map(serializeOrder) });
+  } catch (err) {
+    console.error('[GET /api/orders]', err);
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch orders' },
+      { status: 500 }
+    );
   }
 }
 
+// ─── POST /api/orders ────────────────────────────────────────────────────────
 export async function POST(req: Request) {
   try {
-    await connectToDatabase();
     const body = await req.json();
+    const data = buildOrderData(body);
 
-    const newOrder = await OrderModel.create(body);
+    const order = await prisma.order.create({ data });
 
-    // Auto-register user profile in User Collection upon purchase
+    // Auto-register the customer as a user profile. Deliberately in its own
+    // try/catch: the order is already committed, so a profile-sync failure must
+    // not turn a successful purchase into an error response.
     try {
-      const email = body.userEmail || (body.shippingAddress?.fullName ? `${body.shippingAddress.fullName.toLowerCase().replace(/[^a-z0-9]/g, '')}@falakcloset.com` : undefined);
-      const phone = body.shippingAddress?.phone;
-      const name = body.shippingAddress?.fullName;
+      const { fullName, phone, district, city, fullAddress, street } = order.shippingAddress;
+      const email =
+        order.userEmail ||
+        (fullName ? `${fullName.toLowerCase().replace(/[^a-z0-9]/g, '')}@falakcloset.com` : '') ||
+        `${phone}@falakcloset.com`;
 
-      if (phone && name) {
-        await UserModel.findOneAndUpdate(
-          { phone },
-          {
-            email: email || `${phone}@falakcloset.com`,
-            phone,
-            name,
-            district: body.shippingAddress?.district || body.shippingAddress?.city || 'Dhaka',
-            fullAddress: body.shippingAddress?.fullAddress || body.shippingAddress?.street || 'Dhaka, Bangladesh',
-            ip: body.userIp || '103.24.12.89'
-          },
-          { upsert: true, new: true }
-        );
-      }
-    } catch { }
+      const profile = {
+        phone,
+        name: fullName,
+        district: district || city || 'Dhaka',
+        fullAddress: fullAddress || street || 'Dhaka, Bangladesh',
+        ...(order.userIp ? { ip: order.userIp } : {}),
+      };
 
-    return NextResponse.json({ success: true, order: newOrder });
-  } catch (error) {
+      await prisma.user.upsert({
+        where: { email: email.toLowerCase() },
+        update: profile,
+        create: { email: email.toLowerCase(), ...profile },
+      });
+    } catch (profileErr) {
+      console.error('[POST /api/orders] profile sync skipped', profileErr);
+    }
+
     return NextResponse.json(
-      { success: false, error: (error as Error).message },
-      { status: 500 }
+      { success: true, message: 'Order placed', order: serializeOrder(order) },
+      { status: 201 }
     );
+  } catch (err) {
+    if (err instanceof OrderValidationError) {
+      return NextResponse.json({ success: false, error: err.message }, { status: 400 });
+    }
+    console.error('[POST /api/orders]', err);
+    return NextResponse.json({ success: false, error: errorMessage(err) }, { status: 500 });
   }
 }
 
+// ─── PATCH /api/orders ───────────────────────────────────────────────────────
+// body: { orderId: 'FLK-12345', status: 'Out for Delivery' }
 export async function PATCH(req: Request) {
   try {
-    await connectToDatabase();
     const { orderId, status } = await req.json();
 
-    const updated = await OrderModel.findOneAndUpdate(
-      { id: orderId },
-      { status },
-      { new: true }
-    );
+    if (!orderId || !status) {
+      return NextResponse.json(
+        { success: false, error: 'orderId and status are required' },
+        { status: 400 }
+      );
+    }
 
-    return NextResponse.json({ success: true, order: updated });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, error: (error as Error).message },
-      { status: 500 }
-    );
+    // `orderId` is the customer-facing FLK number, which lives in `orderNumber`.
+    const existing = await prisma.order.findUnique({ where: { orderNumber: String(orderId) } });
+    if (!existing) {
+      return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
+    }
+
+    const order = await prisma.order.update({
+      where: { orderNumber: existing.orderNumber },
+      data: { status: String(status) },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Order status updated',
+      order: serializeOrder(order),
+    });
+  } catch (err) {
+    console.error('[PATCH /api/orders]', err);
+    return NextResponse.json({ success: false, error: errorMessage(err) }, { status: 500 });
   }
 }

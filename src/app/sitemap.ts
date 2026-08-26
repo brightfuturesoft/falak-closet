@@ -1,15 +1,27 @@
 import { MetadataRoute } from 'next';
-import { PRODUCTS } from '@/data/products';
+import { getProductSlugs } from '@/lib/products';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://falakcloset.com';
+  const now = new Date();
 
-  const productUrls = PRODUCTS.map((product) => ({
-    url: `${baseUrl}/product/${product?.slug}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.8
-  }));
+  // Real slugs from the database. Listing the seed array here advertised
+  // /product/<slug> URLs for demo items that 404 on a live store, and omitted
+  // every product the admin actually created.
+  let productUrls: MetadataRoute.Sitemap = [];
+  try {
+    const slugs = await getProductSlugs();
+    productUrls = slugs.map(({ slug, updatedAt }) => ({
+      url: `${baseUrl}/product/${slug}`,
+      lastModified: new Date(updatedAt),
+      changeFrequency: 'weekly' as const,
+      priority: 0.8
+    }));
+  } catch (err) {
+    // A sitemap missing its product URLs still beats a 500 that tells crawlers
+    // the whole site is broken.
+    console.error('[sitemap] could not list product slugs:', err);
+  }
 
   const staticPages = [
     '',
@@ -26,7 +38,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/terms'
   ].map((route) => ({
     url: `${baseUrl}${route}`,
-    lastModified: new Date(),
+    lastModified: now,
     changeFrequency: 'daily' as const,
     priority: route === '' ? 1.0 : 0.9
   }));

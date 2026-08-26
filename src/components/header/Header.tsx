@@ -15,7 +15,7 @@ import {
   X
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { PRODUCTS, Product } from '@/data/products';
+import { Product } from '@/data/products';
 import { formatCurrency } from '@/lib/utils';
 import { Logo } from '@/components/ui/Logo';
 
@@ -60,8 +60,9 @@ export function Header() {
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [userName, setUserName] = useState<string | null>(null);
 
-  // Combine store products + static products for full coverage
-  const allStoreProducts = cartProducts && cartProducts.length > 0 ? cartProducts : PRODUCTS;
+  // Search the live catalog only. Falling back to the seed array meant an empty
+  // store still returned demo products, whose /product links 404.
+  const allStoreProducts = cartProducts || [];
 
   useEffect(() => {
     try {

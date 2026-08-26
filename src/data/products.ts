@@ -2,6 +2,8 @@ export interface ProductColor {
   name: string;
   hex: string;
   imageIndex?: number;
+  /** Per-colour gallery built by the admin form; `images` on the product is the flattened union. */
+  images?: string[];
 }
 
 export interface ProductVariation {
@@ -34,8 +36,6 @@ export interface Product {
   slug: string;
   name: string;
   code: string;
-  dateAdded: string;
-  imageLabel: string;
   category: CategoryType | string;
   subCategory?: string;
   price: number;
@@ -60,6 +60,9 @@ export interface Product {
   features: string[];
   careInstructions: string[];
   reviewsList?: Review[];
+  /** ISO strings — Prisma `Date`s are serialized in `src/lib/products.ts` so they can cross to the client. */
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export const PRODUCTS: Product[] = [
@@ -68,8 +71,6 @@ export const PRODUCTS: Product[] = [
     slug: 'crinkle-hijab',
     name: 'Crinkle Hijab',
     code: 'EZ-L6',
-    dateAdded: '7/4/2026',
-    imageLabel: 'Cool Comfort Crinkle HIJAB',
     category: 'Hijabs & Dupattas',
     price: 250,
     originalPrice: 350,
@@ -118,8 +119,6 @@ export const PRODUCTS: Product[] = [
     slug: 'kaftan-set',
     name: 'Kaftan Set',
     code: 'EM-E16',
-    dateAdded: '7/4/2026',
-    imageLabel: 'Cool Comfort Crinkle HIJAB',
     category: 'Modest Dresses',
     price: 1950,
     originalPrice: 2500,
@@ -156,8 +155,6 @@ export const PRODUCTS: Product[] = [
     slug: 'golden-shimmer-hijab',
     name: 'Golden Shimmer Hijab',
     code: 'EZ-M12',
-    dateAdded: '5/17/2026',
-    imageLabel: 'Love Candy Hijab',
     category: 'Hijabs & Dupattas',
     price: 350,
     originalPrice: 480,
@@ -188,8 +185,6 @@ export const PRODUCTS: Product[] = [
     slug: 'sequin-embellished-scarf',
     name: 'Sequin Embellished Scarf',
     code: 'EZ-S8',
-    dateAdded: '5/17/2026',
-    imageLabel: 'Love Candy Hijab',
     category: 'Hijabs & Dupattas',
     price: 420,
     originalPrice: 600,
@@ -220,8 +215,6 @@ export const PRODUCTS: Product[] = [
     slug: 'rose-dust-pleated-hijab',
     name: 'Rose Dust Pleated Hijab',
     code: 'EZ-P4',
-    dateAdded: '5/17/2026',
-    imageLabel: 'Love Candy Hijab',
     category: 'Hijabs & Dupattas',
     price: 380,
     originalPrice: 520,

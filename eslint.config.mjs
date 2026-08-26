@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated Prisma client — gitignored output from an earlier generator
+    // config that nothing imports (the app uses `@prisma/client`). Linting it
+    // buries real findings under thousands of generated-code warnings.
+    "src/generated/**",
   ]),
 ]);
 

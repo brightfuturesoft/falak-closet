@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Product, PRODUCTS } from '@/data/products';
+import { Product } from '@/data/products';
 import { PROMOTIONS, Promotion } from '@/data/promotions';
 import { sendNewOrderNotification } from '@/lib/socketClient';
 
@@ -69,6 +69,8 @@ interface CartContextType {
   // Dynamic Database Products State
   products: Product[];
   isLoadingProducts: boolean;
+  /** Non-null when the catalog read failed — lets consumers distinguish "no products" from "could not load". */
+  productsError: string | null;
   refreshProductsFromApi: () => Promise<void>;
   getProductBySlug: (slug: string) => Product | undefined;
 
@@ -84,7 +86,16 @@ const FREE_SHIPPING_MIN = 100;
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({
+  children,
+  initialProducts = [],
+  initialProductsError = null,
+}: {
+  children: React.ReactNode;
+  /** Server-rendered catalog from the root layout. Keeps the first paint free of a fetch waterfall. */
+  initialProducts?: Product[];
+  initialProductsError?: string | null;
+}) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<Product[]>([]);
   const [appliedPromo, setAppliedPromo] = useState<Promotion | null>(null);
@@ -92,27 +103,41 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
 
   // Dynamic Database Products State
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  // Already have the server's copy, so nothing is "loading" on first paint.
+  const [isLoadingProducts, setIsLoadingProducts] = useState(initialProducts.length === 0 && !initialProductsError);
+  const [productsError, setProductsError] = useState<string | null>(initialProductsError);
 
   // Load products from Database API
   const refreshProductsFromApi = async () => {
     setIsLoadingProducts(true);
     try {
-      const res = await fetch('/api/products');
-      const data = await res.json();
-      if (data.products) {
-        setProducts(data.products);
+      const res = await fetch('/api/products', { cache: 'no-store' });
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data?.success || !Array.isArray(data.products)) {
+        // Keep whatever is already on screen. Blanking the catalog on a failed
+        // refresh used to turn a transient network blip into an empty store.
+        setProductsError(data?.error || `Could not load the catalog (HTTP ${res.status}).`);
+        return;
       }
-    } catch {
-      setProducts([]);
+
+      setProducts(data.products);
+      setProductsError(null);
+    } catch (err) {
+      setProductsError((err as Error).message || 'Network error while loading the catalog.');
     } finally {
       setIsLoadingProducts(false);
     }
   };
 
+  // The server already handed us the catalog; re-fetching on mount would just
+  // duplicate that query. Only fetch when it arrived empty.
   useEffect(() => {
-    refreshProductsFromApi();
+    if (initialProducts.length === 0 && !initialProductsError) {
+      refreshProductsFromApi();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getProductBySlug = (slug: string) => {
@@ -354,6 +379,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setIsCartDrawerOpen,
         products,
         isLoadingProducts,
+        productsError,
         refreshProductsFromApi,
         getProductBySlug,
         orders,

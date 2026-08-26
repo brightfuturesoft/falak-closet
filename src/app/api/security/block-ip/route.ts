@@ -1,52 +1,77 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/db';
-import { BlockedIpModel } from '@/models/BlockedIp';
+import { prisma } from '@/lib/prisma';
 
+function errorMessage(err: unknown) {
+  return err instanceof Error ? err.message : 'Server error';
+}
+
+// ─── GET /api/security/block-ip ──────────────────────────────────────────────
 export async function GET() {
   try {
-    await connectToDatabase();
-    const blockedIps = await BlockedIpModel.find({}).sort({ createdAt: -1 });
+    const blockedIps = await prisma.blockedIp.findMany({ orderBy: { createdAt: 'desc' } });
     return NextResponse.json({ success: true, blockedIps });
-  } catch (error) {
-    return NextResponse.json({ success: true, blockedIps: [], source: 'offline' });
+  } catch (err) {
+    // A security screen that reports "no blocked IPs" during an outage is worse
+    // than one that reports the outage, so this is a real 500.
+    console.error('[GET /api/security/block-ip]', err);
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch blocked IPs' },
+      { status: 500 }
+    );
   }
 }
 
+// ─── POST /api/security/block-ip ─────────────────────────────────────────────
 export async function POST(req: Request) {
   try {
-    await connectToDatabase();
     const { ip, reason, blockedBy } = await req.json();
+    const cleanIp = String(ip ?? '').trim();
 
-    if (!ip || !ip.trim()) {
+    if (!cleanIp) {
       return NextResponse.json({ success: false, error: 'IP address required' }, { status: 400 });
     }
 
-    const cleanIp = ip.trim();
-    const blocked = await BlockedIpModel.findOneAndUpdate(
-      { ip: cleanIp },
-      { ip: cleanIp, reason: reason || 'Blocked by Admin', blockedBy: blockedBy || 'Admin', blockedAt: new Date() },
-      { upsert: true, new: true }
-    );
+    const fields = {
+      reason: String(reason ?? '').trim() || 'Blocked by Admin',
+      blockedBy: String(blockedBy ?? '').trim() || 'Admin',
+      blockedAt: new Date(),
+    };
 
-    return NextResponse.json({ success: true, blockedIp: blocked });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
+    const blockedIp = await prisma.blockedIp.upsert({
+      where: { ip: cleanIp },
+      update: fields,
+      create: { ip: cleanIp, ...fields },
+    });
+
+    return NextResponse.json({ success: true, blockedIp });
+  } catch (err) {
+    console.error('[POST /api/security/block-ip]', err);
+    return NextResponse.json({ success: false, error: errorMessage(err) }, { status: 500 });
   }
 }
 
+// ─── DELETE /api/security/block-ip?ip=... ────────────────────────────────────
 export async function DELETE(req: Request) {
   try {
-    await connectToDatabase();
     const { searchParams } = new URL(req.url);
-    const ip = searchParams.get('ip');
+    const ip = String(searchParams.get('ip') ?? '').trim();
 
     if (!ip) {
       return NextResponse.json({ success: false, error: 'IP address required' }, { status: 400 });
     }
 
-    await BlockedIpModel.deleteOne({ ip: ip.trim() });
+    const existing = await prisma.blockedIp.findUnique({ where: { ip } });
+    if (!existing) {
+      return NextResponse.json(
+        { success: false, error: `IP ${ip} is not currently blocked` },
+        { status: 404 }
+      );
+    }
+
+    await prisma.blockedIp.delete({ where: { ip } });
     return NextResponse.json({ success: true, message: `IP ${ip} unblocked successfully` });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
+  } catch (err) {
+    console.error('[DELETE /api/security/block-ip]', err);
+    return NextResponse.json({ success: false, error: errorMessage(err) }, { status: 500 });
   }
 }

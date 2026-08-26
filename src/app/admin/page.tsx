@@ -16,15 +16,48 @@ import { SecurityTab } from '@/components/admin/SecurityTab';
 import { SettingsTab } from '@/components/admin/SettingsTab';
 import { ProductFormModal } from '@/components/admin/ProductFormModal';
 import { OrderReceiptModal } from '@/components/admin/OrderReceiptModal';
-import { PromoFormModal } from '@/components/admin/PromoFormModal';
+import { PromoFormModal, PromoVoucherData } from '@/components/admin/PromoFormModal';
 import { AdminCreateOrderModal } from '@/components/admin/AdminCreateOrderModal';
 import { ToastNotification, ToastMessage } from '@/components/admin/ToastNotification';
 
-import { PRODUCTS, Product } from '@/data/products';
-import { PROMOTIONS, Promotion } from '@/data/promotions';
+import { Product } from '@/data/products';
 import { playNewOrderSound } from '@/lib/soundNotification';
 import { useCart, OrderRecord } from '@/context/CartContext';
 import { getSocket } from '@/lib/socketClient';
+
+/**
+ * Every admin write goes through this. The handlers below used to be
+ * `try { await fetch(...) } catch { }` followed by an unconditional optimistic
+ * update and a success toast — so a rejected write still read as "published to
+ * store!". Here a non-2xx response, or a body without `success: true`, is a
+ * failure and the caller must not touch state.
+ */
+async function requestJson<T = Record<string, unknown>>(
+  url: string,
+  init?: RequestInit
+): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
+  try {
+    const res = await fetch(url, init);
+    const body = await res.json().catch(() => null);
+
+    if (!res.ok || !body?.success) {
+      return { ok: false, error: body?.error || `HTTP ${res.status} ${res.statusText}` };
+    }
+    return { ok: true, data: body as T };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message || 'Network error — is the server running?' };
+  }
+}
+
+const jsonInit = (method: string, body: unknown): RequestInit => ({
+  method,
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body),
+});
+
+const promoKey = (promo: Pick<PromoVoucherData, '_id' | 'id' | 'code'>) =>
+  promo._id || promo.id || promo.code;
+
 
 function AdminDashboardContent() {
   const pathname = usePathname();
@@ -78,7 +111,7 @@ function AdminDashboardContent() {
   // DB Source & Data State
   const [dbSource, setDbSource] = useState<string>('Connecting...');
   const [productsList, setProductsList] = useState<Product[]>([]);
-  const [promosList, setPromosList] = useState<Promotion[]>([]);
+  const [promosList, setPromosList] = useState<PromoVoucherData[]>([]);
   const [ordersList, setOrdersList] = useState<OrderRecord[]>([]);
 
   // Loading & Action States
@@ -94,7 +127,7 @@ function AdminDashboardContent() {
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddPromoOpen, setIsAddPromoOpen] = useState(false);
-  const [editingPromo, setEditingPromo] = useState<any | null>(null);
+  const [editingPromo, setEditingPromo] = useState<PromoVoucherData | null>(null);
   const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false);
 
   const handleDirectOrderCreated = (newOrder: OrderRecord) => {
@@ -142,23 +175,29 @@ function AdminDashboardContent() {
     addToast('info', 'Logged out from Falak Closet Admin Panel.');
   };
 
-  // Fetch Store Data from APIs
+  // Fetch Store Data from APIs. `noStore` on every call: the admin panel must
+  // never be served a cached catalog, or a write followed by a refetch would
+  // show the pre-write state and look like the write failed.
   const fetchAllData = async () => {
     setIsRefreshing(true);
-    try {
-      const pRes = await fetch('/api/products');
-      const pData = await pRes.json();
-      setProductsList(pData.products || []);
-      if (pData.source) setDbSource(pData.source);
-    } catch {
+    const failures: string[] = [];
+
+    const products = await requestJson<{ products: Product[] }>('/api/products', {
+      cache: 'no-store',
+    });
+    if (products.ok) {
+      setProductsList(products.data.products || []);
+      setDbSource('MongoDB');
+    } else {
+      failures.push(`products (${products.error})`);
       setDbSource('offline');
-      setProductsList([]);
     }
 
-    try {
-      const oRes = await fetch('/api/orders');
-      const oData = await oRes.json();
-      const fetchedOrders: OrderRecord[] = oData.orders || [];
+    const orders = await requestJson<{ orders: OrderRecord[] }>('/api/orders', {
+      cache: 'no-store',
+    });
+    if (orders.ok) {
+      const fetchedOrders = orders.data.orders || [];
       setOrdersList(fetchedOrders);
 
       // Check for incoming new orders
@@ -174,19 +213,22 @@ function AdminDashboardContent() {
       }
 
       // Update known order IDs set
-      const nextSet = new Set<string>();
-      fetchedOrders.forEach((o) => nextSet.add(o.id));
-      knownOrderIdsRef.current = nextSet;
-    } catch {
-      setOrdersList([]);
+      knownOrderIdsRef.current = new Set(fetchedOrders.map((o) => o.id));
+    } else {
+      failures.push(`orders (${orders.error})`);
     }
 
-    try {
-      const prRes = await fetch('/api/promotions');
-      const prData = await prRes.json();
-      setPromosList(prData.promotions || []);
-    } catch {
-      setPromosList([]);
+    const promos = await requestJson<{ promotions: PromoVoucherData[] }>('/api/promotions', {
+      cache: 'no-store',
+    });
+    if (promos.ok) {
+      setPromosList(promos.data.promotions || []);
+    } else {
+      failures.push(`promotions (${promos.error})`);
+    }
+
+    if (failures.length > 0) {
+      addToast('error', `Could not load ${failures.join(', ')}`);
     }
 
     refreshProductsFromApi();
@@ -258,180 +300,153 @@ function AdminDashboardContent() {
   const handleSeedDatabase = async () => {
     setIsSeeding(true);
     setSeedResult(null);
-    try {
-      const res = await fetch('/api/seed', { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        setSeedResult('Database seeded successfully with modest fashion dataset!');
-        addToast('success', 'MongoDB re-seeded with luxury modest fashion dataset!');
-        fetchAllData();
-      } else {
-        setSeedResult(`Seed error: ${data.error}`);
-        addToast('error', `Seed error: ${data.error}`);
-      }
-    } catch {
-      setSeedResult('Could not connect to MongoDB service at mongodb://localhost:27017.');
-      addToast('error', 'MongoDB service unavailable.');
-    } finally {
-      setIsSeeding(false);
+
+    const result = await requestJson<{ message: string }>('/api/seed', { method: 'POST' });
+
+    if (result.ok) {
+      setSeedResult(result.data.message);
+      addToast('success', result.data.message);
+      await fetchAllData();
+    } else {
+      setSeedResult(`Seed failed: ${result.error}`);
+      addToast('error', `Seed failed: ${result.error}`);
     }
+
+    setIsSeeding(false);
   };
 
-  // Save / Update Product
-  const handleSaveProduct = async (productData: Partial<Product>) => {
-    if (editingProduct) {
-      // Update
-      try {
-        await fetch(`/api/products/${editingProduct.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(productData)
-        });
-      } catch { }
+  // Save / Update Product. Returns whether the write actually landed — the modal
+  // stays open (with the form intact) when it did not.
+  const handleSaveProduct = async (productData: Partial<Product>): Promise<boolean> => {
+    const isEdit = Boolean(editingProduct);
 
-      setProductsList((prev) =>
-        prev.map((p) => (p.id === editingProduct.id ? ({ ...p, ...productData } as Product) : p))
-      );
-      setEditingProduct(null);
-      addToast('success', `Product "${productData.name}" updated successfully!`);
-    } else {
-      // Create
-      try {
-        const res = await fetch('/api/products', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(productData)
-        });
-        const data = await res.json();
-        if (data.success && data.product) {
-          setProductsList((prev) => [data.product, ...prev]);
-        } else {
-          setProductsList((prev) => [
-            {
-              ...productData,
-              id: `flk-${Date.now()}`,
-              slug: (productData.name || 'item').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-              rating: 5.0,
-              reviewCount: 1
-            } as Product,
-            ...prev
-          ]);
-        }
-      } catch {
-        setProductsList((prev) => [
-          {
-            ...productData,
-            id: `flk-${Date.now()}`,
-            slug: (productData.name || 'item').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-            rating: 5.0,
-            reviewCount: 1
-          } as Product,
-          ...prev
-        ]);
-      }
-      addToast('success', `New product "${productData.name}" published to store!`);
+    const result = isEdit
+      ? await requestJson(`/api/products/${editingProduct!.id}`, jsonInit('PUT', productData))
+      : await requestJson('/api/products', jsonInit('POST', productData));
+
+    if (!result.ok) {
+      addToast('error', `Could not ${isEdit ? 'update' : 'publish'} "${productData.name}": ${result.error}`);
+      return false;
     }
+
+    // Refetch rather than hand-merging: the server owns the slug, the derived
+    // discount, and the variation-summed stock, so its copy is the real one.
+    setEditingProduct(null);
+    await fetchAllData();
+    addToast(
+      'success',
+      isEdit
+        ? `Product "${productData.name}" updated successfully!`
+        : `New product "${productData.name}" published to store!`
+    );
+    return true;
   };
 
   // Update In-Line Stock
   const handleUpdateStock = async (id: string, newStock: number) => {
-    try {
-      await fetch(`/api/products/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stock: newStock })
-      });
-    } catch { }
+    const result = await requestJson(`/api/products/${id}`, jsonInit('PATCH', { stock: newStock }));
 
-    setProductsList((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, stock: newStock } : p))
-    );
+    if (!result.ok) {
+      addToast('error', `Stock update failed: ${result.error}`);
+      return;
+    }
+
+    setProductsList((prev) => prev.map((p) => (p.id === id ? { ...p, stock: newStock } : p)));
+    // The storefront reads from the cart context, not this table — without this
+    // the shop keeps showing the old stock until a full reload.
+    refreshProductsFromApi();
     addToast('info', `Stock updated to ${newStock} pcs.`);
   };
 
   // Delete Product
   const handleDeleteProduct = async (id: string) => {
-    if (confirm('Are you sure you want to delete this product item?')) {
-      try {
-        await fetch(`/api/products/${id}`, { method: 'DELETE' });
-      } catch { }
-      setProductsList((prev) => prev.filter((p) => p.id !== id));
-      addToast('warning', 'Product deleted from inventory catalog.');
+    if (!confirm('Are you sure you want to delete this product item?')) return;
+
+    const result = await requestJson(`/api/products/${id}`, { method: 'DELETE' });
+
+    if (!result.ok) {
+      addToast('error', `Delete failed: ${result.error}`);
+      return;
     }
+
+    setProductsList((prev) => prev.filter((p) => p.id !== id));
+    refreshProductsFromApi();
+    addToast('warning', 'Product deleted from inventory catalog.');
   };
 
   // Update Order Status
   const handleUpdateOrderStatus = async (orderId: string, newStatus: OrderRecord['status']) => {
-    try {
-      await fetch('/api/orders', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, status: newStatus })
-      });
-    } catch { }
+    const result = await requestJson('/api/orders', jsonInit('PATCH', { orderId, status: newStatus }));
 
-    setOrdersList((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
-    );
+    if (!result.ok) {
+      addToast('error', `Could not update order #${orderId}: ${result.error}`);
+      return;
+    }
+
+    setOrdersList((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
     addToast('success', `Order #${orderId} status changed to ${newStatus}.`);
   };
 
   // Save or Update Promotion Voucher (CRUD)
-  const handleSavePromotion = async (promoData: any) => {
-    const isEdit = !!promoData._id || !!promoData.id;
-    try {
-      const res = await fetch('/api/promotions', {
-        method: isEdit ? 'PATCH' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(promoData)
-      });
-      const data = await res.json();
+  const handleSavePromotion = async (promoData: Partial<PromoVoucherData>) => {
+    const isEdit = Boolean(promoData._id || promoData.id);
 
-      if (data.promotion) {
-        if (isEdit) {
-          setPromosList((prev) =>
-            prev.map((p: any) => ((p._id || p.id) === (promoData._id || promoData.id) ? data.promotion : p))
-          );
-        } else {
-          setPromosList((prev) => [data.promotion, ...prev]);
-        }
-      }
-    } catch { }
+    const result = await requestJson<{ promotion: PromoVoucherData }>(
+      '/api/promotions',
+      jsonInit(isEdit ? 'PATCH' : 'POST', promoData)
+    );
 
-    addToast('success', `Voucher code ${promoData.code} ${isEdit ? 'updated' : 'created'} successfully!`);
+    if (!result.ok) {
+      addToast('error', `Could not save voucher ${promoData.code}: ${result.error}`);
+      return;
+    }
+
+    const saved = result.data.promotion;
+    setPromosList((prev) =>
+      isEdit
+        ? prev.map((p) => (promoKey(p) === (promoData._id || promoData.id) ? saved : p))
+        : [saved, ...prev]
+    );
+    addToast('success', `Voucher code ${saved.code} ${isEdit ? 'updated' : 'created'} successfully!`);
   };
 
   // Toggle Promotion Status (Active <-> Disabled)
-  const handleTogglePromoStatus = async (promo: any) => {
+  const handleTogglePromoStatus = async (promo: PromoVoucherData) => {
     const nextStatus = promo.status === 'Active' ? 'Disabled' : 'Active';
-    const promoId = promo._id || promo.id;
+    const promoId = promoKey(promo);
 
-    try {
-      await fetch('/api/promotions', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: promoId, code: promo.code, status: nextStatus })
-      });
-    } catch { }
+    const result = await requestJson(
+      '/api/promotions',
+      jsonInit('PATCH', { id: promoId, code: promo.code, status: nextStatus })
+    );
+
+    if (!result.ok) {
+      addToast('error', `Could not change ${promo.code}: ${result.error}`);
+      return;
+    }
 
     setPromosList((prev) =>
-      prev.map((p: any) => ((p._id || p.id) === promoId ? { ...p, status: nextStatus } : p))
+      prev.map((p) => (promoKey(p) === promoId ? { ...p, status: nextStatus } : p))
     );
     addToast('info', `Promo code ${promo.code} is now ${nextStatus}.`);
   };
 
   // Delete Promotion Voucher
   const handleDeletePromotion = async (id: string, code: string) => {
-    if (confirm(`Are you sure you want to delete promo code "${code}"?`)) {
-      try {
-        await fetch(`/api/promotions?id=${encodeURIComponent(id)}&code=${encodeURIComponent(code)}`, {
-          method: 'DELETE'
-        });
-      } catch { }
+    if (!confirm(`Are you sure you want to delete promo code "${code}"?`)) return;
 
-      setPromosList((prev) => prev.filter((p: any) => (p._id || p.id || p.code) !== id && p.code !== code));
-      addToast('warning', `Promo voucher code ${code} deleted.`);
+    const result = await requestJson(
+      `/api/promotions?id=${encodeURIComponent(id)}&code=${encodeURIComponent(code)}`,
+      { method: 'DELETE' }
+    );
+
+    if (!result.ok) {
+      addToast('error', `Could not delete ${code}: ${result.error}`);
+      return;
     }
+
+    setPromosList((prev) => prev.filter((p) => promoKey(p) !== id && p.code !== code));
+    addToast('warning', `Promo voucher code ${code} deleted.`);
   };
 
   const pendingOrdersCount = ordersList.filter(
@@ -553,7 +568,7 @@ function AdminDashboardContent() {
 
           {activeTab === 'promotions' && (
             <PromotionsTab
-              promotions={promosList as any}
+              promotions={promosList}
               onOpenAddPromoModal={() => {
                 setEditingPromo(null);
                 setIsAddPromoOpen(true);
@@ -609,6 +624,7 @@ function AdminDashboardContent() {
         }}
         onSaveProduct={handleSaveProduct}
         editingProduct={editingProduct}
+        existingProducts={productsList}
       />
 
       {/* Add / Edit Promo Voucher Modal */}

@@ -23,8 +23,8 @@ import {
   Pipette,
   Palette
 } from 'lucide-react';
-import { Product, CATEGORIES, WORK_TYPES, OCCASIONS, MATERIALS, ProductVariation, ProductColor } from '@/data/products';
-import { Category, getStoredCategories } from '@/data/categories';
+import { Product, WORK_TYPES, OCCASIONS, MATERIALS, WEATHER_TYPES, ProductVariation, ProductColor } from '@/data/products';
+import { useCategories } from '@/lib/useCategories';
 import { FASHION_COLORS_50, autoDetectColor, getColorNameFromHex, ColorOption } from '@/data/colors';
 import { formatCurrency } from '@/lib/utils';
 import { ImageColorPickerModal } from './ImageColorPickerModal';
@@ -41,52 +41,61 @@ export interface DetailedColorVariation {
 interface ProductFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSaveProduct: (productData: Partial<Product>) => Promise<void>;
+  /** Resolves to `false` when the save failed — the modal then stays open with the data intact. */
+  onSaveProduct: (productData: Partial<Product>) => Promise<boolean>;
   editingProduct?: Product | null;
+  /** Live catalog, used to suggest existing material / work-type / occasion values. */
+  existingProducts?: Product[];
+}
+
+/** Seed values merged with whatever the live catalog already uses, de-duplicated. */
+function suggestionsFor(products: Product[], key: 'material' | 'workType' | 'occasion' | 'weather', seeds: readonly string[]) {
+  const fromDb = products.map((p) => (p[key] || '').trim()).filter(Boolean);
+  return Array.from(new Set([...seeds, ...fromDb])).sort();
 }
 
 export function ProductFormModal({
   isOpen,
   onClose,
   onSaveProduct,
-  editingProduct
+  editingProduct,
+  existingProducts = []
 }: ProductFormModalProps) {
   // Active Wizard Tab (1: Basic, 2: Pricing, 3: Color Variations & Photos, 4: Features & Care)
   const [wizardStep, setWizardStep] = useState<1 | 2 | 3 | 4>(1);
 
-  // Form Fields State
+  // Form Fields State. workType/occasion/material/weather are free-text with
+  // datalist hints, not selects: the frozen seed arrays were never meant to cap
+  // what a merchandiser can type.
   const [formData, setFormData] = useState({
     name: '',
-    category: 'Abayas',
+    code: '',
+    category: '',
     subCategory: '',
     price: 0,
     originalPrice: 0,
-    workType: 'Embroidery' as typeof WORK_TYPES[number],
-    occasion: 'Festive & Eid' as typeof OCCASIONS[number],
-    material: 'Nida Silk' as typeof MATERIALS[number],
+    workType: 'Embroidery',
+    occasion: 'Festive & Eid',
+    material: 'Nida Silk',
+    weather: '',
+    isNew: false,
     stock: 0,
     description: '',
     featuresText: '',
     careText: ''
   });
 
-  // Dynamic Managed Categories & Subcategories State
-  const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
+  // Save failure message, shown inline so it cannot be missed behind the overlay.
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch('/api/categories')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && Array.isArray(data.categories)) {
-          setAvailableCategories(data.categories);
-        } else {
-          setAvailableCategories(getStoredCategories());
-        }
-      })
-      .catch(() => {
-        setAvailableCategories(getStoredCategories());
-      });
-  }, []);
+  // Dynamic Managed Categories & Subcategories — admin must see the DB truth, no seed fallback
+  const { categories: availableCategories, isLoading: categoriesLoading, error: categoriesError } = useCategories();
+
+  const materialOptions = suggestionsFor(existingProducts, 'material', MATERIALS);
+  const workTypeOptions = suggestionsFor(existingProducts, 'workType', WORK_TYPES);
+  const occasionOptions = suggestionsFor(existingProducts, 'occasion', OCCASIONS);
+  const weatherOptions = suggestionsFor(existingProducts, 'weather', WEATHER_TYPES);
+
 
   // Color Variations State (Color-wise image arrays)
   const [colorVariations, setColorVariations] = useState<DetailedColorVariation[]>([]);
@@ -122,21 +131,26 @@ export function ProductFormModal({
 
   // Load Initial Product Data for Editing
   useEffect(() => {
+    setSaveError(null);
     if (editingProduct) {
       setFormData({
         name: editingProduct.name || '',
-        category: (editingProduct.category as any) || 'Abayas',
-        subCategory: (editingProduct as any).subCategory || '',
+        code: editingProduct.code || '',
+        category: editingProduct.category || '',
+        subCategory: editingProduct.subCategory || '',
         price: editingProduct.price || 0,
         originalPrice: editingProduct.originalPrice || Math.round((editingProduct.price || 0) * 1.25),
-        workType: (editingProduct.workType as any) || 'Embroidery',
-        occasion: (editingProduct.occasion as any) || 'Festive & Eid',
-        material: (editingProduct.material as any) || 'Nida Silk',
+        workType: editingProduct.workType || 'Embroidery',
+        occasion: editingProduct.occasion || 'Festive & Eid',
+        material: editingProduct.material || 'Nida Silk',
+        weather: editingProduct.weather || '',
+        isNew: editingProduct.isNew ?? false,
         stock: editingProduct.stock ?? 10,
         description: editingProduct.description || 'Luxury modest ensemble.',
         featuresText: (editingProduct.features || []).join('\n'),
         careText: (editingProduct.careInstructions || []).join('\n')
       });
+
 
       // Construct color variations array from editing product
       if (editingProduct.colors && editingProduct.colors.length > 0) {
@@ -176,13 +190,16 @@ export function ProductFormModal({
     } else {
       setFormData({
         name: '',
-        category: 'Abayas',
+        code: '',
+        category: '',
         subCategory: '',
         price: 0,
         originalPrice: 0,
         workType: 'Embroidery',
         occasion: 'Festive & Eid',
         material: 'Nida Silk',
+        weather: '',
+        isNew: true,
         stock: 0,
         description: '',
         featuresText: '',
@@ -200,6 +217,19 @@ export function ProductFormModal({
       setSelectedSizes(['M']);
     }
   }, [editingProduct, isOpen]);
+
+  // Categories arrive asynchronously, so a new product's default category can
+  // only be picked once they land. Deliberately no seed-list fallback: offering
+  // a category the store does not manage produces an unfilterable product.
+  useEffect(() => {
+    if (formData.category || availableCategories.length === 0) return;
+    const first = availableCategories[0];
+    setFormData((prev) => ({
+      ...prev,
+      category: first.name,
+      subCategory: first.subCategories[0]?.name || ''
+    }));
+  }, [availableCategories, formData.category]);
 
   // Update auto-detected color name when custom Hex input changes (e.g. #fff -> Pure White, #000 -> Midnight Black)
   const handleHexInputChange = (rawHex: string) => {
@@ -383,6 +413,14 @@ export function ProductFormModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSaveError(null);
+
+    if (!formData.category) {
+      setSaveError('Pick a category first — none are loaded yet.');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       // Aggregate all images across all color variations for global product images array
       const allAggregatedImages: string[] = [];
@@ -406,7 +444,7 @@ export function ProductFormModal({
         hex: c.hex,
         imageIndex: i,
         images: c.images
-      })) as any;
+      }));
 
       const features = formData.featuresText
         .split('\n')
@@ -420,8 +458,22 @@ export function ProductFormModal({
 
       const totalStockFromMatrix = variationsMatrix.reduce((sum, v) => sum + v.stock, 0);
 
-      await onSaveProduct({
-        ...formData,
+      // Field-by-field, not `...formData`: the spread also carried `featuresText`
+      // and `careText`, which are textarea scratch state with no column behind
+      // them — Prisma rejects unknown fields, so the whole save 500'd.
+      const saved = await onSaveProduct({
+        name: formData.name,
+        code: formData.code || undefined,
+        category: formData.category,
+        subCategory: formData.subCategory || undefined,
+        price: formData.price,
+        originalPrice: formData.originalPrice,
+        workType: formData.workType,
+        occasion: formData.occasion,
+        material: formData.material,
+        weather: formData.weather || undefined,
+        isNew: formData.isNew,
+        description: formData.description,
         colors: formattedColors,
         sizes: selectedSizes,
         images: allAggregatedImages.length > 0 ? allAggregatedImages : ['https://images.unsplash.com/photo-1609357605129-26f69add5d6e?auto=format&fit=crop&w=1000&q=80'],
@@ -430,9 +482,15 @@ export function ProductFormModal({
         features,
         careInstructions
       });
-      onClose();
-    } catch {
-      // Handled upstream
+
+      // Only close on a confirmed write — otherwise the admin loses the whole form.
+      if (saved) {
+        onClose();
+      } else {
+        setSaveError('The store rejected this product. See the error notification for details.');
+      }
+    } catch (err) {
+      setSaveError((err as Error).message || 'Unexpected error while saving.');
     } finally {
       setIsSubmitting(false);
     }
@@ -510,38 +568,58 @@ export function ProductFormModal({
               {/* STEP 1: BASIC INFO */}
               {wizardStep === 1 && (
                 <div className="space-y-4 animate-in fade-in">
-                  <div className="space-y-1.5">
-                    <label className="font-bold text-stone-700">Product Title / Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="e.g. Royal Emerald Silk Embroidered Abaya"
-                      className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="font-bold text-stone-700">Product Title / Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="e.g. Royal Emerald Silk Embroidered Abaya"
+                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="font-bold text-stone-700">SKU / Style Code</label>
+                      <input
+                        type="text"
+                        value={formData.code}
+                        onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                        placeholder="FLK-AB-001"
+                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900"
+                      />
+                    </div>
                   </div>
+
+                  {categoriesError && (
+                    <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 font-bold">
+                      Could not load categories: {categoriesError}
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="font-bold text-stone-700">Main Category *</label>
                       <select
                         value={formData.category}
+                        disabled={categoriesLoading || availableCategories.length === 0}
                         onChange={(e) => {
                           const newCatName = e.target.value;
                           const matchedCat = availableCategories.find(c => c.name.toLowerCase() === newCatName.toLowerCase() || c.slug.toLowerCase() === newCatName.toLowerCase());
                           const defaultSub = matchedCat?.subCategories[0]?.name || '';
                           setFormData({ ...formData, category: newCatName, subCategory: defaultSub });
                         }}
-                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 font-bold focus:outline-none focus:ring-2 focus:ring-stone-900"
+                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 font-bold focus:outline-none focus:ring-2 focus:ring-stone-900 disabled:opacity-60"
                       >
-                        {availableCategories.length > 0 ? (
+                        {availableCategories.length === 0 ? (
+                          <option value="">
+                            {categoriesLoading ? 'Loading categories…' : 'No categories — create one in the Categories tab'}
+                          </option>
+                        ) : (
                           availableCategories.map((c) => (
                             <option key={c.id} value={c.name}>{c.name}</option>
-                          ))
-                        ) : (
-                          CATEGORIES.map((c) => (
-                            <option key={c} value={c}>{c}</option>
                           ))
                         )}
                       </select>
@@ -567,48 +645,83 @@ export function ProductFormModal({
                     </div>
                   </div>
 
+                  {/* Free text + datalist: suggestions come from the seed vocabulary
+                      merged with whatever the live catalog already uses. */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="font-bold text-stone-700">Material Fabric</label>
-                      <select
+                      <input
+                        type="text"
+                        list="flk-materials"
                         value={formData.material}
-                        onChange={(e) => setFormData({ ...formData, material: e.target.value as any })}
-                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-900"
-                      >
-                        {MATERIALS.map((m) => (
-                          <option key={m} value={m}>{m}</option>
-                        ))}
-                      </select>
+                        onChange={(e) => setFormData({ ...formData, material: e.target.value })}
+                        placeholder="e.g. Nida Silk"
+                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900"
+                      />
+                      <datalist id="flk-materials">
+                        {materialOptions.map((m) => <option key={m} value={m} />)}
+                      </datalist>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="font-bold text-stone-700">Season / Weather</label>
+                      <input
+                        type="text"
+                        list="flk-weather"
+                        value={formData.weather}
+                        onChange={(e) => setFormData({ ...formData, weather: e.target.value })}
+                        placeholder="e.g. Summer"
+                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900"
+                      />
+                      <datalist id="flk-weather">
+                        {weatherOptions.map((w) => <option key={w} value={w} />)}
+                      </datalist>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="font-bold text-stone-700">Work Type & Detailing</label>
-                      <select
+                      <input
+                        type="text"
+                        list="flk-work-types"
                         value={formData.workType}
-                        onChange={(e) => setFormData({ ...formData, workType: e.target.value as any })}
-                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-900"
-                      >
-                        {WORK_TYPES.map((w) => (
-                          <option key={w} value={w}>{w}</option>
-                        ))}
-                      </select>
+                        onChange={(e) => setFormData({ ...formData, workType: e.target.value })}
+                        placeholder="e.g. Embroidery"
+                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900"
+                      />
+                      <datalist id="flk-work-types">
+                        {workTypeOptions.map((w) => <option key={w} value={w} />)}
+                      </datalist>
                     </div>
 
                     <div className="space-y-1.5">
                       <label className="font-bold text-stone-700">Target Occasion</label>
-                      <select
+                      <input
+                        type="text"
+                        list="flk-occasions"
                         value={formData.occasion}
-                        onChange={(e) => setFormData({ ...formData, occasion: e.target.value as any })}
-                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-900"
-                      >
-                        {OCCASIONS.map((o) => (
-                          <option key={o} value={o}>{o}</option>
-                        ))}
-                      </select>
+                        onChange={(e) => setFormData({ ...formData, occasion: e.target.value })}
+                        placeholder="e.g. Festive & Eid"
+                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900"
+                      />
+                      <datalist id="flk-occasions">
+                        {occasionOptions.map((o) => <option key={o} value={o} />)}
+                      </datalist>
                     </div>
                   </div>
+
+                  <label className="flex items-center gap-3 px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.isNew}
+                      onChange={(e) => setFormData({ ...formData, isNew: e.target.checked })}
+                      className="w-4 h-4 accent-stone-900"
+                    />
+                    <span className="font-bold text-stone-700">
+                      Flag as New — shows the &ldquo;NEW&rdquo; badge on the storefront
+                    </span>
+                  </label>
 
                   <div className="space-y-1.5">
                     <label className="font-bold text-stone-700">Detailed Description</label>
@@ -911,6 +1024,13 @@ export function ProductFormModal({
                       className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900"
                     />
                   </div>
+                </div>
+              )}
+
+              {/* Save failure banner — sits by the submit button, on every step */}
+              {saveError && (
+                <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 font-bold">
+                  {saveError}
                 </div>
               )}
 

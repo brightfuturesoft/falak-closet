@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, use, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -17,7 +17,7 @@ import {
   Minus,
   ZoomIn
 } from 'lucide-react';
-import { PRODUCTS, Product } from '@/data/products';
+import { Product } from '@/data/products';
 import { formatCurrency } from '@/lib/utils';
 import { useCart } from '@/context/CartContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
@@ -26,8 +26,7 @@ import { getProductSchema, getBreadcrumbSchema } from '@/lib/schema';
 import { ProductZoomModal } from '@/components/product/ProductZoomModal';
 import { NewArrivalSection } from '@/components/home/NewArrivalSection';
 
-export default function ProductDetailClient({ params }: { params: Promise<{ slug: string }> }) {
-  const resolvedParams = use(params);
+export default function ProductDetailClient({ initialProduct }: { initialProduct: Product }) {
   const searchParams = useSearchParams();
   const colorQueryParam = searchParams.get('color');
   const router = useRouter();
@@ -35,11 +34,10 @@ export default function ProductDetailClient({ params }: { params: Promise<{ slug
   const { trackEvent } = useAnalytics();
   const { showToast } = useToast();
 
-  const product =
-    getProductBySlug(resolvedParams.slug) ||
-    products.find((p) => p.slug === resolvedParams.slug) ||
-    PRODUCTS.find((p) => p.slug === resolvedParams.slug) ||
-    PRODUCTS[0];
+  // The server resolved this product (and 404'd if it did not exist), so it is
+  // always defined. The context copy only wins when it is fresher — e.g. after
+  // an admin edit triggers a client-side catalog refresh.
+  const product: Product = getProductBySlug(initialProduct.slug) || initialProduct;
 
   const colorsList = product?.colors && product.colors.length > 0
     ? product.colors
@@ -655,7 +653,7 @@ export default function ProductDetailClient({ params }: { params: Promise<{ slug
 
       {/* New Arrivals Product Carousel */}
       <NewArrivalSection
-        products={products.length > 0 ? products : PRODUCTS}
+        products={products.filter((p) => p.id !== product.id)}
         title="YOU MAY ALSO LIKE / NEW ARRIVALS"
         subtitle="Explore more of our latest modest fashion creations"
       />

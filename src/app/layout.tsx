@@ -9,6 +9,7 @@ import { Footer } from '@/components/footer/Footer';
 import { MobileBottomNav } from '@/components/header/MobileBottomNav';
 import { getOrganizationSchema, getWebSiteSchema } from '@/lib/schema';
 import { FacebookPixel } from '@/components/analytics/FacebookPixel';
+import { getProductsSafe } from '@/lib/products';
 
 const playfair = Playfair_Display({
   variable: '--font-serif',
@@ -95,13 +96,19 @@ export const metadata: Metadata = {
   }
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const orgSchema = getOrganizationSchema();
   const webSiteSchema = getWebSiteSchema();
+
+  // Read the catalog here rather than in each page: the Header search and the
+  // cart both need it, so seeding the provider once means every route ships
+  // products in its initial HTML instead of fetching them after hydration.
+  // The read is `unstable_cache`d and tagged, so this is one shared query.
+  const { products, error: productsError } = await getProductsSafe();
 
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable} ${hindSiliguri.variable}`}>
@@ -122,7 +129,7 @@ export default function RootLayout({
         <FacebookPixel />
         <AnalyticsProvider>
           <ToastProvider>
-            <CartProvider>
+            <CartProvider initialProducts={products} initialProductsError={productsError}>
               <div className="flex flex-col min-h-screen">
                 <Header />
                 <main className="flex-1">{children}</main>

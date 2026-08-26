@@ -10,32 +10,68 @@ export function formatCurrency(amount: number): string {
   return `৳${Math.round(amount).toLocaleString('en-IN')}`;
 }
 
-export function filterProducts(
-  products: Product[],
-  filters: {
-    category?: string;
-    workType?: string;
-    occasion?: string;
-    material?: material;
-    color?: string;
-    minPrice?: number;
-    maxPrice?: number;
-    searchQuery?: string;
-    sortBy?: 'price-asc' | 'price-desc' | 'rating' | 'newest';
-  }
-): Product[] {
+/**
+ * Normalise a taxonomy value so a name and its slug compare equal.
+ *
+ * Products store whichever form the admin sent — "Hijabs & Dupattas" from the
+ * category dropdown, "hijabs-dupattas" from a category link — so a strict
+ * equality check silently hid half the catalog behind the filter pills.
+ */
+function norm(value: string | undefined | null): string {
+  return (value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+/** True when `value` matches `target` as either a display name or a slug. */
+function taxonomyMatches(value: string | undefined | null, target: string): boolean {
+  return norm(value) === norm(target);
+}
+
+export interface ProductFilters {
+  category?: string;
+  subCategory?: string;
+  workType?: string;
+  occasion?: string;
+  material?: string;
+  weather?: string;
+  color?: string;
+  size?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  searchQuery?: string;
+  sortBy?: 'price-asc' | 'price-desc' | 'rating' | 'newest';
+}
+
+export function filterProducts(products: Product[], filters: ProductFilters): Product[] {
   let result = [...products];
 
   if (filters.category && filters.category !== 'All') {
-    result = result.filter((p) => p.category === filters.category);
+    result = result.filter((p) => taxonomyMatches(p.category, filters.category!));
+  }
+
+  if (filters.subCategory && filters.subCategory !== 'All') {
+    result = result.filter((p) => taxonomyMatches(p.subCategory, filters.subCategory!));
   }
 
   if (filters.workType && filters.workType !== 'All') {
-    result = result.filter((p) => p.workType === filters.workType);
+    result = result.filter((p) => taxonomyMatches(p.workType, filters.workType!));
   }
 
   if (filters.occasion && filters.occasion !== 'All') {
-    result = result.filter((p) => p.occasion === filters.occasion);
+    result = result.filter((p) => taxonomyMatches(p.occasion, filters.occasion!));
+  }
+
+  // Was declared in the filter type but never applied, so /shop's material
+  // filter silently returned the unfiltered catalog.
+  if (filters.material && filters.material !== 'All') {
+    result = result.filter((p) => taxonomyMatches(p.material, filters.material!));
+  }
+
+  if (filters.weather && filters.weather !== 'All') {
+    result = result.filter((p) => taxonomyMatches(p.weather, filters.weather!));
   }
 
   if (filters.color && filters.color !== 'All') {
@@ -44,6 +80,15 @@ export function filterProducts(
       (p) =>
         p.colors?.some((c) => c.name.toLowerCase().includes(qColor)) ||
         p.variations?.some((v) => v.colorName.toLowerCase().includes(qColor))
+    );
+  }
+
+  if (filters.size && filters.size !== 'All') {
+    const qSize = filters.size.toLowerCase();
+    result = result.filter(
+      (p) =>
+        p.sizes?.some((s) => s.toLowerCase() === qSize) ||
+        p.variations?.some((v) => v.size.toLowerCase() === qSize)
     );
   }
 
@@ -61,6 +106,8 @@ export function filterProducts(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.category.toLowerCase().includes(q) ||
+        (p.code || '').toLowerCase().includes(q) ||
+        (p.subCategory || '').toLowerCase().includes(q) ||
         (p.workType || '').toLowerCase().includes(q) ||
         (p.material || '').toLowerCase().includes(q) ||
         p.colors?.some((c) => c.name.toLowerCase().includes(q)) ||
@@ -87,4 +134,3 @@ export function filterProducts(
 
   return result;
 }
-type material = string;

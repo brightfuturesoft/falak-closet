@@ -1,3 +1,12 @@
+/**
+ * Category taxonomy types + seed data.
+ *
+ * The live taxonomy lives in MongoDB and is read through `/api/categories`
+ * (see `useCategories()` for clients, `fetchCategories()` for Server Components).
+ * `INITIAL_CATEGORIES` is only a seed payload (POST /api/categories/seed) and an
+ * offline fallback for storefront components.
+ */
+
 export interface SubCategory {
   id: string;
   name: string;
@@ -106,30 +115,3 @@ export const INITIAL_CATEGORIES: Category[] = [
     ]
   }
 ];
-
-const STORAGE_KEY = 'falak_categories_store_v1';
-
-export function getStoredCategories(): Category[] {
-  if (typeof window === 'undefined') return INITIAL_CATEGORIES;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_CATEGORIES));
-      return INITIAL_CATEGORIES;
-    }
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_CATEGORIES;
-  } catch {
-    return INITIAL_CATEGORIES;
-  }
-}
-
-export function saveStoredCategories(categories: Category[]): void {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(categories));
-    window.dispatchEvent(new Event('falak_categories_updated'));
-  } catch {
-    // Local storage fallback
-  }
-}

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { Home, Search, LayoutGrid, ShoppingBag, User, X, Sparkles } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { PRODUCTS, Product } from '@/data/products';
+import { Product } from '@/data/products';
 import { formatCurrency } from '@/lib/utils';
 
 // Safe Image Component for search results
@@ -49,7 +49,8 @@ export function MobileBottomNav() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Product[]>([]);
 
-  const allStoreProducts = cartProducts && cartProducts.length > 0 ? cartProducts : PRODUCTS;
+  // Live catalog only — see the note in Header.tsx.
+  const allStoreProducts = cartProducts || [];
 
   useEffect(() => {
     if (!searchQuery.trim()) {
