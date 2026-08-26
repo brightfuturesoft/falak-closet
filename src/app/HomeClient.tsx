@@ -11,13 +11,20 @@ import { PromoBannerSection } from '@/components/home/PromoBannerSection';
 import { AllProductsSection } from '@/components/home/AllProductsSection';
 import { ValuePropsSection } from '@/components/home/ValuePropsSection';
 import type { HeroSlideView } from '@/lib/heroSlides';
+import type { PromotionBanner } from '@/lib/promotionBanners';
 
 /**
  * The interactive half of the home page — everything that needs `useCart` or
  * local state. The hero slides arrive as a prop from the server component so
  * they render in the initial HTML instead of after a client fetch.
  */
-export default function HomeClient({ heroSlides }: { heroSlides: HeroSlideView[] }) {
+export default function HomeClient({
+  heroSlides,
+  promoBanner
+}: {
+  heroSlides: HeroSlideView[];
+  promoBanner: PromotionBanner | null;
+}) {
   const { products, isLoadingProducts, productsError, refreshProductsFromApi } = useCart();
   const [selectedFilter, setSelectedFilter] = useState<{ type: string; val: string } | null>(null);
 
@@ -126,7 +133,7 @@ export default function HomeClient({ heroSlides }: { heroSlides: HeroSlideView[]
           <BestSellersSection products={products} />
 
           {/* 5. FLASH SALE & PROMOTIONAL VOUCHERS Banner */}
-          <PromoBannerSection />
+          <PromoBannerSection banner={promoBanner} />
 
           {/* 6. ALL PRODUCTS & FULL COLLECTION Section */}
           <AllProductsSection products={filteredProducts} />
