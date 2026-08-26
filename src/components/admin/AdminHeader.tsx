@@ -94,6 +94,10 @@ export function AdminHeader({
     hero: {
       title: 'Hero Carousel Slides',
       subtitle: 'Manage the home page banner slider — slides, images, CTAs, and order.'
+    },
+    reviews: {
+      title: 'Customer Reviews',
+      subtitle: 'Moderate product reviews — approve genuine feedback, remove spam.'
     }
   };
 

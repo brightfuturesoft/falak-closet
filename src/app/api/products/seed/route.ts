@@ -10,6 +10,7 @@ import { PRODUCTS } from '@/data/products';
 // Mirrors /api/categories/seed: idempotent, never destructive.
 export async function POST() {
   try {
+    // only admin can run this 
     const existing = await prisma.product.count();
     if (existing > 0) {
       return NextResponse.json({

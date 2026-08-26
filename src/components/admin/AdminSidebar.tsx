@@ -14,11 +14,12 @@ import {
   FolderTree,
   Megaphone,
   Images,
+  Star,
   LogOut
 } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 
-export type AdminTabType = 'overview' | 'orders' | 'products' | 'categories' | 'promotions' | 'customers' | 'analytics' | 'security' | 'settings' | 'delivery' | 'banners' | 'hero';
+export type AdminTabType = 'overview' | 'orders' | 'products' | 'categories' | 'promotions' | 'customers' | 'analytics' | 'security' | 'settings' | 'delivery' | 'banners' | 'hero' | 'reviews';
 
 interface AdminSidebarProps {
   activeTab: AdminTabType;
@@ -70,6 +71,13 @@ export function AdminSidebar({
           {productsCount}
         </span>
       )
+    },
+    {
+      id: 'reviews' as AdminTabType,
+      href: '/admin/reviews',
+      label: 'Customer Reviews',
+      icon: Star,
+      badge: null
     },
     {
       id: 'categories' as AdminTabType,

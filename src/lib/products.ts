@@ -85,6 +85,7 @@ export function serializeProduct(row: ProductRow): Product {
       date: r.date,
       comment: r.comment,
       verifiedPurchase: r.verifiedPurchase,
+      status: r.status === 'pending' ? 'pending' : r.status === 'approved' ? 'approved' : undefined,
     })),
     freeDeliveryQuantity: opt(row.freeDeliveryQuantity),
     createdAt: row.createdAt.toISOString(),
@@ -348,6 +349,7 @@ function toReviews(value: unknown) {
       date: toStr(r.date) || '2026-01-01',
       comment: toStr(r.comment),
       verifiedPurchase: toBool(r.verifiedPurchase),
+      status: toStr(r.status) === 'pending' ? 'pending' : 'approved',
     }));
 }
 
