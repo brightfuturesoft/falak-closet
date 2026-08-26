@@ -26,6 +26,7 @@ import { Product } from '@/data/products';
 import { playNewOrderSound } from '@/lib/soundNotification';
 import { useCart, OrderRecord } from '@/context/CartContext';
 import { getSocket } from '@/lib/socketClient';
+import { cloudinaryPublicIdFromUrl, deleteCloudinaryImage } from '@/lib/cloudinary';
 
 /**
  * Every admin write goes through this. The handlers below used to be
@@ -372,11 +373,26 @@ function AdminDashboardContent() {
   const handleDeleteProduct = async (id: string) => {
     if (!confirm('Are you sure you want to delete this product item?')) return;
 
+    // Snapshot before the row disappears — needed for the Cloudinary cleanup.
+    const product = productsList.find((p) => p.id === id);
     const result = await requestJson(`/api/products/${id}`, { method: 'DELETE' });
 
     if (!result.ok) {
       addToast('error', `Delete failed: ${result.error}`);
       return;
+    }
+
+    // Best-effort destroy of every Cloudinary asset this product owned —
+    // only URLs under our falak-closet/ namespace ever match.
+    const ownedUrls = new Set<string>([
+      ...(product?.images || []),
+      ...(product?.colors || []).flatMap((c) => c.images || []),
+    ]);
+    for (const url of ownedUrls) {
+      const publicId = cloudinaryPublicIdFromUrl(url);
+      if (publicId?.startsWith('falak-closet/')) {
+        deleteCloudinaryImage(publicId);
+      }
     }
 
     setProductsList((prev) => prev.filter((p) => p.id !== id));

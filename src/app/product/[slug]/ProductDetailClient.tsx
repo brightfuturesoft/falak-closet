@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
+import { SmartImage } from '@/components/ui/SmartImage';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -300,7 +300,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
             onMouseMove={handleMouseMove}
             className="relative aspect-[4/5] sm:aspect-[3/4] w-full rounded-3xl overflow-hidden bg-stone-100 border border-pink-100 shadow-md group cursor-crosshair"
           >
-            <Image
+            <SmartImage
               src={imagesList[selectedImageIndex] || imagesList[0]}
               alt={product?.name || 'Product Image'}
               fill
@@ -359,7 +359,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                       : 'border-transparent opacity-75 hover:opacity-100'
                       }`}
                   >
-                    <Image src={img} alt={`Thumbnail ${idx + 1}`} fill sizes="80px" className="object-cover" />
+                    <SmartImage src={img} alt={`Thumbnail ${idx + 1}`} fill sizes="80px" className="object-cover" />
                     {mappedColor && (
                       <span
                         className="absolute bottom-1.5 right-1.5 w-3 h-3 rounded-full border border-white shadow-md transition-transform group-hover/thumb:scale-125"

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { SmartImage } from '@/components/ui/SmartImage';
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Truck, Tag, ShieldCheck } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { formatCurrency } from '@/lib/utils';
@@ -204,7 +204,7 @@ export function CartDrawer() {
 
                   {/* Product Thumbnail */}
                   <div className="relative w-16 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-stone-200">
-                    <Image
+                    <SmartImage
                       src={item.product?.images[0]}
                       alt={item.product?.name}
                       fill
