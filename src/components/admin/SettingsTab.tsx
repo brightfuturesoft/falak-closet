@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Settings, Database, RefreshCw, CheckCircle2, KeyRound, CloudUpload } from 'lucide-react';
+import { Settings, Database, RefreshCw, CheckCircle2, KeyRound, CloudUpload, Phone } from 'lucide-react';
 import { uploadImages } from '@/lib/cloudinary';
 import type { Product } from '@/data/products';
 
@@ -151,10 +151,87 @@ export function SettingsTab({
     return new File([blob], `legacy-${Date.now()}.${ext}`, { type: blob.type });
   };
 
-  // Load both settings blocks once on mount (functions are declared above).
+  // ── Site identity & contact (footer + Organization schema) ──────────
+  const [siteForm, setSiteForm] = useState({
+    contactPhone: '',
+    contactEmail: '',
+    address: '',
+    whatsapp: '',
+    instagram: '',
+    facebook: '',
+    youtube: ''
+  });
+  const [isSavingSite, setIsSavingSite] = useState(false);
+  const [siteSavedSuccess, setSiteSavedSuccess] = useState(false);
+  const [siteError, setSiteError] = useState<string | null>(null);
+
+  const fetchSiteSettings = async () => {
+    try {
+      const res = await fetch('/api/settings?key=site');
+      const data = await res.json();
+      if (data.success && data.setting) {
+        const val = data.setting.value;
+        setSiteForm({
+          contactPhone: val.contactPhone || '',
+          contactEmail: val.contactEmail || '',
+          address: val.address || '',
+          whatsapp: val.whatsapp || '',
+          instagram: val.instagram || '',
+          facebook: val.facebook || '',
+          youtube: val.youtube || ''
+        });
+      }
+    } catch (e) {
+      console.error('Failed to load site identity:', e);
+    }
+  };
+
+  const handleSaveSiteSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const email = siteForm.contactEmail.trim();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setSiteError('Contact email does not look valid.');
+      return;
+    }
+
+    for (const field of ['whatsapp', 'instagram', 'facebook', 'youtube'] as const) {
+      const v = siteForm[field].trim();
+      if (v && v.includes(':') && !/^https?:\/\//i.test(v)) {
+        setSiteError(`Social link "${field}" must be an https:// URL or plain handle.`);
+        return;
+      }
+    }
+
+    setIsSavingSite(true);
+    setSiteError(null);
+    setSiteSavedSuccess(false);
+
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'site', value: siteForm })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSiteSavedSuccess(true);
+        setTimeout(() => setSiteSavedSuccess(false), 3000);
+      } else {
+        setSiteError(data.error || 'Failed to save site identity.');
+      }
+    } catch {
+      setSiteError('Network error — failed to save site identity.');
+    } finally {
+      setIsSavingSite(false);
+    }
+  };
+
+  // Load all settings blocks once on mount (functions are declared above).
   useEffect(() => {
     fetchBkashSettings();
     fetchStoreSettings();
+    fetchSiteSettings();
   }, []);
 
   const handleMigrateImages = async () => {
@@ -429,6 +506,124 @@ export function SettingsTab({
               className="px-5 py-2.5 bg-stone-900 hover:bg-stone-850 text-white font-bold text-xs rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50"
             >
               {isSavingBkash ? 'Saving settings...' : 'Save bKash Configuration'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Site Identity & Contact */}
+      <div className="p-6 bg-white rounded-3xl border border-stone-200 shadow-sm space-y-6">
+        <div className="pb-4 border-b border-stone-200">
+          <h3 className="font-serif font-bold text-lg text-stone-900 flex items-center gap-2">
+            <Phone className="w-5 h-5 text-[#9B050B]" />
+            <span>Site Identity & Contact</span>
+          </h3>
+          <p className="text-xs text-stone-500">
+            Contact details and social profiles shown in the footer and shared with search engines.
+            Leave a field empty to hide it.
+          </p>
+        </div>
+
+        {siteSavedSuccess && (
+          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-bold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>Saved — the footer and search listings update within a minute.</span>
+          </div>
+        )}
+
+        {siteError && (
+          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 font-bold">{siteError}</div>
+        )}
+
+        <form onSubmit={handleSaveSiteSettings} className="space-y-4 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="font-bold text-stone-700">Contact Phone</label>
+              <input
+                type="text"
+                value={siteForm.contactPhone}
+                onChange={(e) => setSiteForm({ ...siteForm, contactPhone: e.target.value })}
+                placeholder="e.g. +880 1XXX-XXXXXX"
+                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 font-mono focus:outline-none focus:ring-1 focus:ring-stone-900"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="font-bold text-stone-700">Contact Email</label>
+              <input
+                type="text"
+                value={siteForm.contactEmail}
+                onChange={(e) => setSiteForm({ ...siteForm, contactEmail: e.target.value })}
+                placeholder="e.g. hello@falakcloset.com"
+                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="font-bold text-stone-700">Business Address</label>
+            <input
+              type="text"
+              value={siteForm.address}
+              onChange={(e) => setSiteForm({ ...siteForm, address: e.target.value })}
+              placeholder="e.g. House 12, Road 5, Dhanmondi, Dhaka"
+              className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="font-bold text-stone-700">WhatsApp</label>
+              <input
+                type="text"
+                value={siteForm.whatsapp}
+                onChange={(e) => setSiteForm({ ...siteForm, whatsapp: e.target.value })}
+                placeholder="8801XXXXXXXXX or https://wa.me/…"
+                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 font-mono focus:outline-none focus:ring-1 focus:ring-stone-900"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="font-bold text-stone-700">Instagram</label>
+              <input
+                type="text"
+                value={siteForm.instagram}
+                onChange={(e) => setSiteForm({ ...siteForm, instagram: e.target.value })}
+                placeholder="@handle or https://instagram.com/…"
+                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="font-bold text-stone-700">Facebook</label>
+              <input
+                type="text"
+                value={siteForm.facebook}
+                onChange={(e) => setSiteForm({ ...siteForm, facebook: e.target.value })}
+                placeholder="handle or https://facebook.com/…"
+                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="font-bold text-stone-700">YouTube</label>
+              <input
+                type="text"
+                value={siteForm.youtube}
+                onChange={(e) => setSiteForm({ ...siteForm, youtube: e.target.value })}
+                placeholder="@channel or https://youtube.com/…"
+                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900"
+              />
+            </div>
+          </div>
+
+          <p className="text-[10px] text-stone-500">
+            Social fields accept a plain handle (@handle), an ID/number, or a full https:// URL.
+          </p>
+
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={isSavingSite}
+              className="px-5 py-2.5 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50"
+            >
+              {isSavingSite ? 'Saving…' : 'Save Site Identity'}
             </button>
           </div>
         </form>

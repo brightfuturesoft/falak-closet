@@ -8,6 +8,7 @@ import { Header } from '@/components/header/Header';
 import { Footer } from '@/components/footer/Footer';
 import { MobileBottomNav } from '@/components/header/MobileBottomNav';
 import { getOrganizationSchema, getWebSiteSchema } from '@/lib/schema';
+import { getSiteIdentitySafe } from '@/lib/siteSettings';
 import { FacebookPixel } from '@/components/analytics/FacebookPixel';
 import { getProductsSafe } from '@/lib/products';
 
@@ -101,7 +102,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const orgSchema = getOrganizationSchema();
+  // Admin-configured contact identity (Settings → Site Identity) feeds both
+  // the Organization JSON-LD and the Footer — one source, cached & tagged.
+  const siteIdentity = await getSiteIdentitySafe();
+  const orgSchema = getOrganizationSchema(siteIdentity);
   const webSiteSchema = getWebSiteSchema();
 
   // Read the catalog here rather than in each page: the Header search and the
@@ -133,7 +137,7 @@ export default async function RootLayout({
               <div className="flex flex-col min-h-screen">
                 <Header />
                 <main className="flex-1">{children}</main>
-                <Footer />
+                <Footer identity={siteIdentity} />
                 <MobileBottomNav />
               </div>
             </CartProvider>

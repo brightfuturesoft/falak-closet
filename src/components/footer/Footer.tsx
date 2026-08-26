@@ -8,18 +8,56 @@ import {
   RotateCcw,
   Headphones,
   Lock,
-  Globe,
-  Share2
+  Camera,
+  Share2,
+  MessageCircle,
+  Play,
+  Phone,
+  Mail,
+  MapPin
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { Logo } from '@/components/ui/Logo';
+import type { SiteIdentity } from '@/lib/siteSettings';
 
-export function Footer() {
+/** "@handle" / digits → full https URL; plain https passes through. */
+function socialHref(value: string, base: string): string {
+  const v = (value || '').trim();
+  if (!v) return '#';
+  if (/^https?:\/\//i.test(v)) return v;
+  return `${base}/${v.replace(/^@/, '')}`;
+}
+
+interface SocialLink {
+  href: string;
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+}
+
+interface ContactLine {
+  Icon: React.ComponentType<{ className?: string }>;
+  text: string;
+  href: string | null;
+}
+
+export function Footer({ identity }: { identity: SiteIdentity }) {
   const pathname = usePathname();
 
   if (pathname?.startsWith('/admin')) {
     return null;
   }
+
+  // Only configured channels render — no more placeholder instagram.com links.
+  const socials: SocialLink[] = [];
+  if (identity.instagram) socials.push({ href: socialHref(identity.instagram, 'https://instagram.com'), label: 'Instagram', Icon: Camera });
+  if (identity.facebook) socials.push({ href: socialHref(identity.facebook, 'https://facebook.com'), label: 'Facebook', Icon: Share2 });
+  if (identity.whatsapp) socials.push({ href: socialHref(identity.whatsapp, 'https://wa.me'), label: 'WhatsApp', Icon: MessageCircle });
+  if (identity.youtube) socials.push({ href: socialHref(identity.youtube, 'https://youtube.com'), label: 'YouTube', Icon: Play });
+
+  const contactLines: ContactLine[] = [];
+  if (identity.contactPhone) contactLines.push({ Icon: Phone, text: identity.contactPhone, href: `tel:${identity.contactPhone.replace(/[^+\d]/g, '')}` });
+  if (identity.contactEmail) contactLines.push({ Icon: Mail, text: identity.contactEmail, href: `mailto:${identity.contactEmail}` });
+  if (identity.address) contactLines.push({ Icon: MapPin, text: identity.address, href: null });
   return (
     <footer className="bg-[#FFFBF0] text-[#0C163A] border-t border-[#F2C76E]/40 pt-12 pb-12 font-sans">
       {/* 4 Value Pillars Banner */}
@@ -58,14 +96,41 @@ export function Footer() {
             Falak Closet is your destination for handcrafted luxury abayas, silk hijabs, kaftans, dresses, and modest couture collections.
           </p>
 
-          <div className="pt-2 flex items-center gap-2">
-            <a href="https://instagram.com" target="_blank" rel="noreferrer" className="p-2 bg-[#F2C76E]/20 hover:bg-[#9B050B] text-[#0C163A] hover:text-white rounded-full transition-colors border border-[#F2C76E]/40">
-              <Globe className="w-4 h-4" />
-            </a>
-            <a href="https://facebook.com" target="_blank" rel="noreferrer" className="p-2 bg-[#F2C76E]/20 hover:bg-[#9B050B] text-[#0C163A] hover:text-white rounded-full transition-colors border border-[#F2C76E]/40">
-              <Share2 className="w-4 h-4" />
-            </a>
-          </div>
+          {contactLines.length > 0 && (
+            <div className="space-y-1.5 pt-1">
+              {contactLines.map(({ Icon, text, href }) =>
+                href ? (
+                  <a key={text} href={href} className="flex items-center gap-2 text-xs text-stone-600 hover:text-[#9B050B] transition-colors">
+                    <Icon className="w-3.5 h-3.5 text-[#9B050B] shrink-0" />
+                    <span>{text}</span>
+                  </a>
+                ) : (
+                  <p key={text} className="flex items-start gap-2 text-xs text-stone-600">
+                    <Icon className="w-3.5 h-3.5 text-[#9B050B] shrink-0 mt-0.5" />
+                    <span>{text}</span>
+                  </p>
+                )
+              )}
+            </div>
+          )}
+
+          {socials.length > 0 && (
+            <div className="pt-2 flex items-center gap-2">
+              {socials.map(({ href, label, Icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={label}
+                  title={label}
+                  className="p-2 bg-[#F2C76E]/20 hover:bg-[#9B050B] text-[#0C163A] hover:text-white rounded-full transition-colors border border-[#F2C76E]/40"
+                >
+                  <Icon className="w-4 h-4" />
+                </a>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Quick Links */}

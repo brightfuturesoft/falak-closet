@@ -1,6 +1,27 @@
 import { Product } from '@/data/products';
+import type { SiteIdentity } from '@/lib/siteSettings';
 
-export function getOrganizationSchema() {
+/** Turn "@handle" / digits into a full https URL, else pass through. */
+function socialUrl(value: string | undefined, base: string): string | null {
+  const v = (value ?? '').trim();
+  if (!v) return null;
+  if (/^https?:\/\//i.test(v)) return v;
+  if (v.startsWith('@')) return `${base}/${v.slice(1)}`;
+  return `${base}/${v}`;
+}
+
+export function getOrganizationSchema(identity?: SiteIdentity) {
+  const sameAs = [
+    socialUrl(identity?.instagram, 'https://instagram.com'),
+    socialUrl(identity?.facebook, 'https://facebook.com'),
+    socialUrl(identity?.youtube, 'https://youtube.com'),
+  ].filter((v): v is string => Boolean(v));
+
+  // No phone configured → no contactPoint at all. The old hardcoded
+  // "+1-800-555-FLK" told crawlers (and customers) to call a number that
+  // never existed.
+  const phone = identity?.contactPhone?.trim();
+
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -8,18 +29,20 @@ export function getOrganizationSchema() {
     url: 'https://falakcloset.com',
     logo: 'https://falakcloset.com/logo.png',
     description: 'Premier modest fashion couture brand featuring handcrafted abayas, luxury kaftans, silk hijabs & modest ensembles.',
-    sameAs: [
-      'https://instagram.com/falakcloset',
-      'https://facebook.com/falakcloset',
-      'https://pinterest.com/falakcloset'
-    ],
-    contactPoint: {
-      '@type': 'ContactPoint',
-      telephone: '+1-800-555-FLK',
-      contactType: 'customer service',
-      areaServed: 'Worldwide',
-      availableLanguage: ['English', 'Arabic', 'Urdu']
-    }
+    ...(identity?.contactEmail ? { email: identity.contactEmail } : {}),
+    ...(identity?.address ? { address: identity.address } : {}),
+    ...(sameAs.length > 0 ? { sameAs } : {}),
+    ...(phone
+      ? {
+          contactPoint: {
+            '@type': 'ContactPoint',
+            telephone: phone,
+            contactType: 'customer service',
+            areaServed: 'BD',
+            availableLanguage: ['Bangla', 'English'],
+          },
+        }
+      : {}),
   };
 }
 
@@ -52,7 +75,9 @@ export function getProductSchema(product: Product) {
     offers: {
       '@type': 'Offer',
       url: `https://falakcloset.com/product/${product?.slug}`,
-      priceCurrency: 'USD',
+      // The store charges in Bangladeshi Taka everywhere (formatCurrency) —
+      // schema.org feeds said USD before, contradicting every page.
+      priceCurrency: 'BDT',
       price: product?.price,
       priceValidUntil: '2027-12-31',
       itemCondition: 'https://schema.org/NewCondition',
