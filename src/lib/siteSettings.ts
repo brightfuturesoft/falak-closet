@@ -29,6 +29,22 @@ export interface SiteIdentity {
   youtube: string;
 }
 
+/** One "Why Choose Us" card on the home page. */
+export interface ValuePropItem {
+  /** Whitelisted icon key — see ICONS in ValuePropsSection.tsx. */
+  icon: string;
+  title: string;
+  description: string;
+}
+
+export interface Announcement {
+  message: string;
+  /** Internal path (/...) or https URL — empty = text-only bar. */
+  link: string;
+  linkLabel: string;
+  isActive: boolean;
+}
+
 /** Matches DEFAULT_SETTINGS['site'] in /api/settings. */
 export const EMPTY_SITE_IDENTITY: SiteIdentity = {
   contactPhone: '',
@@ -103,5 +119,80 @@ export async function getSiteIdentitySafe(): Promise<SiteIdentity> {
   } catch (err) {
     console.error('[settings] site identity read failed:', err);
     return EMPTY_SITE_IDENTITY;
+  }
+}
+
+/** The four cards the storefront shipped with — fallback when unset. */
+export const DEFAULT_VALUE_PROPS: ValuePropItem[] = [
+  { icon: 'award', title: 'Premium Nida & Silk Fabrics', description: 'Crafted with imported Korean Nida, pure Dubai silk, and breathable airy cotton fabrics.' },
+  { icon: 'shield', title: '100% Authentic Modest Cut', description: 'Generous flared silhouettes, full-length hemlines, and modest wrist coverage for effortless modesty.' },
+  { icon: 'truck', title: 'Fast Doorstep BD Delivery', description: 'Swift 2-3 day express courier delivery across all 64 districts in Bangladesh.' },
+  { icon: 'rotate', title: '30-Day Easy Exchange', description: 'Hassle-free size replacement and item exchange guarantee within 30 days.' },
+];
+
+function parseValueProps(value: unknown): ValuePropItem[] {
+  if (!Array.isArray(value)) return DEFAULT_VALUE_PROPS;
+  const items = value
+    .filter((v): v is Record<string, unknown> => Boolean(v) && typeof v === 'object')
+    .map((v) => ({
+      icon: typeof v.icon === 'string' ? v.icon : 'sparkles',
+      title: typeof v.title === 'string' ? v.title.trim() : '',
+      description: typeof v.description === 'string' ? v.description.trim() : '',
+    }))
+    .filter((v) => v.title);
+  return items.length > 0 ? items : DEFAULT_VALUE_PROPS;
+}
+
+export const getValueProps = unstable_cache(
+  async (): Promise<ValuePropItem[]> => {
+    const row = await prisma.siteSetting.findUnique({ where: { key: 'value-props' } });
+    return parseValueProps(row?.value);
+  },
+  ['settings:value-props'],
+  { tags: [SITE_SETTINGS_TAG], revalidate: 3600 }
+);
+
+export async function getValuePropsSafe(): Promise<ValuePropItem[]> {
+  try {
+    return await getValueProps();
+  } catch (err) {
+    console.error('[settings] value props read failed:', err);
+    return DEFAULT_VALUE_PROPS;
+  }
+}
+
+function parseAnnouncement(value: unknown): Announcement {
+  const a = (value ?? {}) as Record<string, unknown>;
+  const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
+  return {
+    message: str(a.message),
+    link: str(a.link),
+    linkLabel: str(a.linkLabel),
+    isActive: a.isActive === true,
+  };
+}
+
+export const EMPTY_ANNOUNCEMENT: Announcement = {
+  message: '',
+  link: '',
+  linkLabel: '',
+  isActive: false,
+};
+
+export const getAnnouncement = unstable_cache(
+  async (): Promise<Announcement> => {
+    const row = await prisma.siteSetting.findUnique({ where: { key: 'announcement' } });
+    return parseAnnouncement(row?.value);
+  },
+  ['settings:announcement'],
+  { tags: [SITE_SETTINGS_TAG], revalidate: 3600 }
+);
+
+export async function getAnnouncementSafe(): Promise<Announcement> {
+  try {
+    return await getAnnouncement();
+  } catch (err) {
+    console.error('[settings] announcement read failed:', err);
+    return EMPTY_ANNOUNCEMENT;
   }
 }
