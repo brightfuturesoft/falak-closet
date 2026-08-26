@@ -98,3 +98,16 @@ export const getAllBanners = unstable_cache(
   ['banners:all'],
   { tags: [PROMOTION_BANNERS_TAG], revalidate: 3600 }
 );
+
+/**
+ * `getActiveBanners()` that never takes a page down — the home promo section
+ * renders with no banner rather than 500ing when the read fails.
+ */
+export async function getActiveBannersSafe(): Promise<PromotionBanner[]> {
+  try {
+    return await getActiveBanners();
+  } catch (err) {
+    console.error('[banners] active read failed:', err);
+    return [];
+  }
+}
