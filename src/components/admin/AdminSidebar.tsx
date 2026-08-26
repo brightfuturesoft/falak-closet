@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 
-export type AdminTabType = 'overview' | 'orders' | 'products' | 'categories' | 'promotions' | 'customers' | 'analytics' | 'security' | 'settings';
+export type AdminTabType = 'overview' | 'orders' | 'products' | 'categories' | 'promotions' | 'customers' | 'analytics' | 'security' | 'settings' | 'delivery';
 
 interface AdminSidebarProps {
   activeTab: AdminTabType;
@@ -74,6 +74,13 @@ export function AdminSidebar({
       href: '/admin/categories',
       label: 'Category Taxonomy',
       icon: FolderTree,
+      badge: null
+    },
+    {
+      id: 'delivery' as AdminTabType,
+      href: '/admin/delivery',
+      label: 'Delivery Zones & Charges',
+      icon: Truck,
       badge: null
     },
     {

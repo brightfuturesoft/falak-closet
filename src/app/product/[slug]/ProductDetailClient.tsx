@@ -15,7 +15,8 @@ import {
   Sparkles,
   Plus,
   Minus,
-  ZoomIn
+  ZoomIn,
+  Truck
 } from 'lucide-react';
 import { Product } from '@/data/products';
 import { formatCurrency } from '@/lib/utils';
@@ -63,6 +64,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         (c) => c.name.toLowerCase() === colorQueryParam.toLowerCase()
       );
       if (colorObj) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedColor(colorObj.name);
         if (typeof colorObj.imageIndex === 'number' && imagesList[colorObj.imageIndex]) {
           setSelectedImageIndex(colorObj.imageIndex);
@@ -124,8 +126,8 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
       if (colorObj) {
         if (typeof colorObj.imageIndex === 'number' && imagesList[colorObj.imageIndex]) {
           matchedImgIdx = colorObj.imageIndex;
-        } else if ((colorObj as any).images && (colorObj as any).images.length > 0) {
-          const firstColorImg = (colorObj as any).images[0];
+        } else if ((colorObj as { images?: string[] }).images && ((colorObj as { images?: string[] }).images?.length ?? 0) > 0) {
+          const firstColorImg = (colorObj as { images?: string[] }).images?.[0];
           matchedImgIdx = imagesList.findIndex((img) => img === firstColorImg);
         }
       }
@@ -170,7 +172,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
     if (!matchedColorName && colorsList) {
       const colorObj = colorsList.find((c) => {
         if (typeof c.imageIndex === 'number' && c.imageIndex === imgIdx) return true;
-        if ((c as any).images && Array.isArray((c as any).images) && (c as any).images.includes(targetImgUrl)) return true;
+        if ((c as { images?: string[] }).images && Array.isArray((c as { images?: string[] }).images) && (c as { images?: string[] }).images?.includes(targetImgUrl)) return true;
         return false;
       });
       if (colorObj) {
@@ -345,7 +347,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
             <div className="flex gap-3 overflow-x-auto pb-2">
               {imagesList.map((img, idx) => {
                 const mappedColor = colorsList.find(
-                  (c) => c.imageIndex === idx || ((c as any).images && (c as any).images.includes(img))
+                  (c) => c.imageIndex === idx || ((c as { images?: string[] }).images && (c as { images?: string[] }).images?.includes(img))
                 ) || (colorsList[idx] ? colorsList[idx] : null);
 
                 return (
@@ -422,6 +424,13 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 Variation: <span className="font-bold text-[#D92670]">{selectedColor} / {selectedSize}</span>
               </p>
             </div>
+
+            {product?.freeDeliveryQuantity && product.freeDeliveryQuantity > 0 ? (
+              <div className="bg-[#D92670]/10 text-[#D92670] border border-[#D92670]/20 px-3 py-1.5 rounded-2xl text-[10px] font-bold flex items-center gap-1 shrink-0">
+                <Truck className="w-3.5 h-3.5 shrink-0" />
+                <span>Free Delivery @ {product.freeDeliveryQuantity}+ pcs</span>
+              </div>
+            ) : null}
 
             <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-xl ${currentStock > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
               }`}>
@@ -530,6 +539,22 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               </div>
             </div>
           </div>
+
+          {product?.freeDeliveryQuantity && product.freeDeliveryQuantity > 0 && (
+            <div className="text-xs font-bold font-sans">
+              {quantity >= product.freeDeliveryQuantity ? (
+                <p className="text-emerald-700 flex items-center gap-1.5 bg-emerald-50 border border-emerald-250 p-2.5 rounded-xl">
+                  <Truck className="w-4 h-4 shrink-0 text-emerald-600 animate-bounce" />
+                  <span>🎉 Quantity milestone met! FREE delivery unlocked!</span>
+                </p>
+              ) : (
+                <p className="text-stone-500 flex items-center gap-1.5 bg-stone-50 border border-stone-200 p-2.5 rounded-xl">
+                  <Truck className="w-4 h-4 text-stone-400 shrink-0 animate-pulse" />
+                  <span>Buy {product.freeDeliveryQuantity - quantity} more of this item to unlock FREE delivery!</span>
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="space-y-3 pt-2">

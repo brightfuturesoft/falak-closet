@@ -20,7 +20,9 @@ export function CartDrawer() {
     appliedPromo,
     discountAmount,
     shippingFee,
-    totalAmount
+    totalAmount,
+    quantityFreeDelivery,
+    selectedZoneName
   } = useCart();
 
   // Item selection state inside drawer
@@ -105,26 +107,49 @@ export function CartDrawer() {
           <div className="flex items-center justify-between text-xs mb-1.5 font-medium">
             <span className="flex items-center gap-1.5 text-stone-800 dark:text-stone-200">
               <Truck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              {selectedSubtotal >= freeShippingThreshold ? (
+              {selectedSubtotal >= freeShippingThreshold || quantityFreeDelivery?.unlocked ? (
                 <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                  🎉 You unlocked FREE Express Shipping!
+                  {quantityFreeDelivery?.unlocked
+                    ? `🎉 Free Delivery unlocked via "${quantityFreeDelivery.productName}" Qty! 🚚`
+                    : '🎉 You unlocked FREE Express Shipping!'}
                 </span>
               ) : (
                 <span>
-                  Add <strong className="text-amber-700 dark:text-amber-400">{formatCurrency(remainingForFreeShipping)}</strong> more for FREE Shipping
+                  {quantityFreeDelivery ? (
+                    <span>
+                      Buy <strong className="text-[#D92670]">{quantityFreeDelivery.requiredQty - quantityFreeDelivery.currentQty}</strong> more of <strong className="text-stone-900 dark:text-stone-100">"{quantityFreeDelivery.productName}"</strong> for FREE Delivery!
+                    </span>
+                  ) : (
+                    <span>
+                      Add <strong className="text-amber-700 dark:text-amber-400">{formatCurrency(remainingForFreeShipping)}</strong> more for FREE Shipping
+                    </span>
+                  )}
                 </span>
               )}
             </span>
             <span className="text-[11px] text-stone-500 font-mono">
-              {Math.round(Math.min(100, (selectedSubtotal / freeShippingThreshold) * 100))}%
+              {selectedSubtotal >= freeShippingThreshold || quantityFreeDelivery?.unlocked
+                ? '100%'
+                : `${Math.round(Math.min(100, (selectedSubtotal / freeShippingThreshold) * 100))}%`}
             </span>
           </div>
           <div className="w-full bg-stone-200 dark:bg-stone-700 h-2 rounded-full overflow-hidden">
             <div
               className="bg-gradient-to-r from-amber-500 to-emerald-500 h-full transition-all duration-500 rounded-full"
-              style={{ width: `${Math.min(100, (selectedSubtotal / freeShippingThreshold) * 100)}%` }}
+              style={{
+                width: `${
+                  selectedSubtotal >= freeShippingThreshold || quantityFreeDelivery?.unlocked
+                    ? 100
+                    : Math.min(100, (selectedSubtotal / freeShippingThreshold) * 100)
+                }%`
+              }}
             />
           </div>
+          {shippingFee > 0 && (
+            <p className="text-[10px] text-stone-500 mt-1 font-sans">
+              Delivery to {selectedZoneName}: ৳{shippingFee} (final fee set at checkout)
+            </p>
+          )}
         </div>
 
         {/* Cart Item List */}

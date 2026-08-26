@@ -82,6 +82,10 @@ export function AdminHeader({
     settings: {
       title: 'System & Database Config',
       subtitle: 'MongoDB connection parameters, database seeder, and store parameters.'
+    },
+    delivery: {
+      title: 'Delivery Zones & Pricing',
+      subtitle: 'Manage administrative shipping zones, sub-areas, and location-based shipping fees.'
     }
   };
 

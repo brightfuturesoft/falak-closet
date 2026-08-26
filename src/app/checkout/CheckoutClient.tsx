@@ -3,14 +3,24 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { CheckCircle2, ShieldCheck, Truck, CreditCard, Lock, ArrowRight, ArrowLeft } from 'lucide-react';
-import { useCart, OrderRecord } from '@/context/CartContext';
+import { CheckCircle2, ShieldCheck, Truck, CreditCard, Lock, ArrowRight, ArrowLeft, X } from 'lucide-react';
+import { useCart, OrderRecord, DeliverySubArea } from '@/context/CartContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
 
 export default function CheckoutClient() {
-  const router = useRouter();
-  const { cart, subtotal, discountAmount, shippingFee, totalAmount, placeOrder } = useCart();
+  const {
+    cart,
+    subtotal,
+    discountAmount,
+    shippingFee,
+    placeOrder,
+    deliveryZones,
+    selectedZoneId,
+    selectedSubAreaId,
+    setSelectedZone,
+    selectedZoneName,
+    selectedSubAreaName
+  } = useCart();
   const { trackEvent } = useAnalytics();
 
   const [formData, setFormData] = useState({
@@ -24,14 +34,74 @@ export default function CheckoutClient() {
 
   const [userEmail, setUserEmail] = useState<string | undefined>(undefined);
   const [isIpBlocked, setIsIpBlocked] = useState(false);
-  const [userIp, setUserIp] = useState<string>('103.24.12.89');
+  const [userIp] = useState<string>('103.24.12.89');
+
+  // bKash manual payment settings state
+  const [bkashSettings, setBkashSettings] = useState<{
+    bkashNumber?: string;
+    bkashAccountType?: string;
+    instructions?: string[];
+  } | null>(null);
+  const [isBkashModalOpen, setIsBkashModalOpen] = useState(false);
+  const [bkashSenderNumber, setBkashSenderNumber] = useState('');
+  const [bkashTrxId, setBkashTrxId] = useState('');
+  const [bkashError, setBkashError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyNumber = () => {
+    if (bkashSettings?.bkashNumber) {
+      navigator.clipboard.writeText(bkashSettings.bkashNumber);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  // Auto-select zone based on user's district
+  React.useEffect(() => {
+    if (!formData.city || deliveryZones.length === 0) return;
+    const cleanCity = formData.city.toLowerCase().trim();
+    if (cleanCity.includes('dhaka')) {
+      const dhakaZone = deliveryZones.find(z => z.name.toLowerCase().includes('inside dhaka'));
+      if (dhakaZone && selectedZoneId !== dhakaZone.id) {
+        setSelectedZone(dhakaZone.id, null);
+      }
+    } else {
+      const outsideZone = deliveryZones.find(z => z.name.toLowerCase().includes('outside dhaka'));
+      if (outsideZone && selectedZoneId !== outsideZone.id) {
+        setSelectedZone(outsideZone.id, null);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.city, deliveryZones]);
+
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch('/api/settings?key=payment');
+        const data = await res.json();
+        if (data.success && data.setting) {
+          setBkashSettings(data.setting.value);
+        }
+      } catch {
+        console.error('Failed to load settings');
+      }
+    };
+    fetchSettings();
+  }, []);
 
   // Auto fill shipping address and check IP blocking status
   React.useEffect(() => {
     try {
       const savedUser = localStorage.getItem('falak_user_account');
       if (savedUser) {
-        const parsed = JSON.parse(savedUser);
+        const parsed = JSON.parse(savedUser) as {
+          email?: string;
+          name?: string;
+          phone?: string;
+          district?: string;
+          fullAddress?: string;
+        };
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (parsed.email) setUserEmail(parsed.email);
         setFormData((prev) => ({
           ...prev,
@@ -49,18 +119,17 @@ export default function CheckoutClient() {
           const data = await res.json();
           const localBlocked = JSON.parse(localStorage.getItem('falak_blocked_ips') || '[]');
           const allBlocked = [...(data.blockedIps || []), ...localBlocked];
-          const isBlocked = allBlocked.some((b: any) => b.ip === userIp);
+          const isBlocked = allBlocked.some((b: { ip: string }) => b.ip === userIp);
           if (isBlocked) setIsIpBlocked(true);
         } catch {
           const localBlocked = JSON.parse(localStorage.getItem('falak_blocked_ips') || '[]');
-          if (localBlocked.some((b: any) => b.ip === userIp)) setIsIpBlocked(true);
+          if (localBlocked.some((b: { ip: string }) => b.ip === userIp)) setIsIpBlocked(true);
         }
       };
       checkBlockedIp();
     } catch { }
   }, [userIp]);
 
-  const [deliveryMethod, setDeliveryMethod] = useState('Standard Express (2-3 Days)');
   const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery (COD)');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -112,21 +181,64 @@ export default function CheckoutClient() {
     e.preventDefault();
     if (cart.length === 0 || isIpBlocked) return;
 
+    if (paymentMethod === 'bKash Send Money (Manual)' && !isBkashModalOpen) {
+      // Intercept to display the gateway-style bKash payment portal first
+      setIsBkashModalOpen(true);
+      return;
+    }
+
     setIsSubmitting(true);
+    setBkashError(null);
 
     try {
-      const order = await placeOrder({
+      const orderPayload: {
+        items: typeof cart;
+        subtotal: number;
+        discount: number;
+        shippingFee: number;
+        total: number;
+        shippingAddress: typeof formData;
+        deliveryMethod: string;
+        paymentMethod: string;
+        userEmail?: string;
+        userIp: string;
+        deliveryZone: string;
+        deliverySubArea?: string;
+        paymentSenderNumber?: string;
+        paymentTrxId?: string;
+        paymentStatus?: string;
+      } = {
         items: cart,
         subtotal,
         discount: activeDiscount,
         shippingFee,
         total: activeTotalAmount,
         shippingAddress: formData,
-        deliveryMethod,
+        deliveryMethod: selectedZoneName + (selectedSubAreaName ? ` - ${selectedSubAreaName}` : ''),
         paymentMethod,
         userEmail,
-        userIp
-      });
+        userIp,
+        deliveryZone: selectedZoneName,
+        deliverySubArea: selectedSubAreaName || undefined
+      };
+
+      if (paymentMethod === 'bKash Send Money (Manual)') {
+        if (!/^01\d{9}$/.test(bkashSenderNumber.trim())) {
+          setBkashError('Please enter a valid 11-digit bKash number.');
+          setIsSubmitting(false);
+          return;
+        }
+        if (!bkashTrxId.trim() || bkashTrxId.trim().length < 6) {
+          setBkashError('Please enter a valid Transaction ID.');
+          setIsSubmitting(false);
+          return;
+        }
+        orderPayload.paymentSenderNumber = bkashSenderNumber.trim();
+        orderPayload.paymentTrxId = bkashTrxId.trim().toUpperCase();
+        orderPayload.paymentStatus = 'Pending';
+      }
+
+      const order = await placeOrder(orderPayload);
 
       trackEvent('purchase', {
         orderId: order.id,
@@ -136,8 +248,10 @@ export default function CheckoutClient() {
       });
 
       setCreatedOrder(order);
+      setIsBkashModalOpen(false);
     } catch (err) {
       console.error('Order placement error:', err);
+      setBkashError('An error occurred while placing the order. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -333,19 +447,16 @@ export default function CheckoutClient() {
             </div>
           </div>
 
-          {/* Delivery Speed */}
-          <div className="bg-white p-6 rounded-3xl border border-pink-100 shadow-xs space-y-3">
+          {/* Delivery Zone Selection */}
+          <div className="bg-white p-6 rounded-3xl border border-pink-100 shadow-xs space-y-4">
             <h2 className="font-bold text-lg text-stone-900">
-              Select Delivery Speed
+              Select Delivery Zone
             </h2>
             <div className="space-y-2 text-xs">
-              {[
-                { label: 'Standard Express (2-3 Days)', price: shippingFee === 0 ? 'FREE' : '৳ 60' },
-                { label: 'VIP Same-Day Express Delivery', price: '৳ 120' }
-              ].map((m) => (
+              {deliveryZones.map((z) => (
                 <label
-                  key={m.label}
-                  className={`flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer transition-all ${deliveryMethod === m.label
+                  key={z.id}
+                  className={`flex items-center justify-between p-3.5 rounded-2xl border cursor-pointer transition-all ${selectedZoneId === z.id
                       ? 'border-[#D92670] bg-pink-50 text-[#D92670] font-bold'
                       : 'border-stone-200 text-stone-700 hover:border-pink-200'
                     }`}
@@ -353,17 +464,46 @@ export default function CheckoutClient() {
                   <div className="flex items-center gap-2">
                     <input
                       type="radio"
-                      name="deliveryMethod"
-                      checked={deliveryMethod === m.label}
-                      onChange={() => setDeliveryMethod(m.label)}
+                      name="deliveryZone"
+                      checked={selectedZoneId === z.id}
+                      onChange={() => setSelectedZone(z.id, null)}
                       className="accent-[#D92670]"
                     />
-                    <span>{m.label}</span>
+                    <div>
+                      <p className="font-bold">{z.name} ({z.etaDays})</p>
+                      <p className="text-[10px] text-stone-500 font-normal">Base shipping fee</p>
+                    </div>
                   </div>
-                  <span className="font-bold">{m.price}</span>
+                  <span className="font-mono font-bold text-sm">৳ {z.charge}</span>
                 </label>
               ))}
             </div>
+
+            {/* Sub-areas Dropdown */}
+            {(() => {
+              const selectedZone = deliveryZones.find(z => z.id === selectedZoneId);
+              if (selectedZone?.subAreas && selectedZone.subAreas.length > 0) {
+                return (
+                  <div className="space-y-1.5 pt-2 text-xs">
+                    <label className="font-bold text-stone-700">Select Specific Delivery Area *</label>
+                    <select
+                      value={selectedSubAreaId || ''}
+                      onChange={(e) => setSelectedZone(selectedZoneId!, e.target.value || null)}
+                      className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-2xl text-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900 font-bold"
+                      required
+                    >
+                      <option value="">-- Choose Area (Custom rate overrides apply) --</option>
+                      {selectedZone.subAreas.map((sub: DeliverySubArea) => (
+                        <option key={sub.id} value={sub.id}>
+                          {sub.name} {sub.charge !== null ? `(৳ ${sub.charge})` : `(৳ ${selectedZone.charge})`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
 
           {/* Payment Option */}
@@ -375,8 +515,7 @@ export default function CheckoutClient() {
             <div className="space-y-2 text-xs">
               {[
                 'Cash on Delivery (COD)',
-                'bKash / Nagad / Rocket Mobile Banking',
-                'Credit / Debit Card'
+                'bKash Send Money (Manual)'
               ].map((pm) => (
                 <label
                   key={pm}
@@ -489,6 +628,135 @@ export default function CheckoutClient() {
           </div>
         </div>
       </form>
+
+      {/* Manual bKash Payment Modal Overlay */}
+      {isBkashModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl border border-stone-200 max-w-md w-full shadow-2xl overflow-hidden text-stone-900 flex flex-col">
+            {/* Header */}
+            <div className="bg-[#E2136E] text-white p-6 text-center space-y-2 relative">
+              <button
+                type="button"
+                onClick={() => setIsBkashModalOpen(false)}
+                className="absolute top-4 right-4 text-white/80 hover:text-white hover:bg-white/10 p-1.5 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <div className="inline-flex items-center justify-center bg-white text-[#E2136E] rounded-2xl px-4 py-2 font-black text-xl tracking-wider shadow-sm select-none">
+                bKash
+              </div>
+              <p className="text-xs text-pink-100">Send Money Payment Portal</p>
+            </div>
+
+            <div className="p-6 space-y-4 flex-grow overflow-y-auto max-h-[60vh] text-left">
+              {/* Amount Info */}
+              <div className="bg-pink-50/50 border border-pink-100 p-4 rounded-2xl flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Amount to Pay</p>
+                  <p className="text-2xl font-black text-[#E2136E] font-mono">৳ {activeTotalAmount}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Reference</p>
+                  <p className="text-xs font-bold text-stone-750">Falak Closet Order</p>
+                </div>
+              </div>
+
+              {/* Merchant Details */}
+              <div className="p-4 bg-stone-50 border border-stone-200 rounded-2xl space-y-2">
+                <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Send Money to</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-mono text-base font-extrabold text-stone-950">
+                      {bkashSettings?.bkashNumber || '01700000005'}
+                    </span>
+                    <span className="ml-2 px-2 py-0.5 bg-pink-100 text-[#E2136E] border border-pink-250 rounded text-[9px] font-bold">
+                      {bkashSettings?.bkashAccountType || 'Personal'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCopyNumber}
+                    className="px-3 py-1.5 bg-[#E2136E] hover:bg-[#C2105E] text-white rounded-lg text-[10px] font-bold transition-all shadow-xs cursor-pointer"
+                  >
+                    {copied ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Instructions list */}
+              <div className="space-y-2 text-xs">
+                <p className="font-bold text-stone-700 uppercase tracking-wider text-[10px]">Instructions:</p>
+                <ol className="list-decimal pl-4 space-y-1 text-stone-600 font-medium">
+                  {bkashSettings?.instructions?.map((inst: string, idx: number) => (
+                    <li key={idx} className="leading-relaxed">{inst}</li>
+                  )) || (
+                    <>
+                      <li>Dial *247# or open the bKash App.</li>
+                      <li>Choose &quot;Send Money&quot; and enter our number.</li>
+                      <li>Enter amount: ৳{activeTotalAmount}.</li>
+                      <li>Use your phone number as reference.</li>
+                      <li>Confirm transaction and copy the Transaction ID.</li>
+                    </>
+                  )}
+                </ol>
+              </div>
+
+              {bkashError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 text-rose-850 rounded-xl text-xs font-bold leading-normal">
+                  {bkashError}
+                </div>
+              )}
+
+              {/* Forms inputs */}
+              <div className="space-y-3 pt-2 border-t border-stone-150">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-stone-700">Your Sender bKash Number *</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={11}
+                    value={bkashSenderNumber}
+                    onChange={(e) => setBkashSenderNumber(e.target.value.replace(/\D/g, ''))}
+                    placeholder="e.g. 017XXXXXXXX"
+                    className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 focus:outline-none focus:ring-1 focus:ring-[#E2136E] font-mono font-bold"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-stone-700">bKash Transaction ID (TrxID) *</label>
+                  <input
+                    type="text"
+                    required
+                    value={bkashTrxId}
+                    onChange={(e) => setBkashTrxId(e.target.value.toUpperCase())}
+                    placeholder="e.g. ABC123XYZ9"
+                    className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 focus:outline-none focus:ring-1 focus:ring-[#E2136E] font-mono font-bold uppercase"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="p-6 bg-stone-50 border-t border-stone-200 flex justify-end gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => setIsBkashModalOpen(false)}
+                className="px-4 py-2 bg-stone-200 hover:bg-stone-300 text-stone-850 rounded-xl font-bold transition-colors cursor-pointer"
+              >
+                Close Gateway
+              </button>
+              <button
+                type="button"
+                onClick={handleCompleteOrder}
+                disabled={isSubmitting}
+                className="px-5 py-2 bg-[#E2136E] hover:bg-[#C2105E] text-white rounded-xl font-bold transition-all shadow-md cursor-pointer disabled:opacity-50"
+              >
+                {isSubmitting ? 'Verifying payment...' : 'Confirm bKash Payment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

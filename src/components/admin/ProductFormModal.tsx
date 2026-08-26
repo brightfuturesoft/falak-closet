@@ -82,7 +82,8 @@ export function ProductFormModal({
     stock: 0,
     description: '',
     featuresText: '',
-    careText: ''
+    careText: '',
+    freeDeliveryQuantity: 0
   });
 
   // Save failure message, shown inline so it cannot be missed behind the overlay.
@@ -148,7 +149,8 @@ export function ProductFormModal({
         stock: editingProduct.stock ?? 10,
         description: editingProduct.description || 'Luxury modest ensemble.',
         featuresText: (editingProduct.features || []).join('\n'),
-        careText: (editingProduct.careInstructions || []).join('\n')
+        careText: (editingProduct.careInstructions || []).join('\n'),
+        freeDeliveryQuantity: editingProduct.freeDeliveryQuantity || 0
       });
 
 
@@ -203,7 +205,8 @@ export function ProductFormModal({
         stock: 0,
         description: '',
         featuresText: '',
-        careText: ''
+        careText: '',
+        freeDeliveryQuantity: 0
       });
       setColorVariations([
         {
@@ -480,7 +483,8 @@ export function ProductFormModal({
         variations: variationsMatrix,
         stock: totalStockFromMatrix > 0 ? totalStockFromMatrix : formData.stock,
         features,
-        careInstructions
+        careInstructions,
+        freeDeliveryQuantity: formData.freeDeliveryQuantity || undefined
       });
 
       // Only close on a confirmed write — otherwise the admin loses the whole form.
@@ -781,6 +785,20 @@ export function ProductFormModal({
                     />
                     <p className="text-[10px] text-stone-500">
                       Note: Setting color/size variation stock in Step 4 automatically updates the total stock.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-stone-700">Free Delivery Quantity (Buy X → Free Delivery)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={formData.freeDeliveryQuantity || ''}
+                      onChange={(e) => setFormData({ ...formData, freeDeliveryQuantity: e.target.value === '' ? 0 : Number(e.target.value) })}
+                      className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 font-mono focus:outline-none focus:ring-2 focus:ring-stone-900"
+                    />
+                    <p className="text-[10px] text-stone-500">
+                      e.g. 3 = buying 3 or more pieces of this product makes delivery FREE. Leave empty or 0 to disable.
                     </p>
                   </div>
                 </div>

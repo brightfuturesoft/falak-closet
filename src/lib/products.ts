@@ -86,6 +86,7 @@ export function serializeProduct(row: ProductRow): Product {
       comment: r.comment,
       verifiedPurchase: r.verifiedPurchase,
     })),
+    freeDeliveryQuantity: opt(row.freeDeliveryQuantity),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -383,6 +384,19 @@ export function buildProductData(body: Raw, options: { partial?: boolean } = {})
   if (sent('rating') || !partial) data.rating = toNum(body.rating, 4.8);
   if (sent('reviewCount') || !partial) data.reviewCount = toInt(body.reviewCount, 0);
   if (sent('stock') || !partial) data.stock = toInt(body.stock, 0);
+
+  if (sent('freeDeliveryQuantity')) {
+    const rawVal = body.freeDeliveryQuantity;
+    if (rawVal === null || rawVal === undefined || rawVal === 0 || rawVal === '0' || rawVal === '') {
+      data.freeDeliveryQuantity = null;
+    } else {
+      const num = Number(rawVal);
+      if (Number.isNaN(num) || !Number.isInteger(num) || num < 0) {
+        throw new ProductValidationError('Free delivery quantity must be a positive integer.');
+      }
+      data.freeDeliveryQuantity = toInt(rawVal);
+    }
+  }
 
   // ── collections ──
   if (sent('colors') || !partial) data.colors = toColors(body.colors);

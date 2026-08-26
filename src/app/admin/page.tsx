@@ -14,6 +14,7 @@ import { CustomersTab } from '@/components/admin/CustomersTab';
 import { AnalyticsTab } from '@/components/admin/AnalyticsTab';
 import { SecurityTab } from '@/components/admin/SecurityTab';
 import { SettingsTab } from '@/components/admin/SettingsTab';
+import { DeliveryZonesTab } from '@/components/admin/DeliveryZonesTab';
 import { ProductFormModal } from '@/components/admin/ProductFormModal';
 import { OrderReceiptModal } from '@/components/admin/OrderReceiptModal';
 import { PromoFormModal, PromoVoucherData } from '@/components/admin/PromoFormModal';
@@ -62,7 +63,7 @@ const promoKey = (promo: Pick<PromoVoucherData, '_id' | 'id' | 'code'>) =>
 function AdminDashboardContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { orders: localOrders, refreshProductsFromApi } = useCart();
+  const { refreshProductsFromApi } = useCart();
 
   // Track known order IDs for sound & toast notifications
   const knownOrderIdsRef = React.useRef<Set<string>>(new Set());
@@ -77,6 +78,7 @@ function AdminDashboardContent() {
   // Sync active tab state from URL pathname (e.g. /admin/orders, /admin/products) or query param
   useEffect(() => {
     if (pathname.includes('/admin/orders')) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveTab('orders');
     } else if (pathname.includes('/admin/products')) {
       setActiveTab('products');
@@ -92,9 +94,11 @@ function AdminDashboardContent() {
       setActiveTab('analytics');
     } else if (pathname.includes('/admin/settings')) {
       setActiveTab('settings');
+    } else if (pathname.includes('/admin/delivery')) {
+      setActiveTab('delivery');
     } else {
       const tabParam = searchParams.get('tab');
-      if (tabParam && ['overview', 'orders', 'products', 'promotions', 'customers', 'security', 'analytics', 'settings'].includes(tabParam)) {
+      if (tabParam && ['overview', 'orders', 'products', 'categories', 'promotions', 'customers', 'security', 'analytics', 'settings', 'delivery'].includes(tabParam)) {
         setActiveTab(tabParam as AdminTabType);
       } else {
         setActiveTab('overview');
@@ -156,6 +160,7 @@ function AdminDashboardContent() {
       const savedSession = typeof window !== 'undefined' ? localStorage.getItem('falak_admin_session') : null;
       const hasCookieSession = typeof document !== 'undefined' ? document.cookie.includes('falak_admin_session=true') : false;
       if (savedSession === 'true' || hasCookieSession) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsAdminLoggedIn(true);
       } else {
         setIsAdminLoggedIn(false);
@@ -240,6 +245,7 @@ function AdminDashboardContent() {
     if (!isAdminLoggedIn) return;
 
     // 1. Initial data fetch
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAllData();
 
     // 2. Connect to Socket.io Server
@@ -294,6 +300,7 @@ function AdminDashboardContent() {
       socket.off('new_order_alert', handleSocketOrderAlert);
       clearInterval(interval);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdminLoggedIn]);
 
   // Seed Database Handler
@@ -385,6 +392,19 @@ function AdminDashboardContent() {
 
     setOrdersList((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
     addToast('success', `Order #${orderId} status changed to ${newStatus}.`);
+  };
+
+  // Update Order Payment Verification Status
+  const handleUpdatePaymentStatus = async (orderId: string, paymentStatus: string) => {
+    const result = await requestJson('/api/orders', jsonInit('PATCH', { orderId, paymentStatus }));
+
+    if (!result.ok) {
+      addToast('error', `Could not update payment status for order #${orderId}: ${result.error}`);
+      return;
+    }
+
+    setOrdersList((prev) => prev.map((o) => (o.id === orderId ? { ...o, paymentStatus } : o)));
+    addToast('success', `Order #${orderId} payment status marked as ${paymentStatus}.`);
   };
 
   // Save or Update Promotion Voucher (CRUD)
@@ -537,6 +557,7 @@ function AdminDashboardContent() {
               orders={ordersList}
               onSelectOrderReceipt={(order) => setSelectedOrderReceipt(order)}
               onUpdateOrderStatus={handleUpdateOrderStatus}
+              onUpdatePaymentStatus={handleUpdatePaymentStatus}
               onOpenCreateOrderModal={() => setIsCreateOrderOpen(true)}
               searchQuery={globalSearchQuery}
             />
@@ -597,6 +618,10 @@ function AdminDashboardContent() {
               isSeeding={isSeeding}
               seedResult={seedResult}
             />
+          )}
+
+          {activeTab === 'delivery' && (
+            <DeliveryZonesTab />
           )}
         </main>
       </div>

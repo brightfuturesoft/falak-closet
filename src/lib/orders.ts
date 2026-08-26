@@ -82,6 +82,11 @@ export function serializeOrder(row: OrderRow) {
     paymentMethod: opt(row.paymentMethod),
     trackingNumber: opt(row.trackingNumber),
     estimatedDelivery: opt(row.estimatedDelivery),
+    deliveryZone: opt(row.deliveryZone),
+    deliverySubArea: opt(row.deliverySubArea),
+    paymentSenderNumber: opt(row.paymentSenderNumber),
+    paymentTrxId: opt(row.paymentTrxId),
+    paymentStatus: opt(row.paymentStatus),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -162,5 +167,10 @@ export function buildOrderData(body: Raw): Prisma.OrderCreateInput {
     ...(toStr(body.estimatedDelivery)
       ? { estimatedDelivery: toStr(body.estimatedDelivery) }
       : {}),
+    ...(toStr(body.deliveryZone) ? { deliveryZone: toStr(body.deliveryZone) } : {}),
+    ...(toStr(body.deliverySubArea) ? { deliverySubArea: toStr(body.deliverySubArea) } : {}),
+    ...(toStr(body.paymentSenderNumber) ? { paymentSenderNumber: toStr(body.paymentSenderNumber) } : {}),
+    ...(toStr(body.paymentTrxId) ? { paymentTrxId: toStr(body.paymentTrxId) } : {}),
+    ...(toStr(body.paymentStatus) ? { paymentStatus: toStr(body.paymentStatus) } : {}),
   };
 }

@@ -69,14 +69,14 @@ export async function POST(req: Request) {
 }
 
 // ─── PATCH /api/orders ───────────────────────────────────────────────────────
-// body: { orderId: 'FLK-12345', status: 'Out for Delivery' }
+// body: { orderId: 'FLK-12345', status?: 'Out for Delivery', paymentStatus?: 'Verified' | 'Rejected' }
 export async function PATCH(req: Request) {
   try {
-    const { orderId, status } = await req.json();
+    const { orderId, status, paymentStatus } = await req.json();
 
-    if (!orderId || !status) {
+    if (!orderId) {
       return NextResponse.json(
-        { success: false, error: 'orderId and status are required' },
+        { success: false, error: 'orderId is required' },
         { status: 400 }
       );
     }
@@ -87,14 +87,18 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
     }
 
+    const updateData: any = {};
+    if (status !== undefined) updateData.status = String(status);
+    if (paymentStatus !== undefined) updateData.paymentStatus = String(paymentStatus);
+
     const order = await prisma.order.update({
       where: { orderNumber: existing.orderNumber },
-      data: { status: String(status) },
+      data: updateData,
     });
 
     return NextResponse.json({
       success: true,
-      message: 'Order status updated',
+      message: 'Order updated',
       order: serializeOrder(order),
     });
   } catch (err) {

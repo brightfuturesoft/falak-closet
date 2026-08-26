@@ -29,6 +29,7 @@ function SafeImage({ src, alt, className }: { src: string; alt: string; classNam
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setImgSrc(src);
     setHasError(false);
   }, [src]);
@@ -70,6 +71,7 @@ function TrackContent() {
     if (idParam || phoneParam) {
       const found = getOrderById(idParam) || getOrdersByPhone(phoneParam)[0];
       if (found) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setActiveOrder(found);
       } else {
         // Fallback search in orders array
@@ -296,15 +298,61 @@ function TrackContent() {
               <div className="space-y-1 text-stone-700">
                 <div className="flex justify-between">
                   <span className="text-stone-500">Payment Method:</span>
-                  <span className="font-bold text-[#0C163A]">Cash on Delivery (COD)</span>
+                  <span className="font-bold text-[#0C163A]">{activeOrder.paymentMethod || 'Cash on Delivery (COD)'}</span>
                 </div>
+
+                {activeOrder.paymentMethod === 'bKash Send Money (Manual)' && (
+                  <>
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-stone-500">bKash Sender:</span>
+                      <span className="font-mono font-bold text-stone-850">
+                        {activeOrder.paymentSenderNumber
+                          ? `${activeOrder.paymentSenderNumber.substring(0, 3)}•••••${activeOrder.paymentSenderNumber.substring(8)}`
+                          : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-stone-500">Transaction ID (TrxID):</span>
+                      <span className="font-mono font-bold text-stone-850">
+                        {activeOrder.paymentTrxId || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-[11px] items-center">
+                      <span className="text-stone-500">Payment Status:</span>
+                      <span className={`font-bold uppercase tracking-wider text-[8px] px-1.5 py-0.5 rounded font-sans ${
+                        activeOrder.paymentStatus === 'Verified'
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                          : activeOrder.paymentStatus === 'Rejected'
+                          ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                          : 'bg-amber-100 text-amber-800 border border-amber-200 animate-pulse'
+                      }`}>
+                        {activeOrder.paymentStatus || 'Pending'}
+                      </span>
+                    </div>
+                  </>
+                )}
+
                 <div className="flex justify-between">
                   <span className="text-stone-500">Subtotal:</span>
-                  <span className="font-mono font-bold text-[#0C163A]">{formatCurrency(activeOrder.total)}</span>
+                  <span className="font-mono font-bold text-[#0C163A]">{formatCurrency(activeOrder.subtotal || activeOrder.total)}</span>
                 </div>
+
+                {activeOrder.discount !== undefined && activeOrder.discount > 0 && (
+                  <div className="flex justify-between text-[#D92670]">
+                    <span className="text-stone-500">Promo Discount:</span>
+                    <span className="font-mono font-bold">-{formatCurrency(activeOrder.discount)}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between">
                   <span className="text-stone-500">Delivery Charge:</span>
-                  <span className="font-mono text-emerald-700 font-bold">FREE Shipping</span>
+                  <span className="font-mono text-[#0C163A] font-bold">
+                    {activeOrder.shippingFee === 0 ? (
+                      <span className="text-emerald-700 font-bold uppercase text-[10px]">Free Delivery</span>
+                    ) : (
+                      formatCurrency(activeOrder.shippingFee || 60)
+                    )}
+                  </span>
                 </div>
                 <div className="flex justify-between border-t border-[#F2C76E]/40 pt-1 text-sm">
                   <span className="font-bold text-[#0C163A]">Total Amount:</span>

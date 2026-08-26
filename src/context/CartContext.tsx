@@ -12,6 +12,22 @@ export interface CartItem {
   quantity: number;
 }
 
+export interface DeliverySubArea {
+  id: string;
+  name: string;
+  charge: number | null;
+}
+
+export interface DeliveryZone {
+  id: string;
+  name: string;
+  charge: number;
+  etaDays: string;
+  isActive: boolean;
+  sortOrder: number;
+  subAreas: DeliverySubArea[];
+}
+
 export interface OrderRecord {
   id: string;
   date: string;
@@ -38,6 +54,11 @@ export interface OrderRecord {
   paymentMethod?: string;
   trackingNumber?: string;
   estimatedDelivery?: string;
+  paymentSenderNumber?: string;
+  paymentTrxId?: string;
+  paymentStatus?: string;
+  deliveryZone?: string;
+  deliverySubArea?: string;
 }
 
 interface CartContextType {
@@ -56,6 +77,15 @@ interface CartContextType {
   totalAmount: number;
   freeShippingThreshold: number;
   freeShippingProgress: number;
+
+  // Delivery Zones
+  deliveryZones: DeliveryZone[];
+  selectedZoneId: string | null;
+  selectedSubAreaId: string | null;
+  setSelectedZone: (zoneId: string, subAreaId?: string | null) => void;
+  selectedZoneName: string;
+  selectedSubAreaName: string | null;
+  quantityFreeDelivery: { unlocked: boolean; productName: string; requiredQty: number; currentQty: number } | null;
 
   // Wishlist
   wishlist: Product[];
@@ -102,6 +132,33 @@ export function CartProvider({
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
 
+  // Delivery Zones State
+  const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
+  const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
+  const [selectedSubAreaId, setSelectedSubAreaId] = useState<string | null>(null);
+
+  const fetchDeliveryZones = async () => {
+    try {
+      const res = await fetch('/api/delivery-zones');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.deliveryZones)) {
+        setDeliveryZones(data.deliveryZones);
+        // Default select first active zone
+        const active = data.deliveryZones.filter((z: DeliveryZone) => z.isActive);
+        if (active.length > 0) {
+          setSelectedZoneId(active[0].id);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch delivery zones:', e);
+    }
+  };
+
+  const setSelectedZone = (zoneId: string, subAreaId: string | null = null) => {
+    setSelectedZoneId(zoneId);
+    setSelectedSubAreaId(subAreaId);
+  };
+
   // Dynamic Database Products State
   const [products, setProducts] = useState<Product[]>(initialProducts);
   // Already have the server's copy, so nothing is "loading" on first paint.
@@ -135,6 +192,7 @@ export function CartProvider({
   // duplicate that query. Only fetch when it arrived empty.
   useEffect(() => {
     if (initialProducts.length === 0 && !initialProductsError) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       refreshProductsFromApi();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -172,6 +230,7 @@ export function CartProvider({
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem('falak_cart');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (savedCart) setCart(JSON.parse(savedCart));
 
       const savedWishlist = localStorage.getItem('falak_wishlist');
@@ -179,6 +238,7 @@ export function CartProvider({
     } catch { }
 
     refreshOrdersFromApi();
+    fetchDeliveryZones();
   }, []);
 
   useEffect(() => {
@@ -290,8 +350,54 @@ export function CartProvider({
     discountAmount = (subtotal * appliedPromo.discountPercentage) / 100;
   }
 
+  // Sum quantities by product ID
+  const quantitiesByProductId: Record<string, number> = {};
+  cart.forEach((item) => {
+    const pid = item.product?.id;
+    if (pid) {
+      quantitiesByProductId[pid] = (quantitiesByProductId[pid] || 0) + (item.quantity ?? 0);
+    }
+  });
+
+  let quantityFreeDelivery: { unlocked: boolean; productName: string; requiredQty: number; currentQty: number } | null = null;
+
+  for (const item of cart) {
+    const prod = item.product;
+    const reqQty = prod?.freeDeliveryQuantity;
+    if (prod && typeof reqQty === 'number' && reqQty > 0) {
+      const currentQty = quantitiesByProductId[prod.id] || 0;
+      if (currentQty >= reqQty) {
+        quantityFreeDelivery = {
+          unlocked: true,
+          productName: prod.name,
+          requiredQty: reqQty,
+          currentQty
+        };
+        break;
+      } else {
+        if (!quantityFreeDelivery || (currentQty / reqQty > quantityFreeDelivery.currentQty / quantityFreeDelivery.requiredQty)) {
+          quantityFreeDelivery = {
+            unlocked: false,
+            productName: prod.name,
+            requiredQty: reqQty,
+            currentQty
+          };
+        }
+      }
+    }
+  }
+
+  const activeZone = deliveryZones.find((z) => z.id === selectedZoneId);
+  const activeSubArea = activeZone?.subAreas?.find((s: DeliverySubArea) => s.id === selectedSubAreaId);
+
+  const selectedZoneName = activeZone?.name || 'Inside Dhaka';
+  const selectedSubAreaName = activeSubArea?.name || null;
+
+  const baseFee = activeSubArea?.charge ?? activeZone?.charge ?? 60; // fallback charge
+
   const freeShippingProgress = Math.min(100, (subtotal / FREE_SHIPPING_MIN) * 100);
-  const shippingFee = subtotal >= FREE_SHIPPING_MIN || subtotal === 0 ? 0 : 15.0;
+  const isFreeDelivery = subtotal >= FREE_SHIPPING_MIN || (quantityFreeDelivery?.unlocked === true);
+  const shippingFee = subtotal === 0 || isFreeDelivery ? 0 : baseFee;
   const totalAmount = Math.max(0, subtotal - discountAmount + shippingFee);
 
   const toggleWishlist = (product: Product) => {
@@ -372,6 +478,13 @@ export function CartProvider({
         totalAmount,
         freeShippingThreshold: FREE_SHIPPING_MIN,
         freeShippingProgress,
+        deliveryZones,
+        selectedZoneId,
+        selectedSubAreaId,
+        setSelectedZone,
+        selectedZoneName,
+        selectedSubAreaName,
+        quantityFreeDelivery,
         wishlist,
         toggleWishlist,
         isInWishlist,

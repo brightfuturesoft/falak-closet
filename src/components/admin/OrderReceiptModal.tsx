@@ -199,12 +199,35 @@ export function OrderReceiptModal({ order, onClose }: OrderReceiptModalProps) {
           </div>
 
           {/* Payment Footnote */}
-          <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 text-[11px] text-stone-600 flex items-center justify-between font-mono">
-            <span className="flex items-center gap-1.5">
-              <CreditCard className="w-4 h-4 text-stone-700" />
-              <span>Payment Mode: <strong>{order.paymentMethod || 'Cash on Delivery'}</strong></span>
-            </span>
-            <span className="text-emerald-700 font-bold">Thank you for shopping with Falak Closet!</span>
+          <div className="space-y-2">
+            <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 text-[11px] text-stone-600 flex flex-col md:flex-row md:items-center justify-between gap-2 font-mono">
+              <span className="flex items-center gap-1.5">
+                <CreditCard className="w-4 h-4 text-stone-700" />
+                <span>Payment Mode: <strong>{order.paymentMethod || 'Cash on Delivery'}</strong></span>
+              </span>
+              <span className="text-emerald-705 font-bold">Thank you for shopping with Falak Closet!</span>
+            </div>
+
+            {order.paymentMethod === 'bKash Send Money (Manual)' && (
+              <div className="p-3 bg-rose-50/40 border border-rose-100 rounded-xl text-[10px] text-stone-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-mono">
+                <div className="flex flex-wrap gap-x-4 gap-y-1">
+                  <span>bKash Sender: <strong className="text-stone-900">{order.paymentSenderNumber}</strong></span>
+                  <span>TrxID: <strong className="text-stone-900">{order.paymentTrxId}</strong></span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-stone-500 uppercase font-bold text-[8px] tracking-wider">Payment Status:</span>
+                  <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider font-sans ${
+                    order.paymentStatus === 'Verified'
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-250'
+                      : order.paymentStatus === 'Rejected'
+                      ? 'bg-rose-100 text-rose-800 border border-rose-250'
+                      : 'bg-amber-100 text-amber-800 border border-amber-250 animate-pulse'
+                  }`}>
+                    {order.paymentStatus || 'Pending'}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

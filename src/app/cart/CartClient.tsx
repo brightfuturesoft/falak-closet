@@ -21,7 +21,9 @@ export default function CartClient() {
     shippingFee,
     totalAmount,
     freeShippingThreshold,
-    freeShippingProgress
+    freeShippingProgress,
+    quantityFreeDelivery,
+    selectedZoneName
   } = useCart();
 
   // Item selection state for cart checkout
@@ -148,21 +150,48 @@ export default function CartClient() {
         <div className="flex items-center justify-between text-xs font-bold">
           <span className="flex items-center gap-1.5 text-stone-900">
             <Truck className="w-4 h-4 text-[#D92670]" />
-            {freeShippingProgress >= 100 ? (
-              <strong className="text-emerald-700">Congratulations! You unlocked FREE Nationwide Delivery!</strong>
+            {freeShippingProgress >= 100 || quantityFreeDelivery?.unlocked ? (
+              <strong className="text-emerald-700">
+                {quantityFreeDelivery?.unlocked
+                  ? `Congratulations! You unlocked FREE Delivery via "${quantityFreeDelivery.productName}" Qty! 🚚`
+                  : 'Congratulations! You unlocked FREE Nationwide Delivery!'}
+              </strong>
             ) : (
-              <span>Add <strong className="text-[#D92670]">{formatCurrency(freeShippingThreshold - subtotal)}</strong> more for FREE Shipping!</span>
+              <span>
+                {quantityFreeDelivery ? (
+                  <span>
+                    Buy <strong className="text-[#D92670]">{quantityFreeDelivery.requiredQty - quantityFreeDelivery.currentQty}</strong> more of <strong className="text-stone-900">"{quantityFreeDelivery.productName}"</strong> for FREE Delivery!
+                  </span>
+                ) : (
+                  <span>Add <strong className="text-[#D92670]">{formatCurrency(freeShippingThreshold - subtotal)}</strong> more for FREE Shipping!</span>
+                )}
+              </span>
             )}
           </span>
-          <span className="font-mono text-stone-500">{Math.round(freeShippingProgress)}%</span>
+          <span className="font-mono text-stone-500">
+            {freeShippingProgress >= 100 || quantityFreeDelivery?.unlocked
+              ? '100%'
+              : `${Math.round(freeShippingProgress)}%`}
+          </span>
         </div>
 
         <div className="w-full h-2 bg-pink-50 rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-[#D92670] to-[#F2C76E] transition-all duration-500 rounded-full"
-            style={{ width: `${Math.min(100, freeShippingProgress)}%` }}
+            style={{
+              width: `${
+                freeShippingProgress >= 100 || quantityFreeDelivery?.unlocked
+                  ? 100
+                  : Math.min(100, freeShippingProgress)
+              }%`
+            }}
           />
         </div>
+        {shippingFee > 0 && (
+          <p className="text-[10px] text-stone-500 font-sans">
+            Delivery to {selectedZoneName}: ৳{shippingFee} (final fee set at checkout)
+          </p>
+        )}
       </div>
 
       {/* Main Grid: Cart Items List + Order Summary Sidebar */}

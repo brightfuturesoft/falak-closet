@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import {
-  Truck,
   Search,
   Download,
   Eye,
@@ -17,6 +16,7 @@ interface OrdersTabProps {
   orders: OrderRecord[];
   onSelectOrderReceipt: (order: OrderRecord) => void;
   onUpdateOrderStatus: (orderId: string, status: OrderRecord['status']) => void;
+  onUpdatePaymentStatus: (orderId: string, paymentStatus: string) => void;
   onOpenCreateOrderModal?: () => void;
   searchQuery: string;
 }
@@ -25,6 +25,7 @@ export function OrdersTab({
   orders,
   onSelectOrderReceipt,
   onUpdateOrderStatus,
+  onUpdatePaymentStatus,
   onOpenCreateOrderModal,
   searchQuery
 }: OrdersTabProps) {
@@ -34,7 +35,15 @@ export function OrdersTab({
   const activeSearch = searchQuery || localQuery;
 
   const filteredOrders = orders.filter((o) => {
-    if (statusFilter !== 'All' && o.status !== statusFilter) return false;
+    if (statusFilter !== 'All') {
+      if (statusFilter === 'Unverified Payments') {
+        if (o.paymentMethod !== 'bKash Send Money (Manual)' || o.paymentStatus !== 'Pending') {
+          return false;
+        }
+      } else if (o.status !== statusFilter) {
+        return false;
+      }
+    }
     if (activeSearch.trim()) {
       const q = activeSearch.toLowerCase();
       const matchId = o.id.toLowerCase().includes(q);
@@ -96,9 +105,18 @@ export function OrdersTab({
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           {/* Status Filter Tabs */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto text-xs font-bold scrollbar-none">
-            {['All', 'Pending', 'Processing', 'Quality Checked', 'Shipped', 'Delivered', 'Cancelled'].map(
+            {['All', 'Unverified Payments', 'Pending', 'Processing', 'Quality Checked', 'Shipped', 'Delivered', 'Cancelled'].map(
               (st) => {
-                const count = st === 'All' ? orders.length : orders.filter((o) => o.status === st).length;
+                const count =
+                  st === 'All'
+                    ? orders.length
+                    : st === 'Unverified Payments'
+                    ? orders.filter(
+                        (o) =>
+                          o.paymentMethod === 'bKash Send Money (Manual)' &&
+                          o.paymentStatus === 'Pending'
+                      ).length
+                    : orders.filter((o) => o.status === st).length;
                 return (
                   <button
                     key={st}
@@ -205,16 +223,32 @@ export function OrdersTab({
                   <td className="py-4 text-stone-700">
                     <p className="font-semibold text-stone-900">{order.items.length} item(s)</p>
                     <p className="text-[10px] text-stone-500 truncate max-w-[140px]">
-                      {order.items.map((i) => i.product?.name || (i as any).name || 'Modest Fashion Item').join(', ')}
+                      {order.items.map((i) => i.product?.name || (i as { name?: string }).name || 'Modest Fashion Item').join(', ')}
                     </p>
                   </td>
                   <td className="py-4 font-mono font-bold text-stone-900 whitespace-nowrap">
                     {formatCurrency(order.total)}
                   </td>
-                  <td className="py-4 text-stone-600 text-[11px]">
-                    <span className="px-2 py-0.5 bg-stone-100 border border-stone-200 rounded-md font-mono font-medium text-stone-800">
+                  <td className="py-4 text-stone-705 text-[11px] space-y-1">
+                    <span className="px-2 py-0.5 bg-stone-100 border border-stone-200 rounded-md font-mono font-medium text-stone-850">
                       {order.paymentMethod || 'Cash on Delivery'}
                     </span>
+                    {order.paymentMethod === 'bKash Send Money (Manual)' && (
+                      <div className="space-y-0.5 text-[10px] bg-stone-50 border border-stone-150 p-1.5 rounded-lg max-w-[155px]">
+                        <p className="font-semibold text-stone-500">Sender: <span className="font-mono font-bold text-stone-900">{order.paymentSenderNumber}</span></p>
+                        <p className="font-semibold text-stone-500">TrxID: <span className="font-mono font-bold text-[#9B050B]">{order.paymentTrxId}</span></p>
+                        <p className="flex items-center gap-1 font-bold pt-0.5">
+                          <span>Payment:</span>
+                          {order.paymentStatus === 'Verified' ? (
+                            <span className="text-emerald-700 uppercase tracking-wider text-[8px] font-sans">Verified</span>
+                          ) : order.paymentStatus === 'Rejected' ? (
+                            <span className="text-rose-700 uppercase tracking-wider text-[8px] font-sans">Rejected</span>
+                          ) : (
+                            <span className="text-amber-700 uppercase tracking-wider text-[8px] font-sans animate-pulse">Pending</span>
+                          )}
+                        </p>
+                      </div>
+                    )}
                   </td>
                   <td className="py-4">
                     <select
@@ -234,14 +268,34 @@ export function OrdersTab({
                       <option value="Cancelled" className="bg-white text-rose-800">Cancelled</option>
                     </select>
                   </td>
-                  <td className="py-4 text-right">
-                    <button
-                      onClick={() => onSelectOrderReceipt(order)}
-                      className="p-2 bg-stone-100 hover:bg-stone-200 text-stone-900 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1.5 text-[11px] font-bold border border-stone-200"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>Invoice</span>
-                    </button>
+                  <td className="py-4 text-right whitespace-nowrap">
+                    <div className="flex items-center justify-end gap-1.5">
+                      {order.paymentMethod === 'bKash Send Money (Manual)' && order.paymentStatus === 'Pending' && (
+                        <>
+                          <button
+                            onClick={() => onUpdatePaymentStatus(order.id, 'Verified')}
+                            className="px-2.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg transition-colors cursor-pointer text-[10px] font-bold shadow-xs border border-emerald-805"
+                            title="Verify Payment"
+                          >
+                            Verify
+                          </button>
+                          <button
+                            onClick={() => onUpdatePaymentStatus(order.id, 'Rejected')}
+                            className="px-2.5 py-1.5 bg-rose-55 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-lg transition-colors cursor-pointer text-[10px] font-bold"
+                            title="Reject Payment"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => onSelectOrderReceipt(order)}
+                        className="p-1.5 bg-stone-100 hover:bg-stone-200 text-stone-900 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1 text-[11px] font-bold border border-stone-200"
+                        title="Invoice"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
