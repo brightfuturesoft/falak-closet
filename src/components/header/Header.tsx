@@ -159,10 +159,12 @@ export function Header() {
       {/* Main Top Header Bar */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4">
-          
+
           {/* Brand Logo */}
           <div className="shrink-0">
-            <Logo variant="full" />
+            <Logo variant="full"
+              size='md'
+            />
           </div>
 
           {/* Centered Search Pill Input - Only visible on Desktop (lg:) screens */}
@@ -200,7 +202,7 @@ export function Header() {
             {/* Desktop Autocomplete Dropdown */}
             {isSearchFocused && searchResults.length > 0 && (
               <div className="absolute left-0 top-full mt-2.5 w-[480px] max-w-xl bg-[#FFFBF0] border-2 border-[#F2C76E] rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 font-sans">
-                
+
                 {/* Header Meta Bar */}
                 <div className="px-3.5 py-2.5 bg-[#F2C76E]/25 border-b border-[#F2C76E]/40 text-xs font-bold text-[#0C163A] uppercase tracking-wider flex items-center justify-between">
                   <span className="flex items-center gap-1.5 font-serif">

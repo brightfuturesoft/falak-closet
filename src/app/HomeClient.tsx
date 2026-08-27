@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw, X } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { HeroCarousel } from '@/components/home/HeroCarousel';
 import { CategoryFilterSlider } from '@/components/home/CategoryFilterSlider';
@@ -55,7 +55,9 @@ export default function HomeClient({
   const isBusy = isLoadingProducts && isEmptyCatalog;
 
   return (
-    <div className="pb-20 lg:pb-16 space-y-6 sm:space-y-10">
+    // Vertical rhythm comes from THIS space-y only — the sections themselves
+    // carry no outer margins, so gaps can never double up.
+    <div className="pb-24 lg:pb-16 space-y-5 sm:space-y-8 lg:space-y-12">
       {/* 1. Hero Banner Slider — slides fetched server-side, passed down as a prop */}
       <HeroCarousel slides={heroSlides} />
 
@@ -73,7 +75,7 @@ export default function HomeClient({
             </p>
             <button
               onClick={() => refreshProductsFromApi()}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-[11px] font-bold uppercase tracking-wider rounded-full transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+              className="inline-flex min-h-[40px] items-center justify-center px-4 bg-red-600 hover:bg-red-700 text-white text-[11px] font-bold uppercase tracking-wider rounded-full transition-colors cursor-pointer gap-1.5 shrink-0 active:scale-95"
             >
               <RefreshCw className="w-3.5 h-3.5" /> Try again
             </button>
@@ -84,32 +86,34 @@ export default function HomeClient({
       {/* Active Filter Indicator Banner */}
       {selectedFilter && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between bg-[#9B050B]/10 border border-[#9B050B]/30 rounded-2xl px-5 py-2.5 text-xs text-stone-800">
-            <span>
-              Filtering by <strong>{selectedFilter.type}</strong>:{' '}
+          <div className="flex items-center justify-between gap-3 bg-[#9B050B]/10 border border-[#9B050B]/30 rounded-2xl px-4 py-2.5 text-xs text-stone-800">
+            <span className="min-w-0">
+              <span className="hidden sm:inline">Filtering by{' '}</span>
+              <strong className="capitalize">{selectedFilter.type}</strong>:{' '}
               <span className="text-[#9B050B] font-bold">{selectedFilter.val}</span>
               <span className="text-stone-500"> · {filteredProducts.length} found</span>
             </span>
             <button
               onClick={() => setSelectedFilter(null)}
-              className="text-[#9B050B] font-bold hover:underline cursor-pointer"
+              className="inline-flex shrink-0 items-center gap-1 min-h-[32px] px-3 rounded-full bg-[#9B050B] text-[#FFFBF0] font-bold text-[11px] hover:bg-[#B8000A] transition-colors cursor-pointer active:scale-95"
             >
-              Clear Filter ✕
+              <X className="w-3 h-3" /> Clear
             </button>
           </div>
         </div>
       )}
 
       {isBusy ? (
-        /* Skeleton stands in for the three product rows below. */
+        /* Skeleton stands in for the three product rows below — same column
+           counts as the real grids so nothing shifts when data lands. */
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           {Array.from({ length: 2 }).map((_, row) => (
             <div key={row} className="space-y-4">
               <div className="h-5 w-64 bg-stone-200 rounded-full animate-pulse" />
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-                {Array.from({ length: 4 }).map((_, i) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+                {Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} className="animate-pulse space-y-3">
-                    <div className="aspect-[3/4] bg-stone-200 rounded-2xl" />
+                    <div className="aspect-[4/5] bg-stone-200 rounded-2xl" />
                     <div className="h-3 bg-stone-200 rounded-full w-3/4" />
                     <div className="h-3 bg-stone-200 rounded-full w-1/3" />
                   </div>
@@ -121,8 +125,8 @@ export default function HomeClient({
       ) : isEmptyCatalog && !productsError ? (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-16 text-center bg-white rounded-3xl border border-pink-100 px-8 space-y-3 shadow-xs">
-            <h2 className="text-lg font-bold text-stone-900">Our new collection is on its way</h2>
-            <p className="text-xs text-stone-500 max-w-sm mx-auto">
+            <h2 className="text-base sm:text-lg font-bold text-stone-900">Our new collection is on its way</h2>
+            <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
               No designs have been published yet. Follow us for the launch announcement.
             </p>
           </div>
