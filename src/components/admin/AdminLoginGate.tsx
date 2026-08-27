@@ -32,7 +32,7 @@ export function AdminLoginGate({ onLoginSuccess }: AdminLoginGateProps) {
         try {
           localStorage.setItem('falak_admin_session', 'true');
           document.cookie = 'falak_admin_session=true; path=/; max-age=86400; SameSite=Lax';
-        } catch {}
+        } catch { }
         onLoginSuccess();
       } else {
         setLoginError(data.error || 'Invalid admin credentials.');
@@ -43,10 +43,10 @@ export function AdminLoginGate({ onLoginSuccess }: AdminLoginGateProps) {
         try {
           localStorage.setItem('falak_admin_session', 'true');
           document.cookie = 'falak_admin_session=true; path=/; max-age=86400; SameSite=Lax';
-        } catch {}
+        } catch { }
         onLoginSuccess();
       } else {
-        setLoginError('Invalid credentials. Demo credentials: admin / falak123');
+        setLoginError('Invalid credentials.');
       }
     } finally {
       setIsLoading(false);
@@ -64,12 +64,12 @@ export function AdminLoginGate({ onLoginSuccess }: AdminLoginGateProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: 'admin', password: 'falak123' })
       });
-    } catch {}
+    } catch { }
 
     try {
       localStorage.setItem('falak_admin_session', 'true');
       document.cookie = 'falak_admin_session=true; path=/; max-age=86400; SameSite=Lax';
-    } catch {}
+    } catch { }
 
     setIsLoading(false);
     onLoginSuccess();
@@ -78,7 +78,7 @@ export function AdminLoginGate({ onLoginSuccess }: AdminLoginGateProps) {
   return (
     <div className="min-h-screen bg-stone-100 text-stone-900 flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
       <div className="max-w-md w-full relative z-10 bg-white p-8 sm:p-10 rounded-3xl border border-stone-200 shadow-2xl space-y-8">
-        
+
         {/* Header Branding */}
         <div className="text-center space-y-3">
           <div className="flex justify-center transform hover:scale-105 transition-transform duration-300">
@@ -116,7 +116,7 @@ export function AdminLoginGate({ onLoginSuccess }: AdminLoginGateProps) {
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Username (admin)"
+              placeholder="Username"
               className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900 focus:border-transparent transition-all"
             />
           </div>
@@ -130,7 +130,7 @@ export function AdminLoginGate({ onLoginSuccess }: AdminLoginGateProps) {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password (falak123)"
+              placeholder="Password"
               className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900 focus:border-transparent transition-all"
             />
           </div>
@@ -147,16 +147,6 @@ export function AdminLoginGate({ onLoginSuccess }: AdminLoginGateProps) {
 
         {/* Quick Demo Login & Navigation */}
         <div className="pt-5 border-t border-stone-200 text-center space-y-3">
-          <button
-            type="button"
-            onClick={handleQuickLogin}
-            disabled={isLoading}
-            className="w-full py-3 bg-stone-100 hover:bg-stone-200 text-stone-900 border border-stone-200 font-bold text-xs rounded-xl transition-all shadow-xs cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Sparkles className="w-4 h-4 text-amber-500" />
-            <span>1-Click Quick Demo Login</span>
-          </button>
-
           <Link
             href="/shop"
             className="inline-flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-900 transition-colors pt-2 font-medium"

@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(
-      { success: false, error: 'Invalid admin credentials. Demo login: admin / falak123' },
+      { success: false, error: 'Invalid admin credentials' },
       { status: 401 }
     );
   } catch (error) {
