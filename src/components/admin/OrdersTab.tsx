@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { OrderRecord } from '@/context/CartContext';
 import { formatCurrency } from '@/lib/utils';
+import { OrderDetailsModal } from '@/components/admin/OrderDetailsModal';
 
 interface OrdersTabProps {
   orders: OrderRecord[];
@@ -32,6 +33,12 @@ export function OrdersTab({
 }: OrdersTabProps) {
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [localQuery, setLocalQuery] = useState('');
+  // Order ID (not snapshot) so the modal re-renders with live status/payment edits.
+  const [detailsOrderId, setDetailsOrderId] = useState<string | null>(null);
+
+  const detailsOrder = detailsOrderId
+    ? orders.find((o) => o.id === detailsOrderId) || null
+    : null;
 
   const activeSearch = searchQuery || localQuery;
 
@@ -197,9 +204,9 @@ export function OrdersTab({
                 <tr key={order.id} className="hover:bg-stone-50 transition-colors">
                   <td className="py-4 font-mono font-bold whitespace-nowrap">
                     <button
-                      onClick={() => onSelectOrderReceipt(order)}
+                      onClick={() => setDetailsOrderId(order.id)}
                       className="text-[#9B050B] hover:text-[#8C0A10] hover:underline cursor-pointer flex items-center gap-1 group transition-colors"
-                      title="Click to view full order details & invoice"
+                      title="Click to view order details"
                     >
                       <span>#{order.id}</span>
                       <Eye className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity text-[#9B050B]" />
@@ -317,6 +324,20 @@ export function OrdersTab({
           </table>
         </div>
       </div>
+
+      {/* Order Details Modal (opened by clicking an order ID) */}
+      {detailsOrder && (
+        <OrderDetailsModal
+          order={detailsOrder}
+          onClose={() => setDetailsOrderId(null)}
+          onUpdateOrderStatus={onUpdateOrderStatus}
+          onUpdatePaymentStatus={onUpdatePaymentStatus}
+          onPrintReceipt={(o) => {
+            setDetailsOrderId(null);
+            onSelectOrderReceipt(o);
+          }}
+        />
+      )}
     </div>
   );
 }
