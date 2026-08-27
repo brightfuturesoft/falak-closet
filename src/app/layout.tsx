@@ -90,11 +90,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/transparent_logo.png', sizes: '32x32', type: 'image/png' },
-      { url: '/transparent_logo.png', sizes: '192x192', type: 'image/png' }
+      { url: '/logo.png', sizes: '32x32', type: 'image/png' },
+      { url: '/logo.png', sizes: '192x192', type: 'image/png' }
     ],
-    shortcut: '/transparent_logo.png',
-    apple: '/transparent_logo.png'
+    shortcut: '/logo.png',
+    apple: '/logo.png'
   }
 };
 
