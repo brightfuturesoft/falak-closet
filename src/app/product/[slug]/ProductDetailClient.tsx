@@ -1317,8 +1317,9 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         title={product?.name}
       />
 
-      {/* Sticky Bottom Purchase Bar for Mobile (placed directly above MobileBottomNav which is bottom-0, h-60px) */}
-      <div className="md:hidden fixed bottom-[62px] left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-pink-100 px-3 py-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] flex items-center justify-between gap-3 safe-bottom animate-fade-in">
+      {/* Sticky Bottom Purchase Bar for Mobile — offset sits above MobileBottomNav,
+          including its env(safe-area-inset-bottom) padding on notched phones */}
+      <div className="md:hidden fixed bottom-[calc(62px+env(safe-area-inset-bottom))] left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-pink-100 px-3 py-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] flex items-center justify-between gap-3 safe-bottom animate-fade-in">
         <div className="flex flex-col min-w-0 shrink-0">
           <span className="font-extrabold text-[#D92670] font-mono text-sm leading-tight truncate">
             {formatCurrency(currentPrice * quantity)}
