@@ -68,3 +68,33 @@
 .animate-fade-in {
   animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* ─────────────────────────── Printable receipt ───────────────────────────
+ * When #receipt-portal is mounted (ReceiptModal), printing outputs ONLY the
+ * receipt sheet: every other direct <body> child is hidden, the overlay is
+ * flattened, and the sheet fills an A4 page. */
+@media print {
+  /* Only take over printing while the receipt modal is mounted — a normal
+   * Ctrl+P elsewhere still prints the regular page. */
+  body:has(#receipt-portal) > *:not(#receipt-portal) {
+    display: none !important;
+  }
+
+  #receipt-portal .no-print {
+    display: none !important;
+  }
+
+  #receipt-portal #receipt-sheet {
+    width: 100% !important;
+    max-width: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+}
