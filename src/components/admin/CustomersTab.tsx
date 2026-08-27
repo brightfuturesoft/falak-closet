@@ -1109,24 +1109,26 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
               {customers.map(mobileCards)}
             </div>
 
-            {/* Server-side pagination */}
-            {pagination.totalPages > 1 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-stone-100">
-                <span className="text-[10px] font-mono text-stone-400">
-                  Page {pagination.page} of {pagination.totalPages} · {pagination.totalItems} total
-                </span>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={pagination.page === 1}
-                    className="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 disabled:opacity-40 disabled:cursor-not-allowed border border-stone-200 rounded-lg text-xs font-bold text-stone-700 transition-colors cursor-pointer flex items-center gap-0.5"
-                    title="Previous page"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" /> Prev
-                  </button>
+            {/* Server-side pagination — always rendered (standard data-grid
+                pattern) so totals and controls stay discoverable even on a
+                single-page result set; buttons just disable at the edges. */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-stone-100">
+              <span className="text-[10px] font-mono text-stone-400">
+                Page {pagination.page} of {pagination.totalPages} · {pagination.totalItems} total
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={pagination.page === 1}
+                  className="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 disabled:opacity-40 disabled:cursor-not-allowed border border-stone-200 rounded-lg text-xs font-bold text-stone-700 transition-colors cursor-pointer flex items-center gap-0.5"
+                  title="Previous page"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" /> Prev
+                </button>
 
-                  {pageWindow(pagination.page, pagination.totalPages).map((p, idx) =>
+                {pagination.totalPages > 1 &&
+                  pageWindow(pagination.page, pagination.totalPages).map((p, idx) =>
                     p === '…' ? (
                       <span key={`ellipsis-${idx}`} className="px-1.5 text-stone-400 text-xs font-mono">
                         …
@@ -1148,18 +1150,17 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
                     )
                   )}
 
-                  <button
-                    type="button"
-                    onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-                    disabled={pagination.page === pagination.totalPages}
-                    className="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 disabled:opacity-40 disabled:cursor-not-allowed border border-stone-200 rounded-lg text-xs font-bold text-stone-700 transition-colors cursor-pointer flex items-center gap-0.5"
-                    title="Next page"
-                  >
-                    Next <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+                  disabled={pagination.page === pagination.totalPages}
+                  className="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 disabled:opacity-40 disabled:cursor-not-allowed border border-stone-200 rounded-lg text-xs font-bold text-stone-700 transition-colors cursor-pointer flex items-center gap-0.5"
+                  title="Next page"
+                >
+                  Next <ChevronRight className="w-3.5 h-3.5" />
+                </button>
               </div>
-            )}
+            </div>
           </>
         )}
       </div>
