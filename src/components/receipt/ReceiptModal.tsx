@@ -65,7 +65,7 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
 
   /* Portal needs the client — hydration flag without a setState-in-effect. */
   const mounted = useSyncExternalStore(
-    () => () => {}, // no subscriptions: server snapshot never changes
+    () => () => { }, // no subscriptions: server snapshot never changes
     () => true, // client
     () => false // server
   );
@@ -300,23 +300,23 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
                     const itemName = item.product?.name || raw.name || 'Falak Closet Item';
                     const unitPrice = item.product?.price ?? raw.price ?? 0;
                     return (
-                    <tr key={i} className="border-b border-stone-100">
-                      <td className="py-2.5 pl-3 pr-2">
-                        <p className="font-bold text-[#0C163A] leading-snug">{itemName}</p>
-                        {(item.selectedColor || item.selectedSize) && (
-                          <p className="text-[9px] text-stone-400 mt-0.5">
-                            {[item.selectedColor, item.selectedSize].filter(Boolean).join(' · ')}
-                          </p>
-                        )}
-                      </td>
-                      <td className="text-center py-2.5 px-2 font-mono">{item.quantity}</td>
-                      <td className="text-right py-2.5 px-2 font-mono text-stone-600">
-                        {formatCurrency(unitPrice)}
-                      </td>
-                      <td className="text-right py-2.5 pl-2 pr-3 font-mono font-bold text-[#0C163A]">
-                        {formatCurrency(unitPrice * item.quantity)}
-                      </td>
-                    </tr>
+                      <tr key={i} className="border-b border-stone-100">
+                        <td className="py-2.5 pl-3 pr-2">
+                          <p className="font-bold text-[#0C163A] leading-snug">{itemName}</p>
+                          {(item.selectedColor || item.selectedSize) && (
+                            <p className="text-[9px] text-stone-400 mt-0.5">
+                              {[item.selectedColor, item.selectedSize].filter(Boolean).join(' · ')}
+                            </p>
+                          )}
+                        </td>
+                        <td className="text-center py-2.5 px-2 font-mono">{item.quantity}</td>
+                        <td className="text-right py-2.5 px-2 font-mono text-stone-600">
+                          {formatCurrency(unitPrice)}
+                        </td>
+                        <td className="text-right py-2.5 pl-2 pr-3 font-mono font-bold text-[#0C163A]">
+                          {formatCurrency(unitPrice * item.quantity)}
+                        </td>
+                      </tr>
                     );
                   })}
                 </tbody>
@@ -353,14 +353,14 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
 
             {/* Signature + footer */}
             <div className="px-8 sm:px-10 pb-6">
-              <div className="grid grid-cols-2 gap-8 text-[10px] text-stone-500 pt-2">
-                <div>
+              {/* <div className="grid grid-cols-2 gap-8 text-[10px] text-stone-500 pt-2"> */}
+              {/* <div>
                   <div className="border-t border-stone-300 w-40 mt-10 pt-1">Customer Signature</div>
-                </div>
-                <div className="text-right">
+                </div> */}
+              {/* <div className="text-right">
                   <div className="border-t border-stone-300 w-40 mt-10 pt-1 ml-auto">Authorized Signature</div>
-                </div>
-              </div>
+                </div> */}
+              {/* </div> */}
 
               <div className="mt-5 border-t border-dashed border-stone-300 pt-3 text-center">
                 <p className="text-[11px] font-bold text-[#0C163A]">
