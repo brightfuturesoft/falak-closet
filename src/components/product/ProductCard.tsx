@@ -76,7 +76,7 @@ export function ProductCard({ product, selectedColor, variationCode }: ProductCa
     : `/product/${product?.slug}`;
 
   return (
-    <div className="group bg-white rounded-3xl border border-pink-100 p-3 shadow-xs hover:shadow-md transition-all max-h-[400px] duration-300 flex flex-col justify-between relative overflow-hidden">
+    <div className="group bg-white rounded-3xl border border-pink-100 p-2.5 sm:p-3 shadow-xs hover:shadow-md transition-all h-full duration-300 flex flex-col justify-between relative overflow-hidden">
       {/* Top Image Container */}
       <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-stone-100">
         <Link href={productUrl} className="block relative w-full h-full">
@@ -122,8 +122,8 @@ export function ProductCard({ product, selectedColor, variationCode }: ProductCa
         </Link>
 
         {/* Interactive Color Swatches Row */}
-        {product?.colors && product.colors.length > 1 && (
-          <div className="flex items-center flex-wrap gap-1.5 pt-0.5 overflow-x-auto scrollbar-none">
+        {product?.colors && product.colors.length > 1 ? (
+          <div className="flex items-center flex-nowrap gap-2 h-7 py-1.5 overflow-x-auto no-scrollbar w-full px-2">
             {product.colors.map((color) => {
               const isSelected = activeColor?.name === color.name;
               return (
@@ -135,7 +135,10 @@ export function ProductCard({ product, selectedColor, variationCode }: ProductCa
                       setActiveImageIndex(color.imageIndex);
                     }
                   }}
-                  className={`w-3.5 h-3.5 rounded-full border transition-all cursor-pointer  hover:scale-105'
+                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full transition-all duration-200 cursor-pointer flex-shrink-0 border border-stone-200/50 hover:scale-110 active:scale-95
+                    ${isSelected
+                      ? 'ring-2 ring-[#0C163A] ring-offset-2 scale-110 shadow-xs z-10'
+                      : 'hover:border-stone-400'
                     }`}
                   style={{ backgroundColor: color.hex }}
                   title={color.name}
@@ -143,6 +146,9 @@ export function ProductCard({ product, selectedColor, variationCode }: ProductCa
               );
             })}
           </div>
+        ) : (
+          /* Placeholder spacer to align card heights perfectly when there are no swatches */
+          <div className="h-7" aria-hidden="true" />
         )}
 
         {/* Price & SKU Code Row */}
