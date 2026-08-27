@@ -14,6 +14,7 @@ export default function AdminOrdersPage() {
       onOpenCreateOrderModal={() => admin.setIsCreateOrderOpen(true)}
       searchQuery={admin.globalSearchQuery}
       ordersFeedCount={admin.ordersList.length}
+      incomingOrderSignal={admin.incomingOrderSignal}
     />
   );
 }

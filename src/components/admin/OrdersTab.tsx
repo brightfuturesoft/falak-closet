@@ -19,6 +19,8 @@ interface OrdersTabProps {
   searchQuery: string;
   /** Context order-feed length; a change (socket alert / POS order) refetches the page. */
   ordersFeedCount: number;
+  /** Realtime arrivals (socket / POS) — prepended instantly, like the pre-pagination table. */
+  incomingOrderSignal: { order: OrderRecord; seq: number } | null;
 }
 
 interface OrdersPagination {
@@ -166,6 +168,7 @@ export function OrdersTab({
   onOpenCreateOrderModal,
   searchQuery,
   ordersFeedCount,
+  incomingOrderSignal,
 }: OrdersTabProps) {
   // Server-side pagination state — every change below refetches /api/orders.
   const [localQuery, setLocalQuery] = useState('');
@@ -254,6 +257,41 @@ export function OrdersTab({
     lastFeedCountRef.current = ordersFeedCount;
     fetchOrders();
   }, [ordersFeedCount, fetchOrders]);
+
+  // Instant prepend: when a realtime order lands (socket alert with sound +
+  // toast from the provider), show it on the spot if the current view could
+  // contain it — page 1, newest-first sort, and the filter matches. The
+  // feed-count refetch above then reconciles counts and pagination.
+  const lastSignalSeqRef = useRef(incomingOrderSignal?.seq ?? 0);
+  useEffect(() => {
+    if (!incomingOrderSignal || incomingOrderSignal.seq === lastSignalSeqRef.current) return;
+    lastSignalSeqRef.current = incomingOrderSignal.seq;
+
+    const { order } = incomingOrderSignal;
+    const matchesFilter =
+      statusFilter === 'All' ||
+      order.status === statusFilter ||
+      (statusFilter === 'Unverified Payments' &&
+        order.paymentMethod === 'bKash Send Money (Manual)' &&
+        order.paymentStatus === 'Pending');
+    const matchesSearch =
+      !debouncedQuery.trim() ||
+      [
+        order.id,
+        order.shippingAddress?.phone || '',
+        order.shippingAddress?.fullName || '',
+        order.shippingAddress?.district || order.shippingAddress?.city || '',
+      ].some((h) => h.toLowerCase().includes(debouncedQuery.trim().toLowerCase()));
+
+    if (pagination.page === 1 && sortKey === 'date' && sortDir === 'desc' && matchesFilter && matchesSearch) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- deliberate event-driven prepend; the provider signal only fires on realtime order arrivals
+      setOrders((prev) =>
+        prev.some((o) => o.id === order.id) ? prev : [order, ...prev.slice(0, pageSize - 1)]
+      );
+      setPagination((prev) => ({ ...prev, totalItems: prev.totalItems + 1 }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [incomingOrderSignal]);
 
   // Param setters that also reset to the first page.
   const applyLocalQuery = (value: string) => {

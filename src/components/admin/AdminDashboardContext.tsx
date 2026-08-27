@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Product } from '@/data/products';
 import { playNewOrderSound } from '@/lib/soundNotification';
 import { useCart, OrderRecord } from '@/context/CartContext';
@@ -53,6 +53,10 @@ export interface AdminDashboardContextValue {
   productsList: Product[];
   promosList: PromoVoucherData[];
   ordersList: OrderRecord[];
+  /** Bumped on every realtime order arrival (socket alert or POS) so tabs can
+   *  prepend the row instantly — same UX as the pre-pagination table — while
+   *  their refetch reconciles counts and pagination afterwards. */
+  incomingOrderSignal: { order: OrderRecord; seq: number } | null;
   fetchAllData: () => Promise<void>;
   isRefreshing: boolean;
   isSocketConnected: boolean;
@@ -150,8 +154,17 @@ export function AdminDashboardProvider({ children }: { children: React.ReactNode
   const [editingPromo, setEditingPromo] = useState<PromoVoucherData | null>(null);
   const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false);
 
+  // Realtime order signal (socket alert / POS) — seq increments per arrival
+  const [incomingOrderSignal, setIncomingOrderSignal] = useState<{
+    order: OrderRecord;
+    seq: number;
+  } | null>(null);
+  const incomingOrderSeqRef = useRef(0);
+
   const handleDirectOrderCreated = (newOrder: OrderRecord) => {
     setOrdersList((prev) => [newOrder, ...prev]);
+    incomingOrderSeqRef.current += 1;
+    setIncomingOrderSignal({ order: newOrder, seq: incomingOrderSeqRef.current });
     addToast('success', `Direct POS Order #${newOrder.id} created successfully!`);
     playNewOrderSound();
     setSelectedOrderReceipt(newOrder);
@@ -301,6 +314,10 @@ export function AdminDashboardProvider({ children }: { children: React.ReactNode
         if (prev.some((o) => o.id === incomingOrder.id)) return prev;
         return [incomingOrder, ...prev];
       });
+
+      // Signal open tabs so paginated views can prepend the row immediately
+      incomingOrderSeqRef.current += 1;
+      setIncomingOrderSignal({ order: incomingOrder, seq: incomingOrderSeqRef.current });
     };
 
     socket.on('new_order_alert', handleSocketOrderAlert);
@@ -515,6 +532,7 @@ export function AdminDashboardProvider({ children }: { children: React.ReactNode
     productsList,
     promosList,
     ordersList,
+    incomingOrderSignal,
     fetchAllData,
     isRefreshing,
     isSocketConnected,
