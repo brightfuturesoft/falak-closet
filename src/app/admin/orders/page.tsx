@@ -1,20 +1,19 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { OverviewTab } from '@/components/admin/OverviewTab';
+import { OrdersTab } from '@/components/admin/OrdersTab';
 import { useAdminDashboard } from '@/components/admin/AdminDashboardContext';
 
-export default function AdminOverviewPage() {
+export default function AdminOrdersPage() {
   const admin = useAdminDashboard();
-  const router = useRouter();
 
   return (
-    <OverviewTab
+    <OrdersTab
       orders={admin.ordersList}
-      products={admin.productsList}
       onSelectOrderReceipt={(order) => admin.setSelectedOrderReceipt(order)}
       onUpdateOrderStatus={admin.handleUpdateOrderStatus}
-      onNavigateToTab={(tab) => router.push(`/admin/${tab}`)}
+      onUpdatePaymentStatus={admin.handleUpdatePaymentStatus}
+      onOpenCreateOrderModal={() => admin.setIsCreateOrderOpen(true)}
+      searchQuery={admin.globalSearchQuery}
     />
   );
 }

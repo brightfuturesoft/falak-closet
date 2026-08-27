@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   Menu,
   X,
@@ -15,10 +16,9 @@ import {
   Zap,
   Volume2
 } from 'lucide-react';
-import { AdminTabType } from './AdminSidebar';
+import { AdminTabType, activeTabFromPathname } from './AdminSidebar';
 
 interface AdminHeaderProps {
-  activeTab: AdminTabType;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   onRefresh: () => Promise<void>;
@@ -32,7 +32,6 @@ interface AdminHeaderProps {
 }
 
 export function AdminHeader({
-  activeTab,
   searchQuery,
   setSearchQuery,
   onRefresh,
@@ -45,6 +44,8 @@ export function AdminHeader({
   onTestSound
 }: AdminHeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
+  const pathname = usePathname();
+  const activeTab = activeTabFromPathname(pathname);
 
   const titles: Record<AdminTabType, { title: string; subtitle: string }> = {
     overview: {

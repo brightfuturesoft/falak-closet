@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Truck,
@@ -22,8 +23,6 @@ import { Logo } from '@/components/ui/Logo';
 export type AdminTabType = 'overview' | 'orders' | 'products' | 'categories' | 'promotions' | 'customers' | 'analytics' | 'security' | 'settings' | 'delivery' | 'banners' | 'hero' | 'reviews';
 
 interface AdminSidebarProps {
-  activeTab: AdminTabType;
-  setActiveTab: (tab: AdminTabType) => void;
   pendingOrdersCount: number;
   productsCount: number;
   promosCount: number;
@@ -32,9 +31,17 @@ interface AdminSidebarProps {
   onCloseMobileDrawer?: () => void;
 }
 
+/** Derive the active tab from the real URL segment (/admin/<tab>). */
+export function activeTabFromPathname(pathname: string): AdminTabType {
+  const segment = pathname.replace(/^\/admin\/?/, '').split('/')[0];
+  const tabs: AdminTabType[] = [
+    'overview', 'orders', 'products', 'categories', 'promotions', 'customers',
+    'security', 'analytics', 'settings', 'delivery', 'banners', 'hero', 'reviews'
+  ];
+  return (tabs.find((t) => t === segment) || 'overview') as AdminTabType;
+}
+
 export function AdminSidebar({
-  activeTab,
-  setActiveTab,
   pendingOrdersCount,
   productsCount,
   promosCount,
@@ -42,6 +49,8 @@ export function AdminSidebar({
   onLogout,
   onCloseMobileDrawer
 }: AdminSidebarProps) {
+  const pathname = usePathname();
+  const activeTab = activeTabFromPathname(pathname);
   const navItems = [
     {
       id: 'overview' as AdminTabType,
@@ -148,13 +157,6 @@ export function AdminSidebar({
     }
   ];
 
-  const handleSelectTab = (tab: AdminTabType) => {
-    setActiveTab(tab);
-    if (onCloseMobileDrawer) {
-      onCloseMobileDrawer();
-    }
-  };
-
   return (
     <aside className="w-full lg:w-64 bg-white border-r border-stone-200 p-6 flex flex-col justify-between flex-shrink-0 h-full text-stone-900 shadow-xs">
       <div className="space-y-6">
@@ -172,7 +174,9 @@ export function AdminSidebar({
               <Link
                 key={item.id}
                 href={item.href}
-                onClick={() => handleSelectTab(item.id)}
+                onClick={() => {
+                  if (onCloseMobileDrawer) onCloseMobileDrawer();
+                }}
                 className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl transition-all cursor-pointer ${isActive
                     ? 'bg-stone-900 text-white shadow-md border border-stone-900'
                     : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
