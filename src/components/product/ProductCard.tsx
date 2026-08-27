@@ -76,7 +76,7 @@ export function ProductCard({ product, selectedColor, variationCode }: ProductCa
     : `/product/${product?.slug}`;
 
   return (
-    <div className="group bg-white rounded-3xl border border-pink-100 p-3 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between relative overflow-hidden">
+    <div className="group bg-white rounded-3xl border border-pink-100 p-3 shadow-xs hover:shadow-md transition-all max-h-[400px] duration-300 flex flex-col justify-between relative overflow-hidden">
       {/* Top Image Container */}
       <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-stone-100">
         <Link href={productUrl} className="block relative w-full h-full">
@@ -123,7 +123,7 @@ export function ProductCard({ product, selectedColor, variationCode }: ProductCa
 
         {/* Interactive Color Swatches Row */}
         {product?.colors && product.colors.length > 1 && (
-          <div className="flex items-center gap-1.5 pt-0.5 overflow-x-auto scrollbar-none">
+          <div className="flex items-center flex-wrap gap-1.5 pt-0.5 overflow-x-auto scrollbar-none">
             {product.colors.map((color) => {
               const isSelected = activeColor?.name === color.name;
               return (
