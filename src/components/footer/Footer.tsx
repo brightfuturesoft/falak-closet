@@ -62,7 +62,7 @@ export function Footer({ identity }: { identity: SiteIdentity }) {
   const email = identity.contactEmail || 'info@eziclick.com';
 
   return (
-    <footer className="bg-[#FFF5F7]/30 text-[#0C163A] border-t border-pink-100 pt-12 pb-12 font-sans">
+    <footer className="bg-[#FDF2F3]/40 text-[#0D153A] border-t border-[#F8D2D5] pt-12 pb-12 font-sans">
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
         {/* Brand Col */}
@@ -74,15 +74,15 @@ export function Footer({ identity }: { identity: SiteIdentity }) {
 
           {/* Value Badges */}
           <div className="flex flex-wrap gap-2 pt-1">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-50 border border-pink-100 text-[#D92670] text-[10px] font-bold shadow-xs">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FDF2F3] border border-[#F8D2D5] text-[#A80C14] text-[10px] font-bold shadow-xs">
               <Truck className="w-3.5 h-3.5 shrink-0" />
               <span>Fast Delivery</span>
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-50 border border-pink-100 text-[#D92670] text-[10px] font-bold shadow-xs">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FDF2F3] border border-[#F8D2D5] text-[#A80C14] text-[10px] font-bold shadow-xs">
               <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
               <span>All Active</span>
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-50 border border-pink-100 text-[#D92670] text-[10px] font-bold shadow-xs">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FDF2F3] border border-[#F8D2D5] text-[#A80C14] text-[10px] font-bold shadow-xs">
               <Sparkles className="w-3.5 h-3.5 shrink-0" />
               <span>Modest style</span>
             </span>
@@ -99,7 +99,7 @@ export function Footer({ identity }: { identity: SiteIdentity }) {
                   rel="noreferrer"
                   aria-label={label}
                   title={label}
-                  className="p-2 bg-pink-50 hover:bg-[#D92670] text-[#D92670] hover:text-white rounded-full transition-colors border border-pink-100/80"
+                  className="p-2 bg-[#FDF2F3] hover:bg-[#A80C14] text-[#A80C14] hover:text-white rounded-full transition-colors border border-[#F8D2D5]/80"
                 >
                   <Icon className="w-4 h-4" />
                 </a>
@@ -110,7 +110,7 @@ export function Footer({ identity }: { identity: SiteIdentity }) {
 
         {/* Contact Info Col */}
         <div className="space-y-3 text-xs">
-          <h4 className="font-extrabold text-[#D92670] uppercase tracking-wider text-xs">Contact</h4>
+          <h4 className="font-extrabold text-[#A80C14] uppercase tracking-wider text-xs">Contact</h4>
           <div className="space-y-3 text-stone-600 font-sans">
             {addresses.map((addr, index) => {
               let label = '';
@@ -121,7 +121,7 @@ export function Footer({ identity }: { identity: SiteIdentity }) {
 
               return (
                 <div key={index} className="flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-[#D92670] shrink-0 mt-0.5" />
+                  <MapPin className="w-4 h-4 text-[#A80C14] shrink-0 mt-0.5" />
                   <div>
                     {label && <strong className="text-stone-800 uppercase block text-[9px] tracking-wider">{label}</strong>}
                     <span>{addr}</span>
@@ -131,15 +131,15 @@ export function Footer({ identity }: { identity: SiteIdentity }) {
             })}
 
             {phone && (
-              <a href={`tel:${phoneClean}`} className="flex items-center gap-2 hover:text-[#D92670] transition-colors">
-                <Phone className="w-4 h-4 text-[#D92670] shrink-0" />
+              <a href={`tel:${phoneClean}`} className="flex items-center gap-2 hover:text-[#A80C14] transition-colors">
+                <Phone className="w-4 h-4 text-[#A80C14] shrink-0" />
                 <span>{phone}</span>
               </a>
             )}
 
             {email && (
-              <a href={`mailto:${email}`} className="flex items-center gap-2 hover:text-[#D92670] transition-colors">
-                <Mail className="w-4 h-4 text-[#D92670] shrink-0" />
+              <a href={`mailto:${email}`} className="flex items-center gap-2 hover:text-[#A80C14] transition-colors">
+                <Mail className="w-4 h-4 text-[#A80C14] shrink-0" />
                 <span>{email}</span>
               </a>
             )}
@@ -148,29 +148,29 @@ export function Footer({ identity }: { identity: SiteIdentity }) {
 
         {/* Quick Links */}
         <div className="space-y-3 text-xs">
-          <h4 className="font-extrabold text-[#D92670] uppercase tracking-wider text-xs">Account</h4>
+          <h4 className="font-extrabold text-[#A80C14] uppercase tracking-wider text-xs">Account</h4>
           <ul className="space-y-2 text-stone-600">
-            <li><Link href="/account" className="hover:text-[#D92670]">My profile</Link></li>
-            <li><Link href="/account" className="hover:text-[#D92670]">Order history</Link></li>
-            <li><Link href="/track" className="hover:text-[#D92670]">Track order</Link></li>
-            <li><Link href="/cart" className="hover:text-[#D92670]">Cart</Link></li>
+            <li><Link href="/account" className="hover:text-[#A80C14]">My profile</Link></li>
+            <li><Link href="/account" className="hover:text-[#A80C14]">Order history</Link></li>
+            <li><Link href="/track" className="hover:text-[#A80C14]">Track order</Link></li>
+            <li><Link href="/cart" className="hover:text-[#A80C14]">Cart</Link></li>
           </ul>
         </div>
 
         {/* Client Care */}
         <div className="space-y-3 text-xs">
-          <h4 className="font-extrabold text-[#D92670] uppercase tracking-wider text-xs">Help</h4>
+          <h4 className="font-extrabold text-[#A80C14] uppercase tracking-wider text-xs">Help</h4>
           <ul className="space-y-2 text-stone-600">
-            <li><Link href="/shipping" className="hover:text-[#D92670]">Delivery charge</Link></li>
-            <li><Link href="/returns" className="hover:text-[#D92670]">Refunds & exchange</Link></li>
-            <li><Link href="/terms" className="hover:text-[#D92670]">Terms</Link></li>
-            <li><Link href="/privacy" className="hover:text-[#D92670]">Privacy</Link></li>
+            <li><Link href="/shipping" className="hover:text-[#A80C14]">Delivery charge</Link></li>
+            <li><Link href="/returns" className="hover:text-[#A80C14]">Refunds & exchange</Link></li>
+            <li><Link href="/terms" className="hover:text-[#A80C14]">Terms</Link></li>
+            <li><Link href="/privacy" className="hover:text-[#A80C14]">Privacy</Link></li>
           </ul>
         </div>
       </div>
 
       {/* Bottom Copyright */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 pt-4 border-t border-pink-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-stone-500 font-mono">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 pt-4 border-t border-[#F8D2D5] flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-stone-500 font-mono">
         <p>© {new Date().getFullYear()} FALAK CLOSET. All Rights Reserved.</p>
         <div className="flex items-center gap-1.5">
           <Lock className="w-3.5 h-3.5 text-emerald-600" />

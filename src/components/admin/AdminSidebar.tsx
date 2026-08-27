@@ -99,7 +99,7 @@ export function AdminSidebar({
       label: 'Promotions ',
       icon: Tag,
       badge: promosCount > 0 ? (
-        <span className="text-[10px] font-mono text-[#9B050B] font-bold px-2 py-0.5 bg-pink-50 rounded-md border border-pink-200">
+        <span className="text-[10px] font-mono text-[#9B050B] font-bold px-2 py-0.5 bg-[#FDF2F3] rounded-md border border-[#F8D2D5]">
           {promosCount}
         </span>
       ) : null

@@ -323,7 +323,7 @@ export function CategoriesTab({ products = [], onRefreshProducts }: CategoriesTa
             <span className="text-xs font-bold text-stone-500 uppercase tracking-wider font-mono">Main Categories</span>
             <h3 className="text-2xl font-black text-stone-900 mt-1">{totalCategoriesCount}</h3>
           </div>
-          <div className="p-3 bg-pink-50 text-[#9B050B] rounded-2xl border border-pink-100">
+          <div className="p-3 bg-[#FDF2F3] text-[#9B050B] rounded-2xl border border-[#F8D2D5]">
             <Shirt className="w-6 h-6" />
           </div>
         </div>
@@ -493,7 +493,7 @@ export function CategoriesTab({ products = [], onRefreshProducts }: CategoriesTa
               {/* Category Card Footer Status */}
               <div className="pt-4 border-t border-stone-100 flex items-center justify-between text-xs font-mono text-stone-500">
                 <span>Products in Category:</span>
-                <span className="font-black text-[#9B050B] bg-pink-50 px-2.5 py-1 rounded-lg border border-pink-100">
+                <span className="font-black text-[#9B050B] bg-[#FDF2F3] px-2.5 py-1 rounded-lg border border-[#F8D2D5]">
                   {categoryProductsCount} Items
                 </span>
               </div>

@@ -52,7 +52,7 @@ function Field({
   return (
     <div className={`space-y-1.5 ${className}`}>
       <label htmlFor={`co-${name}`} className="text-[11px] sm:text-xs font-bold text-stone-700">
-        {label} {required && <span className="text-[#D92670]">*</span>}
+        {label} {required && <span className="text-[#A80C14]">*</span>}
       </label>
       <input
         id={`co-${name}`}
@@ -66,7 +66,7 @@ function Field({
         inputMode={inputMode}
         pattern={pattern}
         maxLength={maxLength}
-        className="w-full min-h-[44px] px-4 bg-stone-50 border border-stone-200 rounded-2xl text-xs sm:text-sm text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[#D92670] focus:border-transparent transition-shadow"
+        className="w-full min-h-[44px] px-4 bg-stone-50 border border-stone-200 rounded-2xl text-xs sm:text-sm text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[#A80C14] focus:border-transparent transition-shadow"
       />
     </div>
   );
@@ -420,11 +420,11 @@ export default function CheckoutClient() {
         </div>
 
         {/* Order Receipt Box */}
-        <div className="p-4 sm:p-6 bg-white rounded-3xl border border-pink-100 text-left space-y-4 shadow-sm">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-pink-100 pb-3 gap-2">
+        <div className="p-4 sm:p-6 bg-white rounded-3xl border border-[#F8D2D5] text-left space-y-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-[#F8D2D5] pb-3 gap-2">
             <div>
               <span className="text-[10px] text-stone-400 uppercase tracking-wider">Order Reference ID</span>
-              <div className="font-mono font-bold text-lg sm:text-xl text-[#D92670] break-all">
+              <div className="font-mono font-bold text-lg sm:text-xl text-[#A80C14] break-all">
                 {createdOrder.id}
               </div>
             </div>
@@ -451,7 +451,7 @@ export default function CheckoutClient() {
               <p className="font-bold text-stone-900">Delivery &amp; Payment:</p>
               <p className="text-stone-500">{createdOrder.deliveryMethod}</p>
               <p className="text-stone-500">{createdOrder.paymentMethod}</p>
-              <p className="font-bold text-[#D92670] mt-2 font-mono text-sm">
+              <p className="font-bold text-[#A80C14] mt-2 font-mono text-sm">
                 Total Paid: ৳ {createdOrder.total}
               </p>
             </div>
@@ -461,7 +461,7 @@ export default function CheckoutClient() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           <Link
             href={`/track?id=${createdOrder.id}`}
-            className="w-full sm:w-auto min-h-[48px] px-8 inline-flex items-center justify-center bg-[#D92670] text-white font-bold text-xs uppercase tracking-wider rounded-full hover:bg-[#C2185B] active:scale-95 transition-all shadow-md gap-2"
+            className="w-full sm:w-auto min-h-[48px] px-8 inline-flex items-center justify-center bg-[#A80C14] text-white font-bold text-xs uppercase tracking-wider rounded-full hover:bg-[#8C0A10] active:scale-95 transition-all shadow-md gap-2"
           >
             <Truck className="w-4 h-4" />
             <span>Track Order Status</span>
@@ -481,7 +481,7 @@ export default function CheckoutClient() {
   if (activeItems.length === 0) {
     return (
       <div className="max-w-xl mx-auto px-4 py-16 sm:py-24 text-center space-y-5 pb-28 lg:pb-12">
-        <div className="w-20 h-20 bg-pink-50 text-[#D92670] rounded-full flex items-center justify-center mx-auto shadow-sm">
+        <div className="w-20 h-20 bg-[#FDF2F3] text-[#A80C14] rounded-full flex items-center justify-center mx-auto shadow-sm">
           <ShoppingBag className="w-10 h-10" />
         </div>
         <div className="space-y-2">
@@ -495,7 +495,7 @@ export default function CheckoutClient() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           <Link
             href="/shop"
-            className="w-full sm:w-auto min-h-[48px] px-8 inline-flex items-center justify-center bg-[#D92670] text-white font-bold text-xs uppercase tracking-wider rounded-full hover:bg-[#C2185B] active:scale-95 transition-all shadow-md gap-2"
+            className="w-full sm:w-auto min-h-[48px] px-8 inline-flex items-center justify-center bg-[#A80C14] text-white font-bold text-xs uppercase tracking-wider rounded-full hover:bg-[#8C0A10] active:scale-95 transition-all shadow-md gap-2"
           >
             <ShoppingBag className="w-4 h-4" />
             <span>Start Shopping</span>
@@ -513,10 +513,10 @@ export default function CheckoutClient() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-10 space-y-6 lg:space-y-8 pb-44 lg:pb-12">
-      <div className="flex items-center justify-between border-b border-pink-100 pb-3 sm:pb-4">
+      <div className="flex items-center justify-between border-b border-[#F8D2D5] pb-3 sm:pb-4">
         <Link
           href="/cart"
-          className="flex items-center gap-1.5 min-h-[40px] text-xs font-semibold text-stone-500 hover:text-[#D92670] transition-colors"
+          className="flex items-center gap-1.5 min-h-[40px] text-xs font-semibold text-stone-500 hover:text-[#A80C14] transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Return to Cart
         </Link>
@@ -529,7 +529,7 @@ export default function CheckoutClient() {
         {/* Order Summary — FIRST on mobile (collapsed by default), right rail on desktop.
             One markup source, reordered via grid placement. */}
         <aside className="lg:col-span-5 lg:order-2">
-          <div className="lg:sticky lg:top-24 bg-white rounded-3xl border border-pink-100 shadow-xs overflow-hidden">
+          <div className="lg:sticky lg:top-24 bg-white rounded-3xl border border-[#F8D2D5] shadow-xs overflow-hidden">
             {/* Summary header — doubles as the mobile disclosure toggle */}
             <button
               type="button"
@@ -540,7 +540,7 @@ export default function CheckoutClient() {
               <div className="min-w-0">
                 <h2 className="font-bold text-base sm:text-lg text-stone-900 flex items-center gap-2">
                   {buyNowItems ? 'Quick Order' : 'Order Summary'}
-                  <span className="px-2 text-xs py-0.5 bg-pink-50 border border-pink-100 rounded-full text-[10px] font-bold text-[#D92670]">
+                  <span className="px-2 text-xs py-0.5 bg-[#FDF2F3] border border-[#F8D2D5] rounded-full text-[10px] font-bold text-[#A80C14]">
                     {activeItems.length} {activeItems.length === 1 ? 'item' : 'items'}
                   </span>
                   {buyNowItems && (
@@ -565,7 +565,7 @@ export default function CheckoutClient() {
               <div className="flex items-center gap-2 shrink-0">
                 <div className="text-right">
                   <span className="block text-[9px] text-stone-400 uppercase tracking-wider leading-none">Total</span>
-                  <span className="font-extrabold text-[#D92670] font-mono text-base sm:text-lg leading-tight">
+                  <span className="font-extrabold text-[#A80C14] font-mono text-base sm:text-lg leading-tight">
                     ৳ {totalAmount}
                   </span>
                 </div>
@@ -574,8 +574,8 @@ export default function CheckoutClient() {
             </button>
 
             {/* Collapsible body: always open on lg, toggled on mobile */}
-            <div className={`${isSummaryOpen ? 'block' : 'hidden'} lg:block border-t border-pink-100 p-4 sm:p-6 space-y-4`}>
-              <div className="divide-y divide-pink-50 max-h-64 overflow-y-auto overscroll-contain pr-1 -mr-1">
+            <div className={`${isSummaryOpen ? 'block' : 'hidden'} lg:block border-t border-[#F8D2D5] p-4 sm:p-6 space-y-4`}>
+              <div className="divide-y divide-[#FDF2F3] max-h-64 overflow-y-auto overscroll-contain pr-1 -mr-1">
                 {activeItems.map((item, idx) => (
                   <div key={idx} className="py-2.5 flex items-center justify-between text-xs gap-3">
                     <div className="flex items-center gap-3 min-w-0">
@@ -617,7 +617,7 @@ export default function CheckoutClient() {
                       placeholder="Enter Promo Code (e.g. EID2026)"
                       value={promoCodeInput}
                       onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
-                      className="flex-1 min-h-[44px] px-3.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono font-bold uppercase text-stone-900 placeholder:font-sans placeholder:font-normal placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#D92670] focus:border-transparent"
+                      className="flex-1 min-h-[44px] px-3.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono font-bold uppercase text-stone-900 placeholder:font-sans placeholder:font-normal placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#A80C14] focus:border-transparent"
                     />
                     <button
                       type="button"
@@ -644,7 +644,7 @@ export default function CheckoutClient() {
                 )}
               </div>
 
-              <div className="pt-3 border-t border-pink-100 space-y-2 text-xs text-stone-600">
+              <div className="pt-3 border-t border-[#F8D2D5] space-y-2 text-xs text-stone-600">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
                   <span className="font-bold text-stone-900">৳ {subtotal}</span>
@@ -661,9 +661,9 @@ export default function CheckoutClient() {
                     {shippingFee === 0 ? <strong className="text-emerald-600 uppercase font-bold">Free</strong> : `৳ ${shippingFee}`}
                   </span>
                 </div>
-                <div className="flex justify-between text-base font-bold text-stone-900 pt-2 border-t border-pink-100">
+                <div className="flex justify-between text-base font-bold text-stone-900 pt-2 border-t border-[#F8D2D5]">
                   <span>Total</span>
-                  <span className="text-[#D92670] text-xl font-extrabold">৳ {totalAmount}</span>
+                  <span className="text-[#A80C14] text-xl font-extrabold">৳ {totalAmount}</span>
                 </div>
               </div>
 
@@ -671,7 +671,7 @@ export default function CheckoutClient() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="hidden lg:flex w-full min-h-[52px] items-center justify-center bg-[#D92670] hover:bg-[#C2185B] active:scale-[0.99] text-white font-extrabold text-xs uppercase tracking-wider rounded-full transition-all shadow-md gap-2 cursor-pointer disabled:opacity-50"
+                className="hidden lg:flex w-full min-h-[52px] items-center justify-center bg-[#A80C14] hover:bg-[#8C0A10] active:scale-[0.99] text-white font-extrabold text-xs uppercase tracking-wider rounded-full transition-all shadow-md gap-2 cursor-pointer disabled:opacity-50"
               >
                 <span>{isSubmitting ? 'Processing Order…' : 'Complete Order'}</span>
                 <ArrowRight className="w-4 h-4" />
@@ -686,9 +686,9 @@ export default function CheckoutClient() {
 
         {/* Shipping Details */}
         <div className="lg:col-span-7 lg:order-1 space-y-5 lg:space-y-6">
-          <section className="bg-white p-4 sm:p-6 rounded-3xl border border-pink-100 shadow-xs space-y-4">
+          <section className="bg-white p-4 sm:p-6 rounded-3xl border border-[#F8D2D5] shadow-xs space-y-4">
             <h2 className="font-bold text-base sm:text-lg text-stone-900 flex items-center gap-2">
-              <span className="w-7 h-7 rounded-full bg-[#D92670]/10 text-[#D92670] text-xs font-black flex items-center justify-center shrink-0">1</span>
+              <span className="w-7 h-7 rounded-full bg-[#A80C14]/10 text-[#A80C14] text-xs font-black flex items-center justify-center shrink-0">1</span>
               Shipping &amp; Contact Details
             </h2>
 
@@ -750,9 +750,9 @@ export default function CheckoutClient() {
           </section>
 
           {/* Delivery Zone Selection */}
-          <section className="bg-white p-4 sm:p-6 rounded-3xl border border-pink-100 shadow-xs space-y-4">
+          <section className="bg-white p-4 sm:p-6 rounded-3xl border border-[#F8D2D5] shadow-xs space-y-4">
             <h2 className="font-bold text-base sm:text-lg text-stone-900 flex items-center gap-2">
-              <span className="w-7 h-7 rounded-full bg-[#D92670]/10 text-[#D92670] text-xs font-black flex items-center justify-center shrink-0">2</span>
+              <span className="w-7 h-7 rounded-full bg-[#A80C14]/10 text-[#A80C14] text-xs font-black flex items-center justify-center shrink-0">2</span>
               Select Delivery Zone
             </h2>
             <div className="space-y-2.5 text-xs" role="radiogroup" aria-label="Delivery zone">
@@ -762,8 +762,8 @@ export default function CheckoutClient() {
                   <label
                     key={z.id}
                     className={`flex items-center justify-between gap-3 min-h-[56px] p-3.5 rounded-2xl border cursor-pointer transition-all active:scale-[0.99] ${isSelected
-                      ? 'border-[#D92670] bg-pink-50 text-[#D92670] font-bold shadow-xs'
-                      : 'border-stone-200 text-stone-700 hover:border-pink-200'
+                      ? 'border-[#A80C14] bg-[#FDF2F3] text-[#A80C14] font-bold shadow-xs'
+                      : 'border-stone-200 text-stone-700 hover:border-[#F8D2D5]'
                       }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -772,12 +772,12 @@ export default function CheckoutClient() {
                         name="deliveryZone"
                         checked={isSelected}
                         onChange={() => setSelectedZone(z.id, null)}
-                        className="accent-[#D92670] w-4 h-4 shrink-0"
+                        className="accent-[#A80C14] w-4 h-4 shrink-0"
                       />
                       <div className="min-w-0">
                         <p className="font-bold flex items-center gap-1.5 flex-wrap">
                           {z.name}
-                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide ${isSelected ? 'bg-[#D92670] text-white' : 'bg-stone-100 text-stone-500'}`}>
+                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide ${isSelected ? 'bg-[#A80C14] text-white' : 'bg-stone-100 text-stone-500'}`}>
                             {z.etaDays}
                           </span>
                         </p>
@@ -797,13 +797,13 @@ export default function CheckoutClient() {
                 return (
                   <div className="space-y-1.5 pt-1 text-xs">
                     <label htmlFor="co-subarea" className="font-bold text-stone-700">
-                      Select Specific Delivery Area <span className="text-[#D92670]">*</span>
+                      Select Specific Delivery Area <span className="text-[#A80C14]">*</span>
                     </label>
                     <select
                       id="co-subarea"
                       value={selectedSubAreaId || ''}
                       onChange={(e) => setSelectedZone(selectedZoneId!, e.target.value || null)}
-                      className="w-full min-h-[44px] px-4 bg-stone-50 border border-stone-200 rounded-2xl text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670] focus:border-transparent font-bold"
+                      className="w-full min-h-[44px] px-4 bg-stone-50 border border-stone-200 rounded-2xl text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14] focus:border-transparent font-bold"
                       required
                     >
                       <option value="">-- Choose Area (Custom rate overrides apply) --</option>
@@ -821,9 +821,9 @@ export default function CheckoutClient() {
           </section>
 
           {/* Payment Option */}
-          <section className="bg-white p-4 sm:p-6 rounded-3xl border border-pink-100 shadow-xs space-y-3">
+          <section className="bg-white p-4 sm:p-6 rounded-3xl border border-[#F8D2D5] shadow-xs space-y-3">
             <h2 className="font-bold text-base sm:text-lg text-stone-900 flex items-center gap-2">
-              <span className="w-7 h-7 rounded-full bg-[#D92670]/10 text-[#D92670] text-xs font-black flex items-center justify-center shrink-0">3</span>
+              <span className="w-7 h-7 rounded-full bg-[#A80C14]/10 text-[#A80C14] text-xs font-black flex items-center justify-center shrink-0">3</span>
               Payment Option
             </h2>
 
@@ -846,8 +846,8 @@ export default function CheckoutClient() {
                   <label
                     key={pm.id}
                     className={`flex items-start gap-3 min-h-[56px] p-3.5 rounded-2xl border cursor-pointer transition-all active:scale-[0.99] ${isSelected
-                      ? 'border-[#D92670] bg-pink-50 font-bold shadow-xs'
-                      : 'border-stone-200 text-stone-700 hover:border-pink-200'
+                      ? 'border-[#A80C14] bg-[#FDF2F3] font-bold shadow-xs'
+                      : 'border-stone-200 text-stone-700 hover:border-[#F8D2D5]'
                       }`}
                   >
                     <input
@@ -855,13 +855,13 @@ export default function CheckoutClient() {
                       name="paymentMethod"
                       checked={isSelected}
                       onChange={() => setPaymentMethod(pm.id)}
-                      className="accent-[#D92670] w-4 h-4 shrink-0 mt-0.5"
+                      className="accent-[#A80C14] w-4 h-4 shrink-0 mt-0.5"
                     />
-                    <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isSelected ? 'bg-[#D92670] text-white' : 'bg-stone-100 text-stone-500'}`}>
+                    <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isSelected ? 'bg-[#A80C14] text-white' : 'bg-stone-100 text-stone-500'}`}>
                       <Icon className="w-[18px] h-[18px]" />
                     </span>
                     <span className="min-w-0">
-                      <span className={`block font-bold ${isSelected ? 'text-[#D92670]' : 'text-stone-800'}`}>{pm.id}</span>
+                      <span className={`block font-bold ${isSelected ? 'text-[#A80C14]' : 'text-stone-800'}`}>{pm.id}</span>
                       <span className="block text-[10px] text-stone-500 font-normal mt-0.5 leading-snug">{pm.desc}</span>
                     </span>
                   </label>
@@ -874,10 +874,10 @@ export default function CheckoutClient() {
 
       {/* Sticky mobile purchase bar — offset matches MobileBottomNav including
           its env(safe-area-inset-bottom) padding once the nav overhaul lands. */}
-      <div className="lg:hidden fixed bottom-[calc(62px+env(safe-area-inset-bottom))] left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-pink-100 px-3 py-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] flex items-center justify-between gap-3">
+      <div className="lg:hidden fixed bottom-[calc(62px+env(safe-area-inset-bottom))] left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#F8D2D5] px-3 py-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] flex items-center justify-between gap-3">
         <div className="flex flex-col min-w-0 shrink-0">
           <span className="text-[9px] text-stone-400 uppercase tracking-wider leading-none">Total ({activeItems.length} {activeItems.length === 1 ? 'item' : 'items'})</span>
-          <span className="font-extrabold text-[#D92670] font-mono text-base leading-tight">
+          <span className="font-extrabold text-[#A80C14] font-mono text-base leading-tight">
             ৳ {totalAmount}
           </span>
         </div>
@@ -885,7 +885,7 @@ export default function CheckoutClient() {
           type="submit"
           form="checkout-form"
           disabled={isSubmitting}
-          className="flex-1 max-w-[62%] min-h-[44px] bg-[#D92670] hover:bg-[#C2185B] active:scale-95 text-white text-[11px] font-extrabold uppercase tracking-wider rounded-full transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+          className="flex-1 max-w-[62%] min-h-[44px] bg-[#A80C14] hover:bg-[#8C0A10] active:scale-95 text-white text-[11px] font-extrabold uppercase tracking-wider rounded-full transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
         >
           <span>{isSubmitting ? 'Processing…' : 'Complete Order'}</span>
           <ArrowRight className="w-3.5 h-3.5" />
@@ -915,12 +915,12 @@ export default function CheckoutClient() {
               <div className="inline-flex items-center justify-center bg-white text-[#E2136E] rounded-2xl px-4 py-2 font-black text-xl tracking-wider shadow-sm select-none">
                 bKash
               </div>
-              <p className="text-xs text-pink-100">Send Money Payment Portal</p>
+              <p className="text-xs text-[#F8D2D5]">Send Money Payment Portal</p>
             </div>
 
             <div className="p-4 sm:p-6 space-y-4 overflow-y-auto overscroll-contain flex-grow text-left">
               {/* Amount Info */}
-              <div className="bg-pink-50/60 border border-pink-100 p-4 rounded-2xl flex items-center justify-between">
+              <div className="bg-[#FDF2F3]/60 border border-[#F8D2D5] p-4 rounded-2xl flex items-center justify-between">
                 <div>
                   <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Amount to Pay</p>
                   <p className="text-2xl font-black text-[#E2136E] font-mono">৳ {totalAmount}</p>
@@ -946,7 +946,7 @@ export default function CheckoutClient() {
                     <span className="font-mono text-base sm:text-lg font-extrabold text-stone-900 tracking-wide truncate">
                       {bkashSettings?.bkashNumber || '01700000005'}
                     </span>
-                    <span className="px-2 py-0.5 bg-pink-100 text-[#E2136E] border border-pink-200 rounded text-[9px] font-bold shrink-0">
+                    <span className="px-2 py-0.5 bg-[#FDF2F3] text-[#E2136E] border border-[#F8D2D5] rounded text-[9px] font-bold shrink-0">
                       {bkashSettings?.bkashAccountType || 'Personal'}
                     </span>
                   </div>

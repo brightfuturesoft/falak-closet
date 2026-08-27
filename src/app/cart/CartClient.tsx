@@ -104,7 +104,7 @@ export default function CartClient() {
   if (cart.length === 0) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center space-y-6">
-        <div className="w-20 h-20 bg-pink-50 rounded-full flex items-center justify-center mx-auto text-[#D92670]">
+        <div className="w-20 h-20 bg-[#FDF2F3] rounded-full flex items-center justify-center mx-auto text-[#A80C14]">
           <ShoppingBag className="w-10 h-10" />
         </div>
 
@@ -118,7 +118,7 @@ export default function CartClient() {
 
         <Link
           href="/shop"
-          className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#D92670] hover:bg-[#C2185B] text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-md transition-colors"
+          className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#A80C14] hover:bg-[#8C0A10] text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-md transition-colors"
         >
           <span>Discover Haute Couture</span>
           <ArrowRight className="w-4 h-4" />
@@ -130,9 +130,9 @@ export default function CartClient() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8 pb-36 lg:pb-12 text-stone-900">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-pink-100 pb-6 gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-[#F8D2D5] pb-6 gap-4">
         <div>
-          <span className="px-3.5 py-1 bg-pink-100 text-[#D92670] text-xs font-bold rounded-full uppercase tracking-wider inline-flex items-center gap-1.5">
+          <span className="px-3.5 py-1 bg-[#FDF2F3] text-[#A80C14] text-xs font-bold rounded-full uppercase tracking-wider inline-flex items-center gap-1.5 border border-[#F8D2D5]">
             <ShoppingBag className="w-3.5 h-3.5" /> Shopping Bag
           </span>
           <h1 className="font-sans text-3xl sm:text-4xl font-extrabold text-stone-900 mt-2">
@@ -152,10 +152,10 @@ export default function CartClient() {
       </div>
 
       {/* Free Shipping Progress Indicator */}
-      <div className="p-4 bg-white rounded-3xl border border-pink-100 shadow-xs space-y-2">
+      <div className="p-4 bg-white rounded-3xl border border-[#F8D2D5] shadow-xs space-y-2">
         <div className="flex items-center justify-between text-xs font-bold">
           <span className="flex items-center gap-1.5 text-stone-900">
-            <Truck className="w-4 h-4 text-[#D92670]" />
+            <Truck className="w-4 h-4 text-[#A80C14]" />
             {freeShippingProgress >= 100 || quantityFreeDelivery?.unlocked ? (
               <strong className="text-emerald-700">
                 {quantityFreeDelivery?.unlocked
@@ -166,10 +166,10 @@ export default function CartClient() {
               <span>
                 {quantityFreeDelivery ? (
                   <span>
-                    Buy <strong className="text-[#D92670]">{quantityFreeDelivery.requiredQty - quantityFreeDelivery.currentQty}</strong> more of <strong className="text-stone-900">"{quantityFreeDelivery.productName}"</strong> for FREE Delivery!
+                    Buy <strong className="text-[#A80C14]">{quantityFreeDelivery.requiredQty - quantityFreeDelivery.currentQty}</strong> more of <strong className="text-stone-900">"{quantityFreeDelivery.productName}"</strong> for FREE Delivery!
                   </span>
                 ) : (
-                  <span>Add <strong className="text-[#D92670]">{formatCurrency(freeShippingThreshold - subtotal)}</strong> more for FREE Shipping!</span>
+                  <span>Add <strong className="text-[#A80C14]">{formatCurrency(freeShippingThreshold - subtotal)}</strong> more for FREE Shipping!</span>
                 )}
               </span>
             )}
@@ -181,9 +181,9 @@ export default function CartClient() {
           </span>
         </div>
 
-        <div className="w-full h-2 bg-pink-50 rounded-full overflow-hidden">
+        <div className="w-full h-2 bg-[#FDF2F3] rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-[#D92670] to-[#F2C76E] transition-all duration-500 rounded-full"
+            className="h-full bg-gradient-to-r from-[#A80C14] to-[#F5C77E] transition-all duration-500 rounded-full"
             style={{
               width: `${
                 freeShippingProgress >= 100 || quantityFreeDelivery?.unlocked
@@ -211,7 +211,7 @@ export default function CartClient() {
                 type="checkbox"
                 checked={selectedKeys.size === cart.length}
                 onChange={toggleSelectAll}
-                className="w-4 h-4 accent-[#D92670] rounded cursor-pointer"
+                className="w-4 h-4 accent-[#A80C14] rounded cursor-pointer"
               />
               <span>Select All Items ({cart.length})</span>
             </label>
@@ -219,7 +219,7 @@ export default function CartClient() {
           </div>
 
           {/* Item Row Loop */}
-          <div className="divide-y divide-pink-100 border border-pink-100 rounded-3xl overflow-hidden bg-white shadow-xs">
+          <div className="divide-y divide-[#F8D2D5] border border-[#F8D2D5] rounded-3xl overflow-hidden bg-white shadow-xs">
             {cart.map((item) => {
               const key = `${item.product?.id}-${item.selectedColor}-${item.selectedSize}`;
               const isSelected = selectedKeys.has(key);
@@ -232,27 +232,27 @@ export default function CartClient() {
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggleSelectKey(key)}
-                      className="w-4 h-4 accent-[#D92670] rounded cursor-pointer shrink-0"
+                      className="w-4 h-4 accent-[#A80C14] rounded cursor-pointer shrink-0"
                     />
 
-                    <div className="relative w-16 h-20 sm:w-20 sm:h-24 rounded-2xl overflow-hidden bg-stone-100 shrink-0 border border-pink-100 shadow-xs">
+                    <div className="relative w-16 h-20 sm:w-20 sm:h-24 rounded-2xl overflow-hidden bg-stone-100 shrink-0 border border-[#F8D2D5] shadow-xs">
                       <Image src={mainImage} alt={item.product?.name || 'Product'} fill sizes="80px" className="object-cover" />
                     </div>
 
                     <div className="space-y-1 min-w-0">
-                      <Link href={`/product/${item.product?.slug || ''}`} className="font-bold text-stone-900 hover:text-[#D92670] text-sm sm:text-base line-clamp-1">
+                      <Link href={`/product/${item.product?.slug || ''}`} className="font-bold text-stone-900 hover:text-[#A80C14] text-sm sm:text-base line-clamp-1">
                         {item.product?.name}
                       </Link>
                       <p className="text-[11px] text-stone-400 font-mono">Code: {item.product?.code || 'FLK'}</p>
 
                       <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-stone-600">
                         {item.selectedColor && (
-                          <span className="px-2 py-0.5 bg-pink-50 border border-pink-100 rounded-full font-bold">
+                          <span className="px-2 py-0.5 bg-[#FDF2F3] border border-[#F8D2D5] rounded-full font-bold text-[#A80C14]">
                             Color: {item.selectedColor}
                           </span>
                         )}
                         {item.selectedSize && (
-                          <span className="px-2 py-0.5 bg-pink-50 border border-pink-100 rounded-full font-bold">
+                          <span className="px-2 py-0.5 bg-[#FDF2F3] border border-[#F8D2D5] rounded-full font-bold text-[#A80C14]">
                             Size: {item.selectedSize}
                           </span>
                         )}
@@ -262,7 +262,7 @@ export default function CartClient() {
 
                   {/* Quantity & Unit Price */}
                   <div className="flex flex-col items-end gap-2 shrink-0">
-                    <span className="font-extrabold text-[#D92670] text-base sm:text-lg font-mono">
+                    <span className="font-extrabold text-[#A80C14] text-base sm:text-lg font-mono">
                       {formatCurrency((item.product?.price || 0) * item.quantity)}
                     </span>
 
@@ -270,14 +270,14 @@ export default function CartClient() {
                       <div className="flex items-center border border-stone-200 rounded-full overflow-hidden bg-stone-50">
                         <button
                           onClick={() => updateQuantity(item.product?.id || '', item.selectedColor, item.selectedSize, item.quantity - 1)}
-                          className="w-7 h-7 flex items-center justify-center text-stone-700 hover:bg-pink-100 transition-colors"
+                          className="w-7 h-7 flex items-center justify-center text-stone-700 hover:bg-[#FDF2F3] transition-colors"
                         >
                           <Minus className="w-3 h-3" />
                         </button>
                         <span className="w-7 text-center font-bold font-mono text-stone-900">{item.quantity}</span>
                         <button
                           onClick={() => updateQuantity(item.product?.id || '', item.selectedColor, item.selectedSize, item.quantity + 1)}
-                          className="w-7 h-7 flex items-center justify-center text-stone-700 hover:bg-pink-100 transition-colors"
+                          className="w-7 h-7 flex items-center justify-center text-stone-700 hover:bg-[#FDF2F3] transition-colors"
                         >
                           <Plus className="w-3 h-3" />
                         </button>
@@ -300,15 +300,15 @@ export default function CartClient() {
 
         {/* Right: Order Summary */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="p-6 bg-white rounded-3xl border border-pink-100 shadow-xs space-y-6">
-            <h3 className="font-bold text-base uppercase tracking-wider text-stone-900 border-b border-pink-100 pb-3">
+          <div className="p-6 bg-white rounded-3xl border border-[#F8D2D5] shadow-xs space-y-6">
+            <h3 className="font-bold text-base uppercase tracking-wider text-stone-900 border-b border-[#F8D2D5] pb-3">
               Order Summary
             </h3>
 
             {/* Promo Code Form */}
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-stone-700 flex items-center gap-1.5">
-                <Tag className="w-3.5 h-3.5 text-[#D92670]" /> Promo Voucher Code
+                <Tag className="w-3.5 h-3.5 text-[#A80C14]" /> Promo Voucher Code
               </label>
 
               {appliedCoupon ? (
@@ -328,7 +328,7 @@ export default function CartClient() {
                     value={promoCodeInput}
                     onChange={(e) => setPromoCodeInput(e.target.value)}
                     placeholder="Enter code (e.g. FALAK10)"
-                    className="flex-1 px-3.5 py-2 bg-stone-50 border border-pink-200 rounded-full text-xs font-mono uppercase focus:outline-none focus:ring-1 focus:ring-[#D92670]"
+                    className="flex-1 px-3.5 py-2 bg-stone-50 border border-[#F8D2D5] rounded-full text-xs font-mono uppercase focus:outline-none focus:ring-1 focus:ring-[#A80C14]"
                   />
                   <button
                     type="submit"
@@ -341,7 +341,7 @@ export default function CartClient() {
               )}
 
               {promoMessage && (
-                <p className={`text-[11px] font-bold ${promoMessage.type === 'success' ? 'text-emerald-600' : 'text-[#D92670]'}`}>
+                <p className={`text-[11px] font-bold ${promoMessage.type === 'success' ? 'text-emerald-600' : 'text-[#A80C14]'}`}>
                   {promoMessage.text}
                 </p>
               )}
@@ -354,7 +354,7 @@ export default function CartClient() {
             </div>
 
             {/* Price Calculations */}
-            <div className="space-y-2.5 text-xs text-stone-600 border-t border-pink-100 pt-4">
+            <div className="space-y-2.5 text-xs text-stone-600 border-t border-[#F8D2D5] pt-4">
               <div className="flex justify-between">
                 <span>Selected Subtotal:</span>
                 <span className="font-mono font-bold text-stone-900">{formatCurrency(selectedSubtotal)}</span>
@@ -374,24 +374,24 @@ export default function CartClient() {
                 </span>
               </div>
 
-              <div className="flex justify-between border-t border-pink-100 pt-3 text-base font-extrabold text-stone-900">
+              <div className="flex justify-between border-t border-[#F8D2D5] pt-3 text-base font-extrabold text-stone-900">
                 <span>Total Amount:</span>
-                <span className="font-mono text-[#D92670]">{formatCurrency(totalAmount)}</span>
+                <span className="font-mono text-[#A80C14]">{formatCurrency(totalAmount)}</span>
               </div>
             </div>
 
             {/* Checkout Action */}
             <Link
               href="/checkout"
-              className="w-full py-4 bg-[#D92670] hover:bg-[#C2185B] text-white font-extrabold text-xs uppercase tracking-wider rounded-full shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-4 bg-[#A80C14] hover:bg-[#8C0A10] text-white font-extrabold text-xs uppercase tracking-wider rounded-full shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>Proceed to Express Checkout</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
 
-            <div className="p-3 bg-pink-50 rounded-2xl text-[11px] text-stone-500 space-y-1">
+            <div className="p-3 bg-[#FDF2F3] border border-[#F8D2D5] rounded-2xl text-[11px] text-stone-500 space-y-1">
               <p className="flex items-center gap-1 font-bold text-stone-800">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#D92670]" /> Safe & Secure Checkout Guarantee
+                <ShieldCheck className="w-3.5 h-3.5 text-[#A80C14]" /> Safe & Secure Checkout Guarantee
               </p>
               <p>Cash on Delivery (COD), bKash, and Mobile Banking accepted across Bangladesh.</p>
             </div>

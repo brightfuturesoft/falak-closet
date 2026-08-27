@@ -50,7 +50,7 @@ export function AuthTabs({
       {/* Card */}
       <div className="bg-white rounded-3xl border border-stone-200/80 overflow-hidden shadow-sm">
         {/* Brand header */}
-        <div className="relative bg-gradient-to-br from-[#D92670] to-[#C2185B] px-6 py-8 text-center overflow-hidden">
+        <div className="relative bg-gradient-to-br from-[#A80C14] to-[#8C0A10] px-6 py-8 text-center overflow-hidden">
           <div className="absolute -top-10 -left-10 w-36 h-36 bg-white/10 rounded-full pointer-events-none" />
           <div className="absolute -bottom-14 -right-8 w-40 h-40 bg-white/10 rounded-full pointer-events-none" />
 
@@ -75,8 +75,8 @@ export function AuthTabs({
                 onClick={() => onSwitchMode('signin')}
                 className={`min-h-[38px] rounded-full text-xs font-bold transition-all cursor-pointer ${
                   authMode === 'signin'
-                    ? 'bg-[#D92670] text-white shadow-md shadow-[#D92670]/25'
-                    : 'text-stone-500 hover:text-[#0C163A]'
+                    ? 'bg-[#A80C14] text-white shadow-md shadow-[#A80C14]/25'
+                    : 'text-stone-500 hover:text-[#0D153A]'
                 }`}
               >
                 Sign In
@@ -89,8 +89,8 @@ export function AuthTabs({
                 onClick={() => onSwitchMode('signup')}
                 className={`min-h-[38px] rounded-full text-xs font-bold transition-all cursor-pointer ${
                   authMode === 'signup'
-                    ? 'bg-[#D92670] text-white shadow-md shadow-[#D92670]/25'
-                    : 'text-stone-500 hover:text-[#0C163A]'
+                    ? 'bg-[#A80C14] text-white shadow-md shadow-[#A80C14]/25'
+                    : 'text-stone-500 hover:text-[#0D153A]'
                 }`}
               >
                 Create Account
@@ -101,7 +101,7 @@ export function AuthTabs({
               type="button"
               id="switch-to-signin"
               onClick={() => onSwitchMode('signin')}
-              className="flex items-center gap-1 text-xs font-bold text-[#D92670] hover:text-[#C2185B] cursor-pointer transition-colors"
+              className="flex items-center gap-1 text-xs font-bold text-[#A80C14] hover:text-[#8C0A10] cursor-pointer transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
               Back to sign in
@@ -130,8 +130,8 @@ export function AuthTabs({
         <div className="px-6 py-4 bg-stone-50 border-t border-stone-100 text-center">
           <p className="text-[10px] text-stone-400 leading-relaxed">
             Protected by secure encryption. By continuing you agree to our{' '}
-            <a href="/terms" className="text-[#D92670] hover:underline">Terms</a> and{' '}
-            <a href="/privacy" className="text-[#D92670] hover:underline">Privacy Policy</a>.
+            <a href="/terms" className="text-[#A80C14] hover:underline">Terms</a> and{' '}
+            <a href="/privacy" className="text-[#A80C14] hover:underline">Privacy Policy</a>.
           </p>
         </div>
       </div>
@@ -147,7 +147,7 @@ export function AuthTabs({
             key={label}
             className="flex flex-col items-center gap-1.5 px-2 py-3 bg-white border border-stone-200/70 rounded-2xl text-center"
           >
-            <Icon className="w-4 h-4 text-[#D92670]" />
+            <Icon className="w-4 h-4 text-[#A80C14]" />
             <span className="text-[10px] font-semibold text-stone-500 leading-tight">{label}</span>
           </div>
         ))}

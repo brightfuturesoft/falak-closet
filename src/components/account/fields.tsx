@@ -2,7 +2,7 @@
 
 /**
  * fields.tsx — shared form primitives for the account area.
- * Unified brand palette: #D92670 (primary) · #C2185B (hover) · #0C163A (ink).
+ * Unified brand palette: #A80C14 (primary) · #8C0A10 (hover) · #0D153A (ink).
  */
 
 import React, { useState } from 'react';
@@ -75,7 +75,7 @@ export function InputField({
     <div className="space-y-1.5">
       <label className="block text-[11px] font-bold uppercase tracking-wide text-stone-500">
         {label}
-        {required && <span className="text-[#D92670] ml-0.5">*</span>}
+        {required && <span className="text-[#A80C14] ml-0.5">*</span>}
       </label>
       <div className="relative">
         {Icon && (
@@ -91,9 +91,9 @@ export function InputField({
           maxLength={maxLength}
           inputMode={inputMode}
           autoComplete={autoComplete}
-          className={`w-full min-h-[44px] px-4 py-2.5 bg-white border border-stone-200 rounded-xl text-[#0C163A] text-sm
-                     placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#D92670]/20
-                     focus:border-[#D92670] hover:border-stone-300 disabled:opacity-50 disabled:cursor-not-allowed
+          className={`w-full min-h-[44px] px-4 py-2.5 bg-white border border-stone-200 rounded-xl text-[#0D153A] text-sm
+                     placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#A80C14]/20
+                     focus:border-[#A80C14] hover:border-stone-300 disabled:opacity-50 disabled:cursor-not-allowed
                      transition-all ${Icon ? 'pl-10' : ''} ${rightElement ? 'pr-10' : ''} ${className}`}
         />
         {rightElement && (
@@ -119,7 +119,7 @@ export function OtpInput({
   return (
     <div className="space-y-1.5">
       <label className="block text-[11px] font-bold uppercase tracking-wide text-stone-500">
-        OTP Code <span className="text-[#D92670] ml-0.5">*</span>
+        OTP Code <span className="text-[#A80C14] ml-0.5">*</span>
       </label>
       <input
         type="text"
@@ -130,10 +130,10 @@ export function OtpInput({
         autoComplete="one-time-code"
         maxLength={6}
         disabled={disabled}
-        className="w-full min-h-[52px] px-4 py-2.5 bg-white border border-stone-200 rounded-xl text-[#0C163A]
+        className="w-full min-h-[52px] px-4 py-2.5 bg-white border border-stone-200 rounded-xl text-[#0D153A]
                    text-lg font-mono font-bold tracking-[0.5em] text-center placeholder:tracking-[0.5em]
-                   placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-[#D92670]/20
-                   focus:border-[#D92670] hover:border-stone-300 disabled:opacity-50 transition-all"
+                   placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-[#A80C14]/20
+                   focus:border-[#A80C14] hover:border-stone-300 disabled:opacity-50 transition-all"
       />
       <p className="text-[10px] text-stone-400 pl-1">Enter the 6-digit code we sent you</p>
     </div>
@@ -196,7 +196,7 @@ export function PasswordInput({
           <button
             type="button"
             onClick={() => setShow((s) => !s)}
-            className="text-stone-400 hover:text-[#D92670] transition-colors cursor-pointer"
+            className="text-stone-400 hover:text-[#A80C14] transition-colors cursor-pointer"
             tabIndex={-1}
             aria-label={show ? 'Hide password' : 'Show password'}
           >
@@ -244,15 +244,15 @@ export function SelectField({
     <div className="space-y-1.5">
       <label className="block text-[11px] font-bold uppercase tracking-wide text-stone-500">
         {label}
-        {required && <span className="text-[#D92670] ml-0.5">*</span>}
+        {required && <span className="text-[#A80C14] ml-0.5">*</span>}
       </label>
       <div className="relative">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
-          className="w-full min-h-[44px] px-4 py-2.5 pr-10 bg-white border border-stone-200 rounded-xl text-[#0C163A]
-                     text-sm focus:outline-none focus:ring-2 focus:ring-[#D92670]/20 focus:border-[#D92670]
+          className="w-full min-h-[44px] px-4 py-2.5 pr-10 bg-white border border-stone-200 rounded-xl text-[#0D153A]
+                     text-sm focus:outline-none focus:ring-2 focus:ring-[#A80C14]/20 focus:border-[#A80C14]
                      hover:border-stone-300 disabled:opacity-50 appearance-none cursor-pointer transition-all"
         >
           {options.map((d) => (
@@ -280,8 +280,8 @@ export function SubmitButton({
     <button
       type="submit"
       disabled={loading || disabled}
-      className="w-full min-h-[46px] py-3 bg-[#D92670] hover:bg-[#C2185B] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed
-                 text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-md shadow-[#D92670]/25
+      className="w-full min-h-[46px] py-3 bg-[#A80C14] hover:bg-[#8C0A10] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed
+                 text-white font-bold text-xs uppercase tracking-wider rounded-full shadow-md shadow-[#A80C14]/25
                  transition-all flex items-center justify-center gap-2 cursor-pointer"
     >
       {loading && <Loader2 className="w-4 h-4 animate-spin" />}

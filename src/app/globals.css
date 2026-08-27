@@ -2,19 +2,25 @@
 
 @layer base {
   :root {
-    --brand-gold: #F2C76E;
-    --brand-gold-hover: #E5B550;
-    --brand-crimson: #9B050B;
-    --brand-crimson-hover: #B8000A;
-    --brand-navy: #0C163A;
-    --brand-cream: #FFFBF0;
+    --brand-gold: #F5C77E;
+    --brand-gold-hover: #E4B566;
+    --brand-gold-light: #FDF7EB;
+    
+    --brand-crimson: #A80C14;
+    --brand-crimson-hover: #8C0A10;
+    --brand-crimson-light: #FDF2F3;
+    --brand-crimson-border: #F8D2D5;
+
+    --brand-navy: #0D153A;
+    --brand-navy-hover: #1A2552;
+    --brand-cream: #FFFBF2;
     --brand-sand-light: #FAF6EC;
     
-    --brand-pink: #D92670;
-    --brand-pink-hover: #C2185B;
+    --brand-pink: #A80C14;
+    --brand-pink-hover: #8C0A10;
 
     --background: #FFFFFF;
-    --foreground: #0C163A;
+    --foreground: #0D153A;
   }
 
   body {
@@ -36,12 +42,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #F5D0D6;
+  background: #F8D2D5;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #D92670;
+  background: #A80C14;
 }
 
 /* Hide scrollbar utility */

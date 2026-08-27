@@ -278,7 +278,7 @@ export function ProductsTab({
                           <div className="flex items-center gap-1.5 max-w-[220px]">
                             <p className="font-bold text-stone-900 truncate">{p.name}</p>
                             {p.freeDeliveryQuantity && p.freeDeliveryQuantity > 0 ? (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#D92670]/10 text-[#D92670] border border-[#D92670]/20 shrink-0">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#A80C14]/10 text-[#A80C14] border border-[#A80C14]/20 shrink-0">
                                 🚚 Free @ {p.freeDeliveryQuantity}+
                               </span>
                             ) : null}
@@ -437,7 +437,7 @@ export function ProductsTab({
                     <h4 className="font-bold text-stone-900 text-sm line-clamp-1 flex items-center justify-between gap-1.5">
                       <span className="truncate">{p.name}</span>
                       {p.freeDeliveryQuantity && p.freeDeliveryQuantity > 0 ? (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#D92670]/10 text-[#D92670] border border-[#D92670]/20 shrink-0 font-sans">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#A80C14]/10 text-[#A80C14] border border-[#A80C14]/20 shrink-0 font-sans">
                           🚚 Free @ {p.freeDeliveryQuantity}+
                         </span>
                       ) : null}

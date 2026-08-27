@@ -210,8 +210,8 @@ export function HeroSlidesTab() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-pink-50 border border-pink-100 rounded-2xl">
-            <Images className="w-6 h-6 text-[#D92670]" />
+          <div className="p-3 bg-[#FDF2F3] border border-[#F8D2D5] rounded-2xl">
+            <Images className="w-6 h-6 text-[#A80C14]" />
           </div>
           <div>
             <h2 className="font-serif font-bold text-xl text-stone-900">Hero Carousel Slides</h2>
@@ -232,7 +232,7 @@ export function HeroSlidesTab() {
           </button>
           <button
             onClick={openCreateModal}
-            className="px-4 py-2.5 bg-[#D92670] hover:bg-[#C2185B] text-white font-bold text-xs rounded-xl transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+            className="px-4 py-2.5 bg-[#A80C14] hover:bg-[#8C0A10] text-white font-bold text-xs rounded-xl transition-all shadow-sm flex items-center gap-2 cursor-pointer"
           >
             <Plus className="w-4 h-4" /> Add Slide
           </button>
@@ -294,7 +294,7 @@ export function HeroSlidesTab() {
               <div className="flex-1 space-y-1.5 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   {slide.tag && (
-                    <span className="px-2 py-0.5 bg-pink-50 border border-pink-100 text-[#D92670] text-[9px] font-black rounded-md uppercase tracking-wider">
+                    <span className="px-2 py-0.5 bg-[#FDF2F3] border border-[#F8D2D5] text-[#A80C14] text-[9px] font-black rounded-md uppercase tracking-wider">
                       {slide.tag}
                     </span>
                   )}
@@ -349,7 +349,7 @@ export function HeroSlidesTab() {
                 </button>
                 <button
                   onClick={() => openEditModal(slide)}
-                  className="p-1.5 text-stone-500 hover:text-[#D92670] hover:bg-pink-50 rounded-lg transition-colors cursor-pointer"
+                  className="p-1.5 text-stone-500 hover:text-[#A80C14] hover:bg-[#FDF2F3] rounded-lg transition-colors cursor-pointer"
                   title="Edit slide"
                 >
                   <Edit2 className="w-4 h-4" />
@@ -400,7 +400,7 @@ export function HeroSlidesTab() {
 
             <form onSubmit={handleSaveSlide} className="p-6 space-y-4">
               {/* Live mini preview — same palette as the storefront hero */}
-              <div className="relative h-28 rounded-2xl overflow-hidden bg-[#0C163A] border border-stone-200">
+              <div className="relative h-28 rounded-2xl overflow-hidden bg-[#0D153A] border border-stone-200">
                 {formData.image && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -409,7 +409,7 @@ export function HeroSlidesTab() {
                     className="absolute inset-0 w-full h-full object-cover opacity-90"
                   />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#0C163A] via-[#0C163A]/90 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0D153A] via-[#0D153A]/90 to-transparent" />
                 <div className="absolute inset-0 p-4 flex flex-col justify-center text-white space-y-1">
                   {formData.tag && (
                     <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-[#F2C76E]">
@@ -433,12 +433,12 @@ export function HeroSlidesTab() {
                     value={formData.tag}
                     onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
                     placeholder="e.g. FRESH OFFERS"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670] uppercase font-mono"
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14] uppercase font-mono"
                   />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold uppercase tracking-wider text-stone-700">
-                    Title <span className="text-[#D92670]">*</span>
+                    Title <span className="text-[#A80C14]">*</span>
                   </label>
                   <input
                     type="text"
@@ -446,7 +446,7 @@ export function HeroSlidesTab() {
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     placeholder="The big headline"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670] font-bold"
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14] font-bold"
                   />
                 </div>
               </div>
@@ -458,13 +458,13 @@ export function HeroSlidesTab() {
                   value={formData.subtitle}
                   onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
                   placeholder="Supporting line under the title"
-                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670]"
+                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14]"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-bold uppercase tracking-wider text-stone-700">
-                  Image URL <span className="text-[#D92670]">*</span>
+                  Image URL <span className="text-[#A80C14]">*</span>
                 </label>
                 <div className="flex flex-col sm:flex-row sm:items-start gap-2">
                   <input
@@ -473,7 +473,7 @@ export function HeroSlidesTab() {
                     value={formData.image}
                     onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                     placeholder="https://res.cloudinary.com/… or any image URL"
-                    className="flex-1 px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670]"
+                    className="flex-1 px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14]"
                   />
                   <ImageUploader
                     folder="hero"
@@ -498,7 +498,7 @@ export function HeroSlidesTab() {
                     value={formData.ctaText}
                     onChange={(e) => setFormData({ ...formData, ctaText: e.target.value })}
                     placeholder="Shop Now"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670]"
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14]"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -509,7 +509,7 @@ export function HeroSlidesTab() {
                     value={formData.ctaLink}
                     onChange={(e) => setFormData({ ...formData, ctaLink: e.target.value })}
                     placeholder="/shop"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670] font-mono"
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14] font-mono"
                   />
                   <datalist id="cta-targets">
                     {CTA_SUGGESTIONS.map((t) => (
@@ -528,7 +528,7 @@ export function HeroSlidesTab() {
                     min={0}
                     value={formData.sortOrder}
                     onChange={(e) => setFormData({ ...formData, sortOrder: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670] font-mono"
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14] font-mono"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -564,7 +564,7 @@ export function HeroSlidesTab() {
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-5 py-2.5 bg-[#D92670] hover:bg-[#C2185B] text-white font-bold text-xs rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2.5 bg-[#A80C14] hover:bg-[#8C0A10] text-white font-bold text-xs rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50"
                 >
                   {isSaving ? 'Saving…' : editingSlide ? 'Save Changes' : 'Create Slide'}
                 </button>

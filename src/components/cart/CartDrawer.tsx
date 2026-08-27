@@ -132,7 +132,7 @@ export function CartDrawer() {
                 <span>
                   {quantityFreeDelivery ? (
                     <span>
-                      Buy <strong className="text-[#D92670]">{quantityFreeDelivery.requiredQty - quantityFreeDelivery.currentQty}</strong> more of <strong className="text-stone-900 dark:text-stone-100">"{quantityFreeDelivery.productName}"</strong> for FREE Delivery!
+                      Buy <strong className="text-[#A80C14]">{quantityFreeDelivery.requiredQty - quantityFreeDelivery.currentQty}</strong> more of <strong className="text-stone-900 dark:text-stone-100">"{quantityFreeDelivery.productName}"</strong> for FREE Delivery!
                     </span>
                   ) : (
                     <span>

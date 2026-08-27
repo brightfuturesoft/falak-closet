@@ -217,15 +217,15 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
           return (
             <article
               key={card.id}
-              className="bg-white border border-pink-100 rounded-3xl p-5 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between"
+              className="bg-white border border-[#F8D2D5] rounded-3xl p-5 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-[#D92670] text-white flex items-center justify-center shadow-xs flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-[#A80C14] text-white flex items-center justify-center shadow-xs flex-shrink-0">
                     <Icon className="w-[18px] h-[18px]" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-sans font-bold text-[#0C163A] text-sm sm:text-base truncate">{card.title}</h3>
+                    <h3 className="font-sans font-bold text-[#0D153A] text-sm sm:text-base truncate">{card.title}</h3>
                     <p className="text-[11px] sm:text-xs text-stone-500 truncate">{card.subtitle}</p>
                   </div>
                 </div>
@@ -245,8 +245,8 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
                         aria-pressed={isTagActive}
                         className={`flex-shrink-0 min-h-[36px] inline-flex items-center px-4 rounded-full text-xs font-semibold transition-all cursor-pointer active:scale-95 border ${
                           isTagActive
-                            ? 'bg-[#D92670] border-[#D92670] text-white shadow-xs'
-                            : 'bg-white hover:bg-pink-50/60 border-stone-200 text-[#0C163A] hover:text-[#D92670] hover:border-pink-200'
+                            ? 'bg-[#A80C14] border-[#A80C14] text-white shadow-xs'
+                            : 'bg-white hover:bg-[#FDF2F3]/60 border-stone-200 text-[#0D153A] hover:text-[#A80C14] hover:border-[#F8D2D5]'
                         }`}
                       >
                         {tag.label}
@@ -273,15 +273,15 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
             return (
               <article
                 key={card.id}
-                className="w-[290px] sm:w-[360px] flex-shrink-0 snap-start bg-white border border-pink-100 rounded-3xl p-4 sm:p-5 shadow-xs flex flex-col justify-between"
+                className="w-[290px] sm:w-[360px] flex-shrink-0 snap-start bg-white border border-[#F8D2D5] rounded-3xl p-4 sm:p-5 shadow-xs flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-full bg-[#D92670] text-white flex items-center justify-center shadow-xs flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-[#A80C14] text-white flex items-center justify-center shadow-xs flex-shrink-0">
                       <Icon className="w-[18px] h-[18px]" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-sans font-bold text-[#0C163A] text-sm sm:text-base truncate">{card.title}</h3>
+                      <h3 className="font-sans font-bold text-[#0D153A] text-sm sm:text-base truncate">{card.title}</h3>
                       <p className="text-[11px] sm:text-xs text-stone-500 truncate">{card.subtitle}</p>
                     </div>
                   </div>
@@ -301,8 +301,8 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
                           aria-pressed={isTagActive}
                           className={`flex-shrink-0 min-h-[36px] inline-flex items-center px-3.5 rounded-full text-xs font-semibold transition-all cursor-pointer active:scale-95 border ${
                             isTagActive
-                              ? 'bg-[#D92670] border-[#D92670] text-white shadow-xs'
-                              : 'bg-white hover:bg-pink-50/60 border-stone-200 text-[#0C163A] hover:text-[#D92670] hover:border-pink-200'
+                              ? 'bg-[#A80C14] border-[#A80C14] text-white shadow-xs'
+                              : 'bg-white hover:bg-[#FDF2F3]/60 border-stone-200 text-[#0D153A] hover:text-[#A80C14] hover:border-[#F8D2D5]'
                           }`}
                         >
                           {tag.label}
@@ -320,7 +320,7 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
         <div className="flex items-center justify-center gap-4 mt-3">
           <button
             onClick={handleScrollLeft}
-            className="w-8 h-8 rounded-full border border-pink-100 flex items-center justify-center text-[#D92670] bg-white active:scale-90 transition-transform shadow-xs cursor-pointer"
+            className="w-8 h-8 rounded-full border border-[#F8D2D5] flex items-center justify-center text-[#A80C14] bg-white active:scale-90 transition-transform shadow-xs cursor-pointer"
             aria-label="Previous category"
           >
             <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
@@ -332,7 +332,7 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
                 key={idx}
                 onClick={() => handleScrollTo(idx)}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
-                  activeCardIndex === idx ? 'w-5 bg-[#D92670]' : 'w-1.5 bg-pink-100'
+                  activeCardIndex === idx ? 'w-5 bg-[#A80C14]' : 'w-1.5 bg-[#FDF2F3]'
                 }`}
                 aria-label={`Go to slide ${idx + 1}`}
               />
@@ -341,7 +341,7 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
 
           <button
             onClick={handleScrollRight}
-            className="w-8 h-8 rounded-full border border-pink-100 flex items-center justify-center text-[#D92670] bg-white active:scale-90 transition-transform shadow-xs cursor-pointer"
+            className="w-8 h-8 rounded-full border border-[#F8D2D5] flex items-center justify-center text-[#A80C14] bg-white active:scale-90 transition-transform shadow-xs cursor-pointer"
             aria-label="Next category"
           >
             <ChevronRight className="w-4 h-4 stroke-[2.5]" />

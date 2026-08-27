@@ -119,8 +119,8 @@ export function ReviewsTab() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-pink-50 border border-pink-100 rounded-2xl">
-            <MessageSquareQuote className="w-6 h-6 text-[#D92670]" />
+          <div className="p-3 bg-[#FDF2F3] border border-[#F8D2D5] rounded-2xl">
+            <MessageSquareQuote className="w-6 h-6 text-[#A80C14]" />
           </div>
           <div>
             <h2 className="font-serif font-bold text-xl text-stone-900">Customer Reviews</h2>
@@ -224,7 +224,7 @@ export function ReviewsTab() {
                     </span>
                     <span className="font-bold text-sm text-stone-900">{r.review.author}</span>
                     <span className="text-[10px] text-stone-400">on</span>
-                    <span className="text-xs font-bold text-[#D92670] truncate max-w-[220px]">
+                    <span className="text-xs font-bold text-[#A80C14] truncate max-w-[220px]">
                       {r.productName}
                     </span>
                     {r.review.verifiedPurchase && (

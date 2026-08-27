@@ -92,7 +92,7 @@ export function ImageUploader({
           </>
         ) : (
           <>
-            <Upload className="w-3.5 h-3.5 text-[#D92670]" />
+            <Upload className="w-3.5 h-3.5 text-[#A80C14]" />
             <span>{label}</span>
           </>
         )}

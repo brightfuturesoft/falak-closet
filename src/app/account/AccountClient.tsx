@@ -60,8 +60,8 @@ export default function AccountClient({ initialUser }: AccountClientProps) {
                 onClick={() => setActiveTab(tab)}
                 className={`flex items-center justify-center gap-1.5 min-h-[40px] px-2 rounded-full transition-all cursor-pointer text-center text-xs font-bold ${
                   activeTab === tab
-                    ? 'bg-[#D92670] text-white shadow-md shadow-[#D92670]/25'
-                    : 'text-stone-500 hover:text-[#D92670] hover:bg-pink-50'
+                    ? 'bg-[#A80C14] text-white shadow-md shadow-[#A80C14]/25'
+                    : 'text-stone-500 hover:text-[#A80C14] hover:bg-[#FDF2F3]'
                 }`}
               >
                 {tab === 'orders' && (

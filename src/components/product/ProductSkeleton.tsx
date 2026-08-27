@@ -29,7 +29,7 @@ export default function ProductSkeleton() {
           </div>
 
           {/* Main Display Image */}
-          <div className="relative aspect-[4/5] w-full sm:aspect-[3/4] rounded-3xl bg-stone-200 animate-pulse border border-pink-50/30 flex-grow shadow-sm" />
+          <div className="relative aspect-[4/5] w-full sm:aspect-[3/4] rounded-3xl bg-stone-200 animate-pulse border border-[#F8D2D5]/30 flex-grow shadow-sm" />
         </div>
 
         {/* Right: Details & Purchase Form */}
@@ -38,7 +38,7 @@ export default function ProductSkeleton() {
           <div className="space-y-3">
             {/* Category / Code Pill */}
             <div className="flex flex-wrap items-center gap-2">
-              <div className="w-20 h-5 rounded-full bg-pink-100/60 animate-pulse" />
+              <div className="w-20 h-5 rounded-full bg-[#FDF2F3]/60 animate-pulse" />
               <div className="w-24 h-5 rounded-md bg-stone-200 animate-pulse" />
             </div>
 
@@ -93,7 +93,7 @@ export default function ProductSkeleton() {
             {/* Buy Buttons */}
             <div className="flex-1 h-12 rounded-2xl bg-stone-200 animate-pulse" />
           </div>
-          <div className="h-12 bg-pink-100/50 animate-pulse rounded-2xl w-full" />
+          <div className="h-12 bg-[#FDF2F3]/50 animate-pulse rounded-2xl w-full" />
 
           {/* Description Snippet */}
           <div className="space-y-2 pt-4">

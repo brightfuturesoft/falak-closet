@@ -45,15 +45,15 @@ export function AnnouncementBar({ announcement }: { announcement: Announcement }
   const safeLink = link.startsWith('/') || /^https?:\/\//i.test(link) ? link : null;
 
   return (
-    <div className="bg-gradient-to-r from-[#0C163A] via-[#D92670] to-[#0C163A] text-white text-xs">
+    <div className="bg-gradient-to-r from-[#0D153A] via-[#A80C14] to-[#0D153A] text-white text-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-center gap-2 relative">
-        <Megaphone className="w-3.5 h-3.5 text-[#F2C76E] shrink-0" />
+        <Megaphone className="w-3.5 h-3.5 text-[#F5C77E] shrink-0" />
         <p className="font-bold tracking-wide text-center truncate">
           {announcement.message}
           {safeLink && (
             <Link
               href={safeLink}
-              className="inline-flex items-center gap-1 ml-2 text-[#F2C76E] hover:text-white underline underline-offset-2 transition-colors"
+              className="inline-flex items-center gap-1 ml-2 text-[#F5C77E] hover:text-white underline underline-offset-2 transition-colors"
             >
               {announcement.linkLabel || 'Learn more'}
               <ArrowRight className="w-3 h-3" />

@@ -41,12 +41,12 @@ export function OrdersTab({ orders, isLoading, error, onRetry }: OrdersTabProps)
     return (
       <div className="p-8 text-center bg-white rounded-3xl border border-stone-200/70 space-y-4">
         <div className="w-14 h-14 mx-auto rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center">
-          <AlertCircle className="w-7 h-7 text-[#D92670]" />
+          <AlertCircle className="w-7 h-7 text-[#A80C14]" />
         </div>
         <p className="text-xs text-stone-500 font-medium max-w-xs mx-auto">{error}</p>
         <button
           onClick={onRetry}
-          className="px-6 py-2.5 bg-[#D92670] hover:bg-[#C2185B] text-white text-xs font-bold rounded-full transition-colors cursor-pointer"
+          className="px-6 py-2.5 bg-[#A80C14] hover:bg-[#8C0A10] text-white text-xs font-bold rounded-full transition-colors cursor-pointer"
         >
           Try Again
         </button>
@@ -57,18 +57,18 @@ export function OrdersTab({ orders, isLoading, error, onRetry }: OrdersTabProps)
   if (orders.length === 0) {
     return (
       <div className="p-10 text-center bg-white rounded-3xl border border-stone-200/70 space-y-4">
-        <div className="w-14 h-14 mx-auto rounded-2xl bg-pink-50 border border-pink-100 flex items-center justify-center">
-          <ShoppingBag className="w-7 h-7 text-[#D92670]" />
+        <div className="w-14 h-14 mx-auto rounded-2xl bg-[#FDF2F3] border border-[#F8D2D5] flex items-center justify-center">
+          <ShoppingBag className="w-7 h-7 text-[#A80C14]" />
         </div>
         <div className="space-y-1">
-          <h3 className="font-serif font-bold text-base text-[#0C163A]">No orders yet</h3>
+          <h3 className="font-serif font-bold text-base text-[#0D153A]">No orders yet</h3>
           <p className="text-xs text-stone-500 max-w-xs mx-auto">
             When you place an order it will appear here with live tracking.
           </p>
         </div>
         <Link
           href="/shop"
-          className="inline-flex items-center gap-1.5 px-6 py-2.5 bg-[#D92670] hover:bg-[#C2185B] text-white text-xs font-bold rounded-full transition-colors"
+          className="inline-flex items-center gap-1.5 px-6 py-2.5 bg-[#A80C14] hover:bg-[#8C0A10] text-white text-xs font-bold rounded-full transition-colors"
         >
           Start Shopping <ArrowRight className="w-3.5 h-3.5" />
         </Link>
@@ -82,18 +82,18 @@ export function OrdersTab({ orders, isLoading, error, onRetry }: OrdersTabProps)
         {orders.map((ord) => (
           <div
             key={ord.id}
-            className="group p-4 sm:p-5 bg-white rounded-2xl border border-stone-200/70 hover:border-[#D92670]/40 hover:shadow-md transition-all flex items-center gap-4"
+            className="group p-4 sm:p-5 bg-white rounded-2xl border border-stone-200/70 hover:border-[#A80C14]/40 hover:shadow-md transition-all flex items-center gap-4"
           >
             <Link
               href={`/track?id=${encodeURIComponent(ord.id)}`}
               className="flex items-center gap-4 flex-1 min-w-0"
             >
-              <div className="w-11 h-11 rounded-xl bg-pink-50 border border-pink-100 flex items-center justify-center shrink-0 group-hover:bg-[#D92670] group-hover:border-[#D92670] transition-colors">
-                <Package className="w-5 h-5 text-[#D92670] group-hover:text-white transition-colors" />
+              <div className="w-11 h-11 rounded-xl bg-[#FDF2F3] border border-[#F8D2D5] flex items-center justify-center shrink-0 group-hover:bg-[#A80C14] group-hover:border-[#A80C14] transition-colors">
+                <Package className="w-5 h-5 text-[#A80C14] group-hover:text-white transition-colors" />
               </div>
 
               <div className="flex-1 min-w-0">
-                <p className="font-mono font-extrabold text-[#D92670] text-sm truncate">#{ord.id}</p>
+                <p className="font-mono font-extrabold text-[#A80C14] text-sm truncate">#{ord.id}</p>
                 <p className="text-[11px] text-stone-400 mt-0.5">
                   Placed{' '}
                   {new Date(ord.date).toLocaleDateString('en-US', {
@@ -106,17 +106,17 @@ export function OrdersTab({ orders, isLoading, error, onRetry }: OrdersTabProps)
               </div>
 
               <div className="text-right shrink-0 space-y-0.5 hidden sm:block">
-                <p className="font-extrabold text-[#0C163A] font-mono text-sm">
+                <p className="font-extrabold text-[#0D153A] font-mono text-sm">
                   {formatCurrency(ord.total)}
                 </p>
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-stone-400 group-hover:text-[#D92670] transition-colors uppercase tracking-wide">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-stone-400 group-hover:text-[#A80C14] transition-colors uppercase tracking-wide">
                   View <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                 </span>
               </div>
             </Link>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 shrink-0">
-              <p className="font-extrabold text-[#0C163A] font-mono text-sm sm:hidden text-right">
+              <p className="font-extrabold text-[#0D153A] font-mono text-sm sm:hidden text-right">
                 {formatCurrency(ord.total)}
               </p>
               <button
@@ -124,7 +124,7 @@ export function OrdersTab({ orders, isLoading, error, onRetry }: OrdersTabProps)
                 onClick={() => setReceiptOrder(ord)}
                 title="Print / save receipt"
                 aria-label={`Print receipt for order ${ord.id}`}
-                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-white border border-stone-200 hover:border-[#D92670]/50 hover:text-[#D92670] hover:bg-pink-50 text-stone-600 text-[11px] font-bold rounded-full transition-all cursor-pointer shadow-xs"
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-white border border-stone-200 hover:border-[#A80C14]/50 hover:text-[#A80C14] hover:bg-[#FDF2F3] text-stone-600 text-[11px] font-bold rounded-full transition-all cursor-pointer shadow-xs"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span className="hidden md:inline">Receipt</span>
