@@ -42,22 +42,96 @@ function getSeedBanners() {
 }
 
 // ─── GET /api/promotion-banners ──────────────────────────────────────────────
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    let banners = await prisma.promotionBanner.findMany({
-      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }]
-    });
+    const fetchBanners = () =>
+      prisma.promotionBanner.findMany({
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }]
+      });
+
+    let banners = await fetchBanners();
 
     if (banners.length === 0) {
       await prisma.promotionBanner.createMany({ data: getSeedBanners() });
-      banners = await prisma.promotionBanner.findMany({
-        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }]
-      });
+      banners = await fetchBanners();
       // Bust cache to reflect the seeded data in cache
       bustBannerCache();
     }
 
-    return NextResponse.json({ success: true, banners });
+    const { searchParams } = new URL(req.url);
+    if (!searchParams.has('page') && !searchParams.has('pageSize')) {
+      return NextResponse.json({ success: true, banners });
+    }
+
+    // ── Server-paginated admin view ────────────────────────────────────────
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
+    const pageSize = Math.min(500, Math.max(1, parseInt(searchParams.get('pageSize') || '8', 10) || 8));
+    const filter = ['all', 'active', 'inactive', 'flash'].includes(searchParams.get('filter') || '')
+      ? searchParams.get('filter')!
+      : 'all';
+    const query = (searchParams.get('query') || '').trim().toLowerCase();
+    const sort = ['sort', 'created', 'title'].includes(searchParams.get('sort') || '')
+      ? searchParams.get('sort')!
+      : 'sort';
+    const dir = searchParams.get('dir') === 'asc' ? 'asc' : 'desc';
+
+    const now = Date.now();
+    const isLiveFlash = (b: (typeof banners)[number]) =>
+      Boolean(b.isFlashSale && b.flashSaleEndsAt && new Date(b.flashSaleEndsAt).getTime() > now);
+
+    const counts = {
+      all: banners.length,
+      active: banners.filter((b) => b.isActive).length,
+      inactive: banners.filter((b) => !b.isActive).length,
+      flash: banners.filter(isLiveFlash).length,
+    };
+
+    const searched = query
+      ? banners.filter(
+          (b) =>
+            b.title.toLowerCase().includes(query) ||
+            (b.code || '').toLowerCase().includes(query) ||
+            (b.subtitle || '').toLowerCase().includes(query)
+        )
+      : banners;
+
+    const filtered =
+      filter === 'all'
+        ? searched
+        : filter === 'flash'
+          ? searched.filter(isLiveFlash)
+          : searched.filter((b) => (filter === 'active' ? b.isActive : !b.isActive));
+
+    const dirMul = dir === 'asc' ? 1 : -1;
+    filtered.sort((a, b) => {
+      switch (sort) {
+        case 'created':
+          return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * dirMul;
+        case 'title':
+          return a.title.localeCompare(b.title) * dirMul;
+        case 'sort':
+        default:
+          return ((a.sortOrder ?? 0) - (b.sortOrder ?? 0)) * dirMul;
+      }
+    });
+
+    const totalItems = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    const safePage = Math.min(page, totalPages);
+    const pageRows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+    return NextResponse.json({
+      success: true,
+      banners: pageRows,
+      pagination: { page: safePage, pageSize, totalItems, totalPages },
+      counts,
+      stats: {
+        total: banners.length,
+        live: counts.active,
+        flashLive: counts.flash,
+        withCodes: banners.filter((b) => b.code).length,
+      },
+    });
   } catch (err) {
     console.error('[GET /api/promotion-banners]', err);
     return NextResponse.json(

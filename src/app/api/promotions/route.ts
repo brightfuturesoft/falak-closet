@@ -32,18 +32,99 @@ function whereFor(id: unknown, code: unknown): Prisma.PromotionWhereUniqueInput 
 }
 
 // ─── GET /api/promotions ─────────────────────────────────────────────────────
-export async function GET() {
+// No params → legacy full { promotions } (admin context). With page/pageSize →
+// server-paginated admin view: filter (all|Active|Expired|Disabled — 'Expired'
+// includes auto-expired), query (code), sort (code|discount|used|created), dir,
+// plus pill counts and usage stats.
+export async function GET(req: Request) {
   try {
-    const existing = await prisma.promotion.findMany({ orderBy: { createdAt: 'desc' } });
+    const { searchParams } = new URL(req.url);
+    const list = async () => prisma.promotion.findMany({ orderBy: { createdAt: 'desc' } });
+
+    let existing = await list();
 
     // First run: give the admin something to edit rather than an empty table.
     if (existing.length === 0) {
       await prisma.promotion.createMany({ data: DEFAULT_COUPONS });
-      const seeded = await prisma.promotion.findMany({ orderBy: { createdAt: 'desc' } });
-      return NextResponse.json({ success: true, promotions: seeded, seeded: seeded.length });
+      existing = await list();
+
+      if (!searchParams.has('page') && !searchParams.has('pageSize')) {
+        return NextResponse.json({ success: true, promotions: existing, seeded: existing.length });
+      }
     }
 
-    return NextResponse.json({ success: true, promotions: existing });
+    if (!searchParams.has('page') && !searchParams.has('pageSize')) {
+      return NextResponse.json({ success: true, promotions: existing });
+    }
+
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
+    const pageSize = Math.min(500, Math.max(1, parseInt(searchParams.get('pageSize') || '8', 10) || 8));
+    const filter = ['all', 'Active', 'Expired', 'Disabled'].includes(searchParams.get('filter') || '')
+      ? searchParams.get('filter')!
+      : 'all';
+    const query = (searchParams.get('query') || '').trim().toLowerCase();
+    const sort = ['code', 'discount', 'used', 'created'].includes(searchParams.get('sort') || '')
+      ? searchParams.get('sort')!
+      : 'created';
+    const dir = searchParams.get('dir') === 'asc' ? 'asc' : 'desc';
+
+    const isExpired = (p: (typeof existing)[number]) =>
+      Boolean(p.expiryDate && new Date(p.expiryDate) < new Date());
+    const tierOf = (p: (typeof existing)[number]): 'Active' | 'Expired' | 'Disabled' =>
+      p.status === 'Active' && isExpired(p) ? 'Expired' : (p.status as 'Active' | 'Expired' | 'Disabled');
+
+    // Pill counts over the entire voucher set (search-independent).
+    const counts = {
+      all: existing.length,
+      Active: existing.filter((p) => tierOf(p) === 'Active').length,
+      Expired: existing.filter((p) => tierOf(p) === 'Expired').length,
+      Disabled: existing.filter((p) => p.status === 'Disabled').length,
+    };
+
+    const searched = query
+      ? existing.filter(
+          (p) =>
+            p.code.toLowerCase().includes(query) ||
+            String(p.discountValue).includes(query)
+        )
+      : existing;
+
+    const filtered = filter === 'all' ? searched : searched.filter((p) => tierOf(p) === filter);
+
+    const dirMul = dir === 'asc' ? 1 : -1;
+    filtered.sort((a, b) => {
+      switch (sort) {
+        case 'code':
+          return a.code.localeCompare(b.code) * dirMul;
+        case 'discount':
+          return (a.discountValue - b.discountValue) * dirMul;
+        case 'used':
+          return ((a.usedCount ?? 0) - (b.usedCount ?? 0)) * dirMul;
+        case 'created':
+        default:
+          return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * dirMul;
+      }
+    });
+
+    const totalItems = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    const safePage = Math.min(page, totalPages);
+    const pageRows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+    return NextResponse.json({
+      success: true,
+      promotions: pageRows,
+      pagination: { page: safePage, pageSize, totalItems, totalPages },
+      counts,
+      stats: {
+        totalRedemptions: existing.reduce((s, p) => s + (p.usedCount ?? 0), 0),
+        activeCount: counts.Active,
+        topCode: existing.reduce(
+          (top, p) => ((p.usedCount ?? 0) > (top?.usedCount ?? 0) ? p : top),
+          existing[0]
+        )?.code ?? null,
+      },
+    });
   } catch (err) {
     // No fall-back-to-defaults here: pretending the defaults are live records
     // hides an outage and invites the admin to "edit" rows that do not exist.

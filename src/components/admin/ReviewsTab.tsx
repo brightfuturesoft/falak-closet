@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Star,
   RefreshCw,
@@ -9,8 +9,15 @@ import {
   AlertTriangle,
   X,
   MessageSquareQuote,
-  RotateCcw
+  RotateCcw,
+  Search,
+  Clock,
+  BadgeCheck,
+  Gauge
 } from 'lucide-react';
+import {
+  StatCard, PaginationBar, useDebouncedValue, usePaginatedRows,
+} from '@/components/admin/tableKit';
 
 interface AdminReview {
   productId: string;
@@ -30,37 +37,51 @@ interface AdminReview {
 type StatusFilter = 'pending' | 'approved' | 'all';
 
 export function ReviewsTab() {
-  const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [filter, setFilter] = useState<StatusFilter>('pending');
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(query);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(8);
   const [actionError, setActionError] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [stats, setStats] = useState<{
+    total: number; pending: number; approved: number; verified: number; avgRating: number;
+  } | null>(null);
 
   // Delete confirm state
   const [deleting, setDeleting] = useState<AdminReview | null>(null);
 
-  const fetchReviews = useCallback(async (status: StatusFilter) => {
-    setIsLoading(true);
-    setLoadError(null);
-    try {
-      const res = await fetch(`/api/reviews?status=${status}`);
-      const data = await res.json();
-      if (data.success) {
-        setReviews(data.reviews || []);
-      } else {
-        setLoadError(data.error || 'Failed to load reviews.');
-      }
-    } catch {
-      setLoadError('Network error — could not reach /api/reviews.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const url = useMemo(
+    () =>
+      `/api/reviews?${new URLSearchParams({
+        status: filter,
+        page: String(page),
+        pageSize: String(pageSize),
+        query: debouncedQuery,
+        sort: 'date',
+        dir: 'desc',
+      })}`,
+    [filter, page, pageSize, debouncedQuery]
+  );
 
-  useEffect(() => {
-    fetchReviews(filter);
-  }, [filter, fetchReviews]);
+  const { rows: reviews, pagination, isLoading, refetch } = usePaginatedRows<AdminReview>(
+    url,
+    (data) => {
+      setStats(data.stats as never);
+      return { rows: data.reviews as AdminReview[], pagination: data.pagination as never };
+    },
+    (message) => setActionError(message)
+  );
+
+  const applyFilter = (f: StatusFilter) => {
+    setFilter(f);
+    setPage(1);
+  };
+
+  const applyQuery = (value: string) => {
+    setQuery(value);
+    setPage(1);
+  };
 
   const keyOf = (r: AdminReview) => `${r.productId}:${r.review.id}`;
 
@@ -80,7 +101,7 @@ export function ReviewsTab() {
         return;
       }
       // Refetch keeps counts/filters honest without hand-merging.
-      await fetchReviews(filter);
+      await refetch();
     } catch {
       setActionError('Network error — could not update the review.');
     } finally {
@@ -103,7 +124,7 @@ export function ReviewsTab() {
         setActionError(data.error || 'Could not delete the review.');
         return;
       }
-      await fetchReviews(filter);
+      await refetch();
     } catch {
       setActionError('Network error — could not delete the review.');
     } finally {
@@ -112,10 +133,18 @@ export function ReviewsTab() {
     }
   };
 
-  const pendingCount = reviews.filter((r) => r.review.status === 'pending').length;
+  const pendingCount = stats?.pending ?? 0;
 
   return (
     <div className="space-y-6">
+      {/* KPI strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard icon={MessageSquareQuote} label="Reviews" value={stats?.total ?? '—'} sub="all products" />
+        <StatCard icon={Clock} label="Pending" value={stats?.pending ?? '—'} sub="awaiting approval" tone="amber" />
+        <StatCard icon={BadgeCheck} label="Verified" value={stats?.verified ?? '—'} sub="confirmed purchases" tone="emerald" />
+        <StatCard icon={Gauge} label="Avg Rating" value={stats ? `${stats.avgRating} ★` : '—'} sub="across all reviews" tone="rose" />
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -126,15 +155,25 @@ export function ReviewsTab() {
             <h2 className="font-serif font-bold text-xl text-stone-900">Customer Reviews</h2>
             <p className="text-xs text-stone-500">
               {filter === 'pending'
-                ? `${reviews.length} awaiting approval`
-                : `${reviews.length} shown${pendingCount > 0 ? ` · ${pendingCount} pending` : ''}`}
+                ? `${pagination.totalItems} awaiting approval`
+                : `${pagination.totalItems} shown${pendingCount > 0 ? ` · ${pendingCount} pending` : ''}`}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => applyQuery(e.target.value)}
+              placeholder="Search author, product…"
+              className="w-44 sm:w-52 pl-9 pr-3 py-2 bg-white border border-stone-200 rounded-xl text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-900"
+            />
+          </div>
           <button
-            onClick={() => fetchReviews(filter)}
+            onClick={refetch}
             className="p-2.5 bg-white border border-stone-200 hover:border-stone-400 rounded-xl transition-colors cursor-pointer"
             title="Refresh reviews"
           >
@@ -146,7 +185,7 @@ export function ReviewsTab() {
             {(['pending', 'approved', 'all'] as StatusFilter[]).map((f) => (
               <button
                 key={f}
-                onClick={() => setFilter(f)}
+                onClick={() => applyFilter(f)}
                 className={`px-3 py-1.5 text-[11px] font-bold rounded-lg capitalize transition-colors cursor-pointer ${
                   filter === f ? 'bg-stone-900 text-white' : 'text-stone-500 hover:bg-stone-100'
                 }`}
@@ -175,28 +214,18 @@ export function ReviewsTab() {
             <div key={i} className="h-28 bg-white border border-stone-200 rounded-3xl animate-pulse" />
           ))}
         </div>
-      ) : loadError ? (
-        <div className="p-6 bg-white rounded-3xl border border-rose-200 text-center space-y-2">
-          <AlertTriangle className="w-8 h-8 text-rose-500 mx-auto" />
-          <p className="text-sm font-bold text-stone-900">Could not load reviews</p>
-          <p className="text-xs text-stone-500">{loadError}</p>
-          <button
-            onClick={() => fetchReviews(filter)}
-            className="px-4 py-2 bg-stone-900 text-white text-xs font-bold rounded-xl cursor-pointer"
-          >
-            Try Again
-          </button>
-        </div>
       ) : reviews.length === 0 ? (
         <div className="p-8 bg-white rounded-3xl border border-dashed border-stone-300 text-center space-y-2">
           <Star className="w-8 h-8 text-stone-300 mx-auto" />
           <p className="text-sm font-bold text-stone-900">
-            {filter === 'pending' ? 'No reviews waiting for approval' : 'No reviews here'}
+            {query.trim() ? 'No reviews match your search' : filter === 'pending' ? 'No reviews waiting for approval' : 'No reviews here'}
           </p>
           <p className="text-xs text-stone-500">
-            {filter === 'pending'
-              ? 'New customer submissions will appear in this queue.'
-              : 'Try a different filter.'}
+            {query.trim()
+              ? `Nothing matches "${query.trim()}".`
+              : filter === 'pending'
+                ? 'New customer submissions will appear in this queue.'
+                : 'Try a different filter.'}
           </p>
         </div>
       ) : (

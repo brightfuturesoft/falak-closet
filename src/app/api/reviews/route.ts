@@ -35,7 +35,9 @@ interface AdminReview {
   };
 }
 
-// ─── GET /api/reviews?status=pending|approved|all ────────────────────────────
+// ─── GET /api/reviews?status=pending|approved|all ──────────────────────────
+// Add page/pageSize for the server-paginated admin view: query (author/comment/
+// product), sort (date|rating), dir, pill counts and moderation stats.
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -72,7 +74,62 @@ export async function GET(req: Request) {
     // Newest first — submissions push to the end of the array.
     reviews.reverse();
 
-    return NextResponse.json({ success: true, reviews, pendingCount: reviews.filter((r) => r.review.status === 'pending').length });
+    if (!searchParams.has('page') && !searchParams.has('pageSize')) {
+      return NextResponse.json({
+        success: true,
+        reviews,
+        pendingCount: reviews.filter((r) => r.review.status === 'pending').length,
+      });
+    }
+
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
+    const pageSize = Math.min(500, Math.max(1, parseInt(searchParams.get('pageSize') || '8', 10) || 8));
+    const query = (searchParams.get('query') || '').trim().toLowerCase();
+    const sort = ['date', 'rating'].includes(searchParams.get('sort') || '')
+      ? searchParams.get('sort')!
+      : 'date';
+    const dir = searchParams.get('dir') === 'asc' ? 'asc' : 'desc';
+
+    const searched = query
+      ? reviews.filter(
+          (r) =>
+            r.review.author.toLowerCase().includes(query) ||
+            r.review.comment.toLowerCase().includes(query) ||
+            r.productName.toLowerCase().includes(query)
+        )
+      : reviews;
+
+    const dirMul = dir === 'asc' ? 1 : -1;
+    searched.sort((a, b) => {
+      if (sort === 'rating') return (a.review.rating - b.review.rating) * dirMul;
+      return (new Date(a.review.date).getTime() - new Date(b.review.date).getTime()) * dirMul;
+    });
+
+    const totalItems = searched.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    const safePage = Math.min(page, totalPages);
+    const pageRows = searched.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+    const pendingCount = reviews.filter((r) => r.review.status === 'pending').length;
+    const approvedCount = reviews.length - pendingCount;
+    const avgRating =
+      reviews.length > 0
+        ? reviews.reduce((s, r) => s + r.review.rating, 0) / reviews.length
+        : 0;
+
+    return NextResponse.json({
+      success: true,
+      reviews: pageRows,
+      pagination: { page: safePage, pageSize, totalItems, totalPages },
+      counts: { all: reviews.length, pending: pendingCount, approved: approvedCount },
+      stats: {
+        total: reviews.length,
+        pending: pendingCount,
+        approved: approvedCount,
+        verified: reviews.filter((r) => r.review.verifiedPurchase).length,
+        avgRating: Math.round(avgRating * 10) / 10,
+      },
+    });
   } catch (err) {
     console.error('[GET /api/reviews]', err);
     return NextResponse.json({ success: false, error: 'Failed to fetch reviews' }, { status: 500 });
