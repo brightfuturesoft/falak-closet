@@ -340,7 +340,7 @@ export function OverviewTab({
                   <td className="py-4 font-mono font-bold whitespace-nowrap">
                     <button
                       onClick={() => onSelectOrderReceipt(order)}
-                      className="text-[#9B050B] hover:text-[#C2185B] hover:underline cursor-pointer flex items-center gap-1 group transition-colors"
+                      className="text-[#9B050B] hover:text-[#8C0A10] hover:underline cursor-pointer flex items-center gap-1 group transition-colors"
                       title="Click to view full order details & invoice"
                     >
                       <span>#{order.id}</span>

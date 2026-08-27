@@ -80,16 +80,16 @@ export default function HomeClient({
       {/* Active Filter Indicator Banner */}
       {selectedFilter && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-3 bg-pink-50 border border-pink-200 rounded-2xl px-4 py-2.5 text-xs text-stone-800">
+          <div className="flex items-center justify-between gap-3 bg-[#FDF2F3] border border-[#F8D2D5] rounded-2xl px-4 py-2.5 text-xs text-stone-800">
             <span className="min-w-0">
               <span className="hidden sm:inline">Filtering by{' '}</span>
               <strong className="capitalize">{selectedFilter.type}</strong>:{' '}
-              <span className="text-[#D92670] font-bold">{selectedFilter.val}</span>
+              <span className="text-[#A80C14] font-bold">{selectedFilter.val}</span>
               <span className="text-stone-500"> · {filteredProducts.length} found</span>
             </span>
             <button
               onClick={() => setSelectedFilter(null)}
-              className="inline-flex shrink-0 items-center gap-1 min-h-[32px] px-3 rounded-full bg-[#D92670] text-white font-bold text-[11px] hover:bg-[#C2185B] transition-colors cursor-pointer active:scale-95"
+              className="inline-flex shrink-0 items-center gap-1 min-h-[32px] px-3 rounded-full bg-[#A80C14] text-white font-bold text-[11px] hover:bg-[#8C0A10] transition-colors cursor-pointer active:scale-95"
             >
               <X className="w-3 h-3" /> Clear
             </button>
@@ -118,7 +118,7 @@ export default function HomeClient({
         </div>
       ) : isEmptyCatalog && !productsError ? (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-16 text-center bg-white rounded-3xl border border-pink-100 px-8 space-y-3 shadow-xs">
+          <div className="py-16 text-center bg-white rounded-3xl border border-[#F8D2D5] px-8 space-y-3 shadow-xs">
             <h2 className="text-base sm:text-lg font-bold text-stone-900">Our new collection is on its way</h2>
             <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
               No designs have been published yet. Follow us for the launch announcement.
@@ -128,7 +128,7 @@ export default function HomeClient({
       ) : (
         <>
           {/* 3. NEW ARRIVALS Section */}
-          <NewArrivalSection products={filteredProducts} />
+          <NewArrivalSection place="home" products={filteredProducts} />
 
           {/* 4. LATEST PRODUCTS Section */}
           <LatestProductsSection products={filteredProducts} />

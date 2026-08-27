@@ -134,7 +134,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteSchema) }}
         />
       </head>
-      <body className="bg-[#FAFAFA] text-stone-900 antialiased selection:bg-[#D92670] selection:text-white">
+      <body className="bg-[#FAFAFA] text-stone-900 antialiased selection:bg-[#A80C14] selection:text-white">
         <Suspense fallback={null}>
           <TopProgressBar />
         </Suspense>

@@ -216,7 +216,7 @@ export function PromotionBannersTab() {
       <div className="p-6 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h3 className="font-serif font-bold text-xl text-stone-900 dark:text-stone-100 flex items-center gap-2">
-            <Megaphone className="w-5 h-5 text-[#D92670]" />
+            <Megaphone className="w-5 h-5 text-[#A80C14]" />
             <span>Storefront Promotion Banners</span>
           </h3>
           <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
@@ -226,7 +226,7 @@ export function PromotionBannersTab() {
 
         <button
           onClick={() => handleOpenModal()}
-          className="px-4 py-2.5 bg-[#D92670] hover:bg-[#C2185B] text-white font-extrabold text-xs rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer"
+          className="px-4 py-2.5 bg-[#A80C14] hover:bg-[#8C0A10] text-white font-extrabold text-xs rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Banner</span>
@@ -240,7 +240,7 @@ export function PromotionBannersTab() {
 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
-          <RefreshCw className="w-8 h-8 text-[#D92670] animate-spin" />
+          <RefreshCw className="w-8 h-8 text-[#A80C14] animate-spin" />
           <p className="text-xs text-stone-500 font-bold">Fetching promotional banners...</p>
         </div>
       ) : loadError ? (
@@ -262,7 +262,7 @@ export function PromotionBannersTab() {
               key={banner.id}
               className={`bg-white dark:bg-stone-900 rounded-3xl border p-5 shadow-xs flex flex-col justify-between space-y-4 relative ${
                 banner.isActive
-                  ? 'border-stone-200 dark:border-stone-800 hover:border-[#D92670]/30'
+                  ? 'border-stone-200 dark:border-stone-800 hover:border-[#A80C14]/30'
                   : 'border-red-200 dark:border-red-900/50 opacity-85 bg-stone-50/50'
               }`}
             >
@@ -284,7 +284,7 @@ export function PromotionBannersTab() {
 
                 <div className="space-y-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="px-2 py-0.5 bg-pink-100 text-[#D92670] text-[9px] font-black rounded-lg uppercase tracking-wider">
+                    <span className="px-2 py-0.5 bg-[#FDF2F3] text-[#A80C14] text-[9px] font-black rounded-lg uppercase tracking-wider">
                       {banner.discountBadge || 'Promo Offer'}
                     </span>
                     <span className="text-[9px] font-bold text-stone-400">Order: {banner.sortOrder}</span>
@@ -317,7 +317,7 @@ export function PromotionBannersTab() {
                     </div>
                   )}
                   {banner.isFlashSale && (
-                    <div className="flex items-center gap-1 text-[#D92670] font-bold">
+                    <div className="flex items-center gap-1 text-[#A80C14] font-bold">
                       <Clock className="w-3.5 h-3.5" />
                       <span>Flash Sale Countdown Timer Active</span>
                     </div>
@@ -406,7 +406,7 @@ export function PromotionBannersTab() {
           <div className="bg-white rounded-3xl border border-stone-200 max-w-lg w-full shadow-xl animate-scale-up my-8">
             <div className="p-6 border-b border-stone-100 flex items-center justify-between">
               <h4 className="font-serif font-bold text-lg text-stone-900 flex items-center gap-2">
-                <Megaphone className="w-5 h-5 text-[#D92670]" />
+                <Megaphone className="w-5 h-5 text-[#A80C14]" />
                 <span>{editingBanner ? 'Edit Promo Banner' : 'Create Promo Banner'}</span>
               </h4>
               <button
@@ -435,7 +435,7 @@ export function PromotionBannersTab() {
                   placeholder="e.g. Eid & Monsoon Flash Sale"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670]"
+                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14]"
                 />
               </div>
 
@@ -448,7 +448,7 @@ export function PromotionBannersTab() {
                   placeholder="e.g. Flat 25% Off across all Embroidered Abayas"
                   value={formData.subtitle}
                   onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670]"
+                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14]"
                 />
               </div>
 
@@ -462,7 +462,7 @@ export function PromotionBannersTab() {
                     placeholder="e.g. FLAT 25% OFF"
                     value={formData.discountBadge}
                     onChange={(e) => setFormData({ ...formData, discountBadge: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670]"
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14]"
                   />
                 </div>
 
@@ -475,7 +475,7 @@ export function PromotionBannersTab() {
                     placeholder="e.g. FLASH25"
                     value={formData.code}
                     onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670] uppercase"
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14] uppercase"
                   />
                 </div>
               </div>
@@ -490,7 +490,7 @@ export function PromotionBannersTab() {
                     placeholder="https://images.unsplash.com/... or /images/..."
                     value={formData.bannerImage}
                     onChange={(e) => setFormData({ ...formData, bannerImage: e.target.value })}
-                    className="flex-1 px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670]"
+                    className="flex-1 px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14]"
                   />
                   <ImageUploader
                     folder="banners"
@@ -518,7 +518,7 @@ export function PromotionBannersTab() {
                     placeholder="e.g. Abayas"
                     value={formData.categoryFilter}
                     onChange={(e) => setFormData({ ...formData, categoryFilter: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670]"
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14]"
                   />
                 </div>
 
@@ -532,7 +532,7 @@ export function PromotionBannersTab() {
                     placeholder="e.g. 1500"
                     value={formData.minSpend}
                     onChange={(e) => setFormData({ ...formData, minSpend: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670]"
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14]"
                   />
                 </div>
               </div>
@@ -543,7 +543,7 @@ export function PromotionBannersTab() {
                     type="checkbox"
                     checked={formData.isFlashSale}
                     onChange={(e) => setFormData({ ...formData, isFlashSale: e.target.checked })}
-                    className="w-4 h-4 text-[#D92670] border-stone-300 rounded focus:ring-[#D92670]"
+                    className="w-4 h-4 text-[#A80C14] border-stone-300 rounded focus:ring-[#A80C14]"
                   />
                   <span className="text-xs font-bold text-stone-700">Is Flash Sale (Timer)</span>
                 </label>
@@ -553,15 +553,15 @@ export function PromotionBannersTab() {
                     type="checkbox"
                     checked={formData.isActive}
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="w-4 h-4 text-[#D92670] border-stone-300 rounded focus:ring-[#D92670]"
+                    className="w-4 h-4 text-[#A80C14] border-stone-300 rounded focus:ring-[#A80C14]"
                   />
                   <span className="text-xs font-bold text-stone-700">Banner Active</span>
                 </label>
               </div>
 
               {formData.isFlashSale && (
-                <div className="space-y-1.5 border border-pink-100 p-3 rounded-2xl bg-pink-50/20">
-                  <label className="text-xs font-bold uppercase tracking-wider text-[#D92670] flex items-center gap-1">
+                <div className="space-y-1.5 border border-[#F8D2D5] p-3 rounded-2xl bg-[#FDF2F3]/20">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#A80C14] flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 animate-spin" /> Flash Sale Ends At *
                   </label>
                   <input
@@ -569,7 +569,7 @@ export function PromotionBannersTab() {
                     required={formData.isFlashSale}
                     value={formData.flashSaleEndsAt}
                     onChange={(e) => setFormData({ ...formData, flashSaleEndsAt: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670]"
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14]"
                   />
                 </div>
               )}
@@ -583,7 +583,7 @@ export function PromotionBannersTab() {
                     type="number"
                     value={formData.sortOrder}
                     onChange={(e) => setFormData({ ...formData, sortOrder: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670]"
+                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14]"
                   />
                 </div>
               </div>
@@ -597,7 +597,7 @@ export function PromotionBannersTab() {
                   rows={2}
                   value={formData.terms}
                   onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670]"
+                  className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14]"
                 />
               </div>
 
@@ -612,7 +612,7 @@ export function PromotionBannersTab() {
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-4 py-2 bg-[#D92670] hover:bg-[#C2185B] text-white font-bold text-xs rounded-xl transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-4 py-2 bg-[#A80C14] hover:bg-[#8C0A10] text-white font-bold text-xs rounded-xl transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {isSaving ? (
                     <>

@@ -72,12 +72,12 @@ export function AddressTab({ user, onUpdateUser, onShowFeedback }: AddressTabPro
   return (
     <div className="p-5 sm:p-6 bg-white rounded-3xl border border-stone-200/70 space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="font-serif font-bold text-base text-[#0C163A]">Profile & Address</h2>
+        <h2 className="font-serif font-bold text-base text-[#0D153A]">Profile & Address</h2>
         {!isEditing && (
           <button
             id="account-edit-address-btn"
             onClick={startEdit}
-            className="flex items-center gap-1.5 px-4 py-2 border border-[#D92670]/30 text-[#D92670] rounded-full font-bold text-xs hover:bg-[#D92670] hover:border-[#D92670] hover:text-white transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2 border border-[#A80C14]/30 text-[#A80C14] rounded-full font-bold text-xs hover:bg-[#A80C14] hover:border-[#A80C14] hover:text-white transition-all cursor-pointer"
           >
             <Edit3 className="w-3.5 h-3.5" /> Edit
           </button>
@@ -132,7 +132,7 @@ export function AddressTab({ user, onUpdateUser, onShowFeedback }: AddressTabPro
               type="submit"
               id="account-save-address-btn"
               disabled={isSaving}
-              className="flex-1 min-h-[44px] bg-[#D92670] hover:bg-[#C2185B] text-white font-bold rounded-full text-xs disabled:opacity-60 transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-[#D92670]/25"
+              className="flex-1 min-h-[44px] bg-[#A80C14] hover:bg-[#8C0A10] text-white font-bold rounded-full text-xs disabled:opacity-60 transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-[#A80C14]/25"
             >
               {isSaving ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -145,19 +145,19 @@ export function AddressTab({ user, onUpdateUser, onShowFeedback }: AddressTabPro
         </form>
       ) : (
         <div className="p-5 bg-stone-50 rounded-2xl border border-stone-200/60 space-y-2.5 text-xs">
-          <p className="flex items-center gap-2 font-bold text-[#0C163A] text-sm">
-            <User className="w-4 h-4 text-[#D92670]" /> {user.name}
+          <p className="flex items-center gap-2 font-bold text-[#0D153A] text-sm">
+            <User className="w-4 h-4 text-[#A80C14]" /> {user.name}
           </p>
           {user.fullAddress && (
             <p className="flex items-start gap-2 text-stone-600">
-              <Home className="w-4 h-4 text-[#D92670] shrink-0 mt-0.5" /> {user.fullAddress}
+              <Home className="w-4 h-4 text-[#A80C14] shrink-0 mt-0.5" /> {user.fullAddress}
             </p>
           )}
           <p className="flex items-center gap-2 text-stone-600 font-medium">
-            <MapPin className="w-4 h-4 text-[#D92670]" /> {user.district}, Bangladesh
+            <MapPin className="w-4 h-4 text-[#A80C14]" /> {user.district}, Bangladesh
           </p>
           <p className="flex items-center gap-2 text-stone-600 font-mono">
-            <Phone className="w-4 h-4 text-[#D92670]" /> {user.phone || '—'}
+            <Phone className="w-4 h-4 text-[#A80C14]" /> {user.phone || '—'}
           </p>
         </div>
       )}

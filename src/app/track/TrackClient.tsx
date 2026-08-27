@@ -42,8 +42,8 @@ function SafeImage({ src, alt, className }: { src: string; alt: string; classNam
 
   if (hasError || !imgSrc) {
     return (
-      <div className="w-full h-full bg-stone-100 flex flex-col items-center justify-center p-1 text-center text-[#0C163A]">
-        <ShoppingBag className="w-4 h-4 text-[#D92670]" />
+      <div className="w-full h-full bg-stone-100 flex flex-col items-center justify-center p-1 text-center text-[#0D153A]">
+        <ShoppingBag className="w-4 h-4 text-[#A80C14]" />
         <span className="text-[8px] font-bold mt-0.5 font-mono line-clamp-1">{alt}</span>
       </div>
     );
@@ -75,7 +75,7 @@ function statusPillClass(status: string) {
     case 'Processing':
       return 'bg-amber-50 text-amber-700 border-amber-200';
     default:
-      return 'bg-pink-50 text-[#D92670] border-pink-200';
+      return 'bg-[#FDF2F3] text-[#A80C14] border-[#F8D2D5]';
   }
 }
 
@@ -161,7 +161,7 @@ function TrackContent() {
       <div className="flex items-center justify-between gap-3">
         <button
           onClick={() => router.push('/account')}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-pink-50 border border-stone-200 hover:border-pink-200 text-[#0C163A] hover:text-[#D92670] text-xs font-bold rounded-full transition-all cursor-pointer shadow-xs"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-[#FDF2F3] border border-stone-200 hover:border-[#F8D2D5] text-[#0D153A] hover:text-[#A80C14] text-xs font-bold rounded-full transition-all cursor-pointer shadow-xs"
         >
           <ArrowLeft className="w-4 h-4" />
           <span className="hidden sm:inline">Back to</span> My Account
@@ -170,7 +170,7 @@ function TrackContent() {
         {activeOrder && (
           <button
             onClick={handlePrintInvoice}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#D92670] hover:bg-[#C2185B] border border-[#D92670] text-white text-xs font-bold rounded-full transition-all cursor-pointer shadow-md shadow-[#D92670]/25"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#A80C14] hover:bg-[#8C0A10] border border-[#A80C14] text-white text-xs font-bold rounded-full transition-all cursor-pointer shadow-md shadow-[#A80C14]/25"
           >
             <Printer className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Print / Save Receipt</span>
@@ -181,13 +181,13 @@ function TrackContent() {
 
       {/* Header Banner */}
       <div className="relative bg-white border border-stone-200/80 p-5 sm:p-7 rounded-3xl shadow-sm overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#D92670] via-[#E75A95] to-[#C2185B]" />
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#A80C14] via-[#E75A95] to-[#8C0A10]" />
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-1">
           <div className="min-w-0">
-            <span className="px-3 py-1 bg-pink-50 text-[#D92670] text-[10px] font-bold rounded-full uppercase tracking-wider inline-flex items-center gap-1.5 border border-pink-100">
+            <span className="px-3 py-1 bg-[#FDF2F3] text-[#A80C14] text-[10px] font-bold rounded-full uppercase tracking-wider inline-flex items-center gap-1.5 border border-[#F8D2D5]">
               <FileText className="w-3.5 h-3.5" /> Order Details & Receipt
             </span>
-            <h1 className="font-serif text-2xl sm:text-3xl font-extrabold text-[#0C163A] mt-2 truncate">
+            <h1 className="font-serif text-2xl sm:text-3xl font-extrabold text-[#0D153A] mt-2 truncate">
               {activeOrder ? `Order #${activeOrder.id}` : 'Track Your Order'}
             </h1>
             {activeOrder ? (
@@ -229,13 +229,13 @@ function TrackContent() {
               onChange={(e) => setInputQuery(e.target.value)}
               placeholder="Enter Order ID or phone number…"
               aria-label="Order ID or phone number"
-              className="w-full min-h-[48px] pl-11 pr-4 py-3 bg-white border border-stone-200 focus:border-[#D92670] rounded-full text-sm text-[#0C163A] placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#D92670]/20 shadow-xs transition-all"
+              className="w-full min-h-[48px] pl-11 pr-4 py-3 bg-white border border-stone-200 focus:border-[#A80C14] rounded-full text-sm text-[#0D153A] placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#A80C14]/20 shadow-xs transition-all"
             />
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[#D92670]" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[#A80C14]" />
           </div>
           <button
             type="submit"
-            className="min-h-[48px] px-8 bg-[#D92670] text-white font-bold text-xs uppercase tracking-wider rounded-full hover:bg-[#C2185B] transition-all shadow-md shadow-[#D92670]/25 flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+            className="min-h-[48px] px-8 bg-[#A80C14] text-white font-bold text-xs uppercase tracking-wider rounded-full hover:bg-[#8C0A10] transition-all shadow-md shadow-[#A80C14]/25 flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
           >
             <Search className="w-4 h-4" />
             <span>Track</span>
@@ -247,7 +247,7 @@ function TrackContent() {
           <button
             type="button"
             onClick={() => setInputQuery('FLK-POS-56598')}
-            className="px-3 py-1.5 bg-white border border-stone-200 hover:border-pink-300 hover:text-[#D92670] rounded-full font-mono font-bold text-stone-600 transition-colors cursor-pointer"
+            className="px-3 py-1.5 bg-white border border-stone-200 hover:border-[#F8D2D5] hover:text-[#A80C14] rounded-full font-mono font-bold text-stone-600 transition-colors cursor-pointer"
           >
             FLK-POS-56598
           </button>
@@ -291,11 +291,11 @@ function TrackContent() {
                 className="p-4 bg-stone-50 rounded-2xl border border-stone-200/60 space-y-1.5"
               >
                 <span className="flex items-center gap-1.5 text-[10px] text-stone-400 uppercase font-bold tracking-wide">
-                  <Icon className="w-3.5 h-3.5 text-[#D92670]" /> {label}
+                  <Icon className="w-3.5 h-3.5 text-[#A80C14]" /> {label}
                 </span>
                 <span
                   className={`font-mono font-extrabold text-xs sm:text-sm ${
-                    accent ? 'text-[#D92670]' : 'text-[#0C163A]'
+                    accent ? 'text-[#A80C14]' : 'text-[#0D153A]'
                   }`}
                 >
                   {value}
@@ -307,11 +307,11 @@ function TrackContent() {
           {/* Interactive Logistics Timeline */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#0C163A] font-serif flex items-center gap-1.5">
-                <Truck className="w-4 h-4 text-[#D92670]" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#0D153A] font-serif flex items-center gap-1.5">
+                <Truck className="w-4 h-4 text-[#A80C14]" />
                 <span>Delivery Progress</span>
               </h3>
-              <span className="text-[10px] font-bold text-[#D92670] bg-pink-50 border border-pink-100 px-2.5 py-1 rounded-full">
+              <span className="text-[10px] font-bold text-[#A80C14] bg-[#FDF2F3] border border-[#F8D2D5] px-2.5 py-1 rounded-full">
                 Step {currentStep + 1} of {statusSteps.length}
               </span>
             </div>
@@ -321,7 +321,7 @@ function TrackContent() {
               <div className="relative">
                 <div className="absolute top-[22px] left-[8.33%] right-[8.33%] h-1 bg-stone-200 rounded-full" />
                 <div
-                  className="absolute top-[22px] left-[8.33%] h-1 bg-gradient-to-r from-[#D92670] to-[#C2185B] rounded-full transition-all duration-700"
+                  className="absolute top-[22px] left-[8.33%] h-1 bg-gradient-to-r from-[#A80C14] to-[#8C0A10] rounded-full transition-all duration-700"
                   style={{ width: `calc((100% - 16.66%) * ${progressPercent / 100})` }}
                 />
                 <div className="relative grid grid-cols-6 gap-2">
@@ -335,9 +335,9 @@ function TrackContent() {
                         <div
                           className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
                             isCurrent
-                              ? 'bg-[#D92670] text-white ring-4 ring-[#D92670]/20 shadow-lg shadow-[#D92670]/30 scale-110'
+                              ? 'bg-[#A80C14] text-white ring-4 ring-[#A80C14]/20 shadow-lg shadow-[#A80C14]/30 scale-110'
                               : isPassed
-                                ? 'bg-[#D92670]/90 text-white'
+                                ? 'bg-[#A80C14]/90 text-white'
                                 : 'bg-stone-100 text-stone-400 border border-stone-200'
                           }`}
                         >
@@ -346,7 +346,7 @@ function TrackContent() {
                         <div className="space-y-0.5">
                           <p
                             className={`font-bold text-[11px] leading-tight ${
-                              isPassed ? 'text-[#0C163A]' : 'text-stone-400'
+                              isPassed ? 'text-[#0D153A]' : 'text-stone-400'
                             }`}
                           >
                             {step.title}
@@ -374,9 +374,9 @@ function TrackContent() {
                       <div
                         className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all ${
                           isCurrent
-                            ? 'bg-[#D92670] text-white ring-4 ring-[#D92670]/20 shadow-md shadow-[#D92670]/30'
+                            ? 'bg-[#A80C14] text-white ring-4 ring-[#A80C14]/20 shadow-md shadow-[#A80C14]/30'
                             : isPassed
-                              ? 'bg-[#D92670]/90 text-white'
+                              ? 'bg-[#A80C14]/90 text-white'
                               : 'bg-stone-100 text-stone-400 border border-stone-200'
                         }`}
                       >
@@ -385,7 +385,7 @@ function TrackContent() {
                       {!isLast && (
                         <div
                           className={`w-0.5 flex-1 min-h-[24px] ${
-                            idx < currentStep ? 'bg-[#D92670]' : 'bg-stone-200'
+                            idx < currentStep ? 'bg-[#A80C14]' : 'bg-stone-200'
                           }`}
                         />
                       )}
@@ -393,12 +393,12 @@ function TrackContent() {
                     <div className={`pb-5 ${isLast ? 'pb-1' : ''}`}>
                       <p
                         className={`font-bold text-xs leading-tight pt-1.5 ${
-                          isPassed ? 'text-[#0C163A]' : 'text-stone-400'
+                          isPassed ? 'text-[#0D153A]' : 'text-stone-400'
                         }`}
                       >
                         {step.title}
                         {isCurrent && (
-                          <span className="ml-2 text-[9px] font-black uppercase tracking-wide text-[#D92670] bg-pink-50 border border-pink-100 px-1.5 py-0.5 rounded-full align-middle">
+                          <span className="ml-2 text-[9px] font-black uppercase tracking-wide text-[#A80C14] bg-[#FDF2F3] border border-[#F8D2D5] px-1.5 py-0.5 rounded-full align-middle">
                             Current
                           </span>
                         )}
@@ -415,16 +415,16 @@ function TrackContent() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Consignee Address */}
             <div className="p-4 sm:p-5 bg-stone-50 rounded-2xl border border-stone-200/60 space-y-2.5">
-              <p className="font-bold text-[#0C163A] uppercase tracking-wider text-[11px] flex items-center gap-1.5 border-b border-stone-200 pb-2">
-                <User className="w-3.5 h-3.5 text-[#D92670]" />
+              <p className="font-bold text-[#0D153A] uppercase tracking-wider text-[11px] flex items-center gap-1.5 border-b border-stone-200 pb-2">
+                <User className="w-3.5 h-3.5 text-[#A80C14]" />
                 <span>Shipping Consignee</span>
               </p>
               <div className="space-y-1 text-xs text-stone-600">
-                <p className="font-bold text-[#0C163A] text-sm">
+                <p className="font-bold text-[#0D153A] text-sm">
                   {activeOrder.shippingAddress?.fullName || 'Valued Client'}
                 </p>
                 <p className="flex items-center gap-1.5 font-mono text-[11px]">
-                  <Phone className="w-3 h-3 text-[#D92670]" />
+                  <Phone className="w-3 h-3 text-[#A80C14]" />
                   {activeOrder.shippingAddress?.phone || 'N/A'}
                 </p>
                 <p>{activeOrder.shippingAddress?.street || 'Full Delivery Address'}</p>
@@ -437,14 +437,14 @@ function TrackContent() {
 
             {/* Payment & Invoice Summary */}
             <div className="p-4 sm:p-5 bg-stone-50 rounded-2xl border border-stone-200/60 space-y-2.5">
-              <p className="font-bold text-[#0C163A] uppercase tracking-wider text-[11px] flex items-center gap-1.5 border-b border-stone-200 pb-2">
-                <CreditCard className="w-3.5 h-3.5 text-[#D92670]" />
+              <p className="font-bold text-[#0D153A] uppercase tracking-wider text-[11px] flex items-center gap-1.5 border-b border-stone-200 pb-2">
+                <CreditCard className="w-3.5 h-3.5 text-[#A80C14]" />
                 <span>Payment Summary</span>
               </p>
               <div className="space-y-1.5 text-xs text-stone-600">
                 <div className="flex justify-between gap-2">
                   <span className="text-stone-400">Payment Method</span>
-                  <span className="font-bold text-[#0C163A] text-right">
+                  <span className="font-bold text-[#0D153A] text-right">
                     {activeOrder.paymentMethod || 'Cash on Delivery (COD)'}
                   </span>
                 </div>
@@ -484,7 +484,7 @@ function TrackContent() {
 
                 <div className="flex justify-between">
                   <span className="text-stone-400">Subtotal</span>
-                  <span className="font-mono font-bold text-[#0C163A]">
+                  <span className="font-mono font-bold text-[#0D153A]">
                     {formatCurrency(activeOrder.subtotal || activeOrder.total)}
                   </span>
                 </div>
@@ -500,7 +500,7 @@ function TrackContent() {
 
                 <div className="flex justify-between">
                   <span className="text-stone-400">Delivery Charge</span>
-                  <span className="font-mono text-[#0C163A] font-bold">
+                  <span className="font-mono text-[#0D153A] font-bold">
                     {activeOrder.shippingFee === 0 ? (
                       <span className="text-emerald-600 font-bold uppercase text-[10px]">
                         Free Delivery
@@ -511,8 +511,8 @@ function TrackContent() {
                   </span>
                 </div>
                 <div className="flex justify-between border-t border-stone-200 pt-2 text-sm">
-                  <span className="font-bold text-[#0C163A]">Total</span>
-                  <span className="font-mono font-extrabold text-[#D92670]">
+                  <span className="font-bold text-[#0D153A]">Total</span>
+                  <span className="font-mono font-extrabold text-[#A80C14]">
                     {formatCurrency(activeOrder.total)}
                   </span>
                 </div>
@@ -522,7 +522,7 @@ function TrackContent() {
 
           {/* Itemized Products Preview */}
           <div className="space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#0C163A] font-serif flex items-center justify-between">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[#0D153A] font-serif flex items-center justify-between">
               <span>Ordered Products ({activeOrder.items?.length || 0} items)</span>
               <span className="font-mono text-[10px] text-stone-400 font-normal normal-case">
                 All items quality inspected
@@ -541,19 +541,19 @@ function TrackContent() {
                       />
                     </div>
                     <div className="min-w-0 space-y-1">
-                      <p className="font-bold text-[#0C163A] line-clamp-1">
+                      <p className="font-bold text-[#0D153A] line-clamp-1">
                         {item.product?.name || 'Falak Closet Item'}
                       </p>
 
                       <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-stone-400">
                         {item.selectedColor && (
                           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-stone-50 border border-stone-200/60 rounded font-medium">
-                            Color: <strong className="text-[#0C163A]">{item.selectedColor}</strong>
+                            Color: <strong className="text-[#0D153A]">{item.selectedColor}</strong>
                           </span>
                         )}
                         {item.selectedSize && (
                           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-stone-50 border border-stone-200/60 rounded font-medium">
-                            Size: <strong className="text-[#0C163A]">{item.selectedSize}</strong>
+                            Size: <strong className="text-[#0D153A]">{item.selectedSize}</strong>
                           </span>
                         )}
                         <span className="font-mono text-stone-500 font-bold">
@@ -565,7 +565,7 @@ function TrackContent() {
                         <div className="pt-1">
                           <Link
                             href={`/product/${item.product.slug}?writeReview=true`}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#D92670] hover:bg-[#C2185B] text-white text-[10px] font-bold rounded-lg transition-colors shadow-xs"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#A80C14] hover:bg-[#8C0A10] text-white text-[10px] font-bold rounded-lg transition-colors shadow-xs"
                           >
                             Write a Review
                           </Link>
@@ -574,7 +574,7 @@ function TrackContent() {
                     </div>
                   </div>
 
-                  <div className="text-right shrink-0 font-mono font-extrabold text-[#D92670] text-xs sm:text-sm">
+                  <div className="text-right shrink-0 font-mono font-extrabold text-[#A80C14] text-xs sm:text-sm">
                     {formatCurrency((item.product?.price || 0) * item.quantity)}
                   </div>
                 </div>
@@ -586,7 +586,7 @@ function TrackContent() {
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-stone-100">
             <Link
               href="/shop"
-              className="w-full sm:w-auto px-6 py-3 bg-[#D92670] hover:bg-[#C2185B] text-white text-xs font-bold rounded-full text-center shadow-md shadow-[#D92670]/25 transition-all inline-flex items-center justify-center gap-1.5"
+              className="w-full sm:w-auto px-6 py-3 bg-[#A80C14] hover:bg-[#8C0A10] text-white text-xs font-bold rounded-full text-center shadow-md shadow-[#A80C14]/25 transition-all inline-flex items-center justify-center gap-1.5"
             >
               Continue Shopping <ChevronRight className="w-3.5 h-3.5" />
             </Link>
@@ -595,13 +595,13 @@ function TrackContent() {
               <button
                 type="button"
                 onClick={handlePrintInvoice}
-                className="w-full sm:w-auto px-6 py-3 bg-white border border-[#D92670]/40 text-[#D92670] hover:bg-pink-50 text-xs font-bold rounded-full text-center transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full sm:w-auto px-6 py-3 bg-white border border-[#A80C14]/40 text-[#A80C14] hover:bg-[#FDF2F3] text-xs font-bold rounded-full text-center transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" /> Print Receipt
               </button>
               <Link
                 href="/account"
-                className="w-full sm:w-auto px-6 py-3 bg-white border border-stone-200 hover:border-pink-300 hover:text-[#D92670] text-[#0C163A] text-xs font-bold rounded-full text-center transition-all"
+                className="w-full sm:w-auto px-6 py-3 bg-white border border-stone-200 hover:border-[#F8D2D5] hover:text-[#A80C14] text-[#0D153A] text-xs font-bold rounded-full text-center transition-all"
               >
                 My Orders Dashboard
               </Link>
@@ -611,20 +611,20 @@ function TrackContent() {
       ) : searched ? (
         /* Not Found */
         <div className="py-14 text-center bg-white rounded-3xl border border-stone-200/80 p-8 space-y-4 shadow-sm">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-pink-50 border border-pink-100 flex items-center justify-center">
-            <SearchX className="w-8 h-8 text-[#D92670]" />
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-[#FDF2F3] border border-[#F8D2D5] flex items-center justify-center">
+            <SearchX className="w-8 h-8 text-[#A80C14]" />
           </div>
-          <h3 className="font-serif font-bold text-base text-[#0C163A]">
+          <h3 className="font-serif font-bold text-base text-[#0D153A]">
             No order found matching &quot;{inputQuery}&quot;
           </h3>
           <div className="text-xs text-stone-500 max-w-sm mx-auto space-y-1">
             <p>• Double-check the Order ID from your confirmation message</p>
             <p>
               • Or try the phone number used at checkout — e.g.{' '}
-              <strong className="text-[#D92670] font-mono">01700000000</strong>
+              <strong className="text-[#A80C14] font-mono">01700000000</strong>
             </p>
             <p>
-              • Sample format: <strong className="text-[#D92670] font-mono">FLK-POS-56598</strong>
+              • Sample format: <strong className="text-[#A80C14] font-mono">FLK-POS-56598</strong>
             </p>
           </div>
         </div>
@@ -632,8 +632,8 @@ function TrackContent() {
         orders.length > 0 && (
           /* No search yet — quick pick from recent local orders */
           <div className="bg-white rounded-3xl border border-stone-200/80 p-5 sm:p-6 space-y-4 shadow-sm">
-            <h3 className="font-serif font-bold text-sm text-[#0C163A] flex items-center gap-2">
-              <Clock className="w-4 h-4 text-[#D92670]" /> Your Recent Orders
+            <h3 className="font-serif font-bold text-sm text-[#0D153A] flex items-center gap-2">
+              <Clock className="w-4 h-4 text-[#A80C14]" /> Your Recent Orders
             </h3>
             <div className="flex flex-wrap gap-2">
               {orders.slice(0, 4).map((o) => (
@@ -641,7 +641,7 @@ function TrackContent() {
                   key={o.id}
                   type="button"
                   onClick={() => setActiveOrder(o)}
-                  className="px-4 py-2 bg-stone-50 hover:bg-pink-50 border border-stone-200 hover:border-pink-200 rounded-full text-[11px] font-mono font-bold text-stone-600 hover:text-[#D92670] transition-all cursor-pointer inline-flex items-center gap-1.5"
+                  className="px-4 py-2 bg-stone-50 hover:bg-[#FDF2F3] border border-stone-200 hover:border-[#F8D2D5] rounded-full text-[11px] font-mono font-bold text-stone-600 hover:text-[#A80C14] transition-all cursor-pointer inline-flex items-center gap-1.5"
                 >
                   #{o.id}
                   <span className="text-stone-400 font-sans">·</span>
@@ -656,11 +656,11 @@ function TrackContent() {
       {/* Support Section */}
       <div className="p-5 sm:p-6 bg-white border border-stone-200/80 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
         <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-pink-50 border border-pink-100 flex items-center justify-center shrink-0">
-            <HelpCircle className="w-[22px] h-[22px] text-[#D92670]" />
+          <div className="w-11 h-11 rounded-2xl bg-[#FDF2F3] border border-[#F8D2D5] flex items-center justify-center shrink-0">
+            <HelpCircle className="w-[22px] h-[22px] text-[#A80C14]" />
           </div>
           <div>
-            <h4 className="font-serif font-bold text-sm text-[#0C163A]">
+            <h4 className="font-serif font-bold text-sm text-[#0D153A]">
               Need assistance with this order?
             </h4>
             <p className="text-xs text-stone-500 mt-0.5">
@@ -671,7 +671,7 @@ function TrackContent() {
         </div>
         <Link
           href="/how-to-order"
-          className="w-full sm:w-auto text-center px-6 py-3 bg-[#D92670] hover:bg-[#C2185B] text-white font-bold text-xs rounded-full transition-all shadow-md shadow-[#D92670]/25 shrink-0"
+          className="w-full sm:w-auto text-center px-6 py-3 bg-[#A80C14] hover:bg-[#8C0A10] text-white font-bold text-xs rounded-full transition-all shadow-md shadow-[#A80C14]/25 shrink-0"
         >
           Contact Customer Care
         </Link>

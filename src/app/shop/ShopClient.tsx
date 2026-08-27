@@ -195,10 +195,10 @@ function FacetList({
   const isActive = (value: string) => norm(activeValue) === norm(value);
 
   return (
-    <div className="p-4 bg-white rounded-2xl border border-pink-100 shadow-xs space-y-3">
+    <div className="p-4 bg-white rounded-2xl border border-[#F8D2D5] shadow-xs space-y-3">
       <h4 className="font-bold text-xs uppercase tracking-wider text-stone-700 flex items-center justify-between gap-2">
         <span className="flex items-center gap-1.5">{icon} {title}</span>
-        <span className="text-[10px] text-pink-500 font-normal shrink-0">{options.length} available</span>
+        <span className="text-[10px] text-[#A80C14] font-normal shrink-0">{options.length} available</span>
       </h4>
 
       {searchable && options.length > 5 && (
@@ -208,7 +208,7 @@ function FacetList({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={`Search ${title.toLowerCase()}...`}
-            className="w-full pl-8 pr-3 py-1.5 text-xs bg-stone-50 border border-pink-100 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#D92670]"
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-stone-50 border border-[#F8D2D5] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#A80C14]"
           />
           <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-stone-400" />
         </div>
@@ -218,7 +218,7 @@ function FacetList({
         <button
           onClick={() => onSelect('All')}
           className={`w-full text-left px-3 py-1.5 rounded-xl transition-all flex items-center justify-between font-bold cursor-pointer ${
-            activeValue === 'All' ? 'bg-[#D92670] text-white shadow-xs' : 'text-stone-700 hover:bg-pink-50'
+            activeValue === 'All' ? 'bg-[#A80C14] text-white shadow-xs' : 'text-stone-700 hover:bg-[#FDF2F3]'
           }`}
         >
           <span>{allLabel}</span>
@@ -229,7 +229,7 @@ function FacetList({
             key={opt.value}
             onClick={() => onSelect(isActive(opt.value) ? 'All' : opt.value)}
             className={`w-full text-left px-3 py-1.5 rounded-xl transition-all flex items-center justify-between gap-2 font-bold cursor-pointer ${
-              isActive(opt.value) ? 'bg-[#D92670] text-white shadow-xs' : 'text-stone-700 hover:bg-pink-50'
+              isActive(opt.value) ? 'bg-[#A80C14] text-white shadow-xs' : 'text-stone-700 hover:bg-[#FDF2F3]'
             }`}
           >
             <span className="flex items-center gap-2 min-w-0">
@@ -329,13 +329,13 @@ function FilterPanel({
   return (
     <div className="space-y-6">
       {/* Category & Subcategory */}
-      <div className="p-4 bg-white rounded-2xl border border-pink-100 shadow-xs space-y-3 font-sans">
+      <div className="p-4 bg-white rounded-2xl border border-[#F8D2D5] shadow-xs space-y-3 font-sans">
         <h4 className="font-bold text-xs uppercase tracking-wider text-stone-700 flex items-center justify-between gap-2">
           <span className="flex items-center gap-1.5">
-            <Grid2X2 className="w-3.5 h-3.5 text-[#D92670]" /> Category
+            <Grid2X2 className="w-3.5 h-3.5 text-[#A80C14]" /> Category
           </span>
           {params.subCategory !== 'All' && (
-            <span className="text-[10px] font-mono text-[#D92670] font-bold bg-pink-50 px-2 py-0.5 rounded-full truncate max-w-[45%]">
+            <span className="text-[10px] font-mono text-[#A80C14] font-bold bg-[#FDF2F3] px-2 py-0.5 rounded-full truncate max-w-[45%] border border-[#F8D2D5]">
               {params.subCategory}
             </span>
           )}
@@ -345,13 +345,13 @@ function FilterPanel({
           <button
             onClick={() => setParams({ category: 'All', subCategory: 'All' })}
             className={`w-full text-left px-3 py-2 rounded-xl transition-all flex items-center justify-between font-bold cursor-pointer ${
-              params.category === 'All' ? 'bg-[#D92670] text-white shadow-xs' : 'text-stone-700 hover:bg-pink-50'
+              params.category === 'All' ? 'bg-[#A80C14] text-white shadow-xs' : 'text-stone-700 hover:bg-[#FDF2F3]'
             }`}
           >
             <span>All Products</span>
             <span
               className={`text-[10px] px-2 py-0.5 rounded-full ${
-                params.category === 'All' ? 'bg-white/20 text-white' : 'bg-pink-100 text-[#D92670]'
+                params.category === 'All' ? 'bg-white/20 text-white' : 'bg-[#FDF2F3] text-[#A80C14]'
               }`}
             >
               {catalog.length}
@@ -365,19 +365,16 @@ function FilterPanel({
               <div key={cat.id} className="space-y-1">
                 <button
                   onClick={() => {
-                    // Both keys in one push: two sequential single-key updates
-                    // each rebuilt the URL from the pre-click params, so the
-                    // second silently threw away the first.
                     setParams({ category: selected ? 'All' : cat.name, subCategory: 'All' });
                   }}
                   className={`w-full text-left px-3 py-2 rounded-xl transition-all flex items-center justify-between font-bold cursor-pointer ${
-                    selected ? 'bg-[#D92670] text-white shadow-xs' : 'text-stone-700 hover:bg-pink-50'
+                    selected ? 'bg-[#A80C14] text-white shadow-xs' : 'text-stone-700 hover:bg-[#FDF2F3]'
                   }`}
                 >
                   <span className="truncate">{cat.name}</span>
                   <span
                     className={`text-[10px] px-2 py-0.5 rounded-full shrink-0 ${
-                      selected ? 'bg-white/20 text-white' : 'bg-pink-100 text-[#D92670]'
+                      selected ? 'bg-white/20 text-white' : 'bg-[#FDF2F3] text-[#A80C14]'
                     }`}
                   >
                     {countForCategory(cat)}
@@ -386,7 +383,7 @@ function FilterPanel({
 
                 {/* Subcategory tree — expanded only for the selected category */}
                 {selected && cat.subCategories.length > 0 && (
-                  <div className="pl-3 space-y-1 py-1 border-l-2 border-[#D92670]/40 ml-3">
+                  <div className="pl-3 space-y-1 py-1 border-l-2 border-[#A80C14]/40 ml-3">
                     {cat.subCategories.map((sub) => {
                       const subSelected =
                         norm(params.subCategory) === norm(sub.name) || norm(params.subCategory) === norm(sub.slug);
@@ -396,7 +393,7 @@ function FilterPanel({
                           key={sub.id}
                           onClick={() => setParam('subCategory', subSelected ? 'All' : sub.name)}
                           className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center justify-between gap-2 cursor-pointer ${
-                            subSelected ? 'bg-[#D92670] text-white' : 'text-stone-600 hover:bg-stone-100'
+                            subSelected ? 'bg-[#A80C14] text-white' : 'text-stone-600 hover:bg-stone-100'
                           }`}
                         >
                           <span className="truncate">• {sub.name}</span>
@@ -426,13 +423,13 @@ function FilterPanel({
                     key={extra.value}
                     onClick={() => setParams({ category: selected ? 'All' : extra.value, subCategory: 'All' })}
                     className={`w-full text-left px-3 py-2 rounded-xl transition-all flex items-center justify-between font-bold cursor-pointer ${
-                      selected ? 'bg-[#D92670] text-white shadow-xs' : 'text-stone-600 hover:bg-pink-50'
+                      selected ? 'bg-[#A80C14] text-white shadow-xs' : 'text-stone-600 hover:bg-[#FDF2F3]'
                     }`}
                   >
                     <span className="truncate">{extra.value}</span>
                     <span
                       className={`text-[10px] px-2 py-0.5 rounded-full shrink-0 ${
-                        selected ? 'bg-white/20 text-white' : 'bg-stone-100 text-stone-600'
+                        selected ? 'bg-white/20 text-white' : 'bg-[#FDF2F3] text-[#A80C14]'
                       }`}
                     >
                       {extra.count}
@@ -447,15 +444,15 @@ function FilterPanel({
 
       {/* Price bands */}
       {facets.prices.length > 0 && (
-        <div className="p-4 bg-white rounded-2xl border border-pink-100 shadow-xs space-y-3">
+        <div className="p-4 bg-white rounded-2xl border border-[#F8D2D5] shadow-xs space-y-3">
           <h4 className="font-bold text-xs uppercase tracking-wider text-stone-700 flex items-center gap-1.5">
-            <Wallet className="w-3.5 h-3.5 text-[#D92670]" /> Price Range
+            <Wallet className="w-3.5 h-3.5 text-[#A80C14]" /> Price Range
           </h4>
           <div className="space-y-1 text-xs">
             <button
               onClick={() => setParam('price', 'All')}
               className={`w-full text-left px-3 py-1.5 rounded-xl transition-all font-bold cursor-pointer ${
-                params.price === 'All' ? 'bg-[#D92670] text-white shadow-xs' : 'text-stone-700 hover:bg-pink-50'
+                params.price === 'All' ? 'bg-[#A80C14] text-white shadow-xs' : 'text-stone-700 hover:bg-[#FDF2F3]'
               }`}
             >
               Any Price
@@ -467,13 +464,13 @@ function FilterPanel({
                   key={band.value}
                   onClick={() => setParam('price', selected ? 'All' : band.value)}
                   className={`w-full text-left px-3 py-1.5 rounded-xl transition-all flex items-center justify-between font-bold cursor-pointer ${
-                    selected ? 'bg-[#D92670] text-white shadow-xs' : 'text-stone-700 hover:bg-pink-50'
+                    selected ? 'bg-[#A80C14] text-white shadow-xs' : 'text-stone-700 hover:bg-[#FDF2F3]'
                   }`}
                 >
                   <span>{band.label}</span>
                   <span
                     className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                      selected ? 'bg-white/20 text-white' : 'bg-stone-100 text-stone-600'
+                      selected ? 'bg-white/20 text-white' : 'bg-[#FDF2F3] text-[#A80C14]'
                     }`}
                   >
                     {band.count}
@@ -487,7 +484,7 @@ function FilterPanel({
 
       <FacetList
         title="Color Family"
-        icon={<Palette className="w-3.5 h-3.5 text-[#D92670]" />}
+        icon={<Palette className="w-3.5 h-3.5 text-[#A80C14]" />}
         allLabel="All Colors"
         options={facets.colors}
         activeValue={params.color}
@@ -497,7 +494,7 @@ function FilterPanel({
 
       <FacetList
         title="Work Type"
-        icon={<Shirt className="w-3.5 h-3.5 text-[#D92670]" />}
+        icon={<Shirt className="w-3.5 h-3.5 text-[#A80C14]" />}
         allLabel="All Work Types"
         options={facets.workTypes}
         activeValue={params.work}
@@ -507,7 +504,7 @@ function FilterPanel({
 
       <FacetList
         title="Occasion"
-        icon={<Tag className="w-3.5 h-3.5 text-[#D92670]" />}
+        icon={<Tag className="w-3.5 h-3.5 text-[#A80C14]" />}
         allLabel="All Occasions"
         options={facets.occasions}
         activeValue={params.occasion}
@@ -517,7 +514,7 @@ function FilterPanel({
 
       <FacetList
         title="Material"
-        icon={<Layers className="w-3.5 h-3.5 text-[#D92670]" />}
+        icon={<Layers className="w-3.5 h-3.5 text-[#A80C14]" />}
         allLabel="All Materials"
         options={facets.materials}
         activeValue={params.material}
@@ -527,7 +524,7 @@ function FilterPanel({
 
       <FacetList
         title="Season"
-        icon={<Sun className="w-3.5 h-3.5 text-[#D92670]" />}
+        icon={<Sun className="w-3.5 h-3.5 text-[#A80C14]" />}
         allLabel="All Seasons"
         options={facets.weathers}
         activeValue={params.weather}
@@ -536,7 +533,7 @@ function FilterPanel({
 
       <FacetList
         title="Size"
-        icon={<Ruler className="w-3.5 h-3.5 text-[#D92670]" />}
+        icon={<Ruler className="w-3.5 h-3.5 text-[#A80C14]" />}
         allLabel="All Sizes"
         options={facets.sizes}
         activeValue={params.size}
@@ -753,9 +750,9 @@ function ShopContent() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8 pb-32 lg:pb-12 text-stone-900">
       {/* Header Title Section */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-pink-100 pb-6 gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-[#F8D2D5] pb-6 gap-4">
         <div>
-          <span className="px-3.5 py-1 bg-pink-100 text-[#D92670] text-xs font-bold rounded-full uppercase tracking-wider inline-flex items-center gap-1.5">
+          <span className="px-3.5 py-1 bg-[#FDF2F3] text-[#A80C14] text-xs font-bold rounded-full uppercase tracking-wider inline-flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5" /> Haute Couture Catalog
           </span>
           <h1 className="font-sans text-3xl sm:text-4xl font-extrabold text-stone-900 mt-2">
@@ -770,7 +767,7 @@ function ShopContent() {
                 {catalog.length} luxurious modest designs
                 {qParam && (
                   <span>
-                    {' '}matching &quot;<strong className="text-[#D92670]">{qParam}</strong>&quot;
+                    {' '}matching &quot;<strong className="text-[#A80C14]">{qParam}</strong>&quot;
                   </span>
                 )}
               </>
@@ -782,7 +779,7 @@ function ShopContent() {
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
           <button
             onClick={() => setIsMobileFilterOpen(true)}
-            className="lg:hidden px-4 py-2.5 bg-white border border-pink-200 text-[#D92670] text-xs font-bold rounded-full hover:bg-pink-50 transition-colors shadow-xs flex items-center gap-2 cursor-pointer"
+            className="lg:hidden px-4 py-2.5 bg-white border border-[#F8D2D5] text-[#A80C14] text-xs font-bold rounded-full hover:bg-[#FDF2F3] transition-colors shadow-xs flex items-center gap-2 cursor-pointer"
           >
             <SlidersHorizontal className="w-4 h-4" />
             <span>Filters{hasActiveFilters ? ` (${activeChips.length})` : ''}</span>
@@ -793,7 +790,7 @@ function ShopContent() {
             <select
               value={sortParam}
               onChange={(e) => setParam('sort', e.target.value)}
-              className="px-4 py-2 bg-white border border-pink-200 rounded-full text-xs font-bold text-stone-800 focus:outline-none focus:ring-2 focus:ring-[#D92670] shadow-xs cursor-pointer"
+              className="px-4 py-2 bg-white border border-[#F8D2D5] rounded-full text-xs font-bold text-stone-800 focus:outline-none focus:ring-2 focus:ring-[#A80C14] shadow-xs cursor-pointer"
             >
               <option value="recommended">Recommended</option>
               <option value="price-low">Price: Low to High</option>
@@ -829,7 +826,7 @@ function ShopContent() {
             <button
               key={`${chip.key}:${chip.value}`}
               onClick={() => setParam(chip.key, chip.key === 'wishlist' ? 'false' : 'All')}
-              className="pl-3 pr-2 py-1.5 bg-white border border-pink-200 rounded-full text-[11px] font-bold text-stone-700 hover:border-[#D92670] hover:text-[#D92670] transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="pl-3 pr-2 py-1.5 bg-white border border-[#F8D2D5] rounded-full text-[11px] font-bold text-stone-700 hover:border-[#A80C14] hover:text-[#A80C14] transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
               <span className="text-stone-400 uppercase tracking-wider">{chip.label}:</span>
               <span className="truncate max-w-[10rem]">{chip.value}</span>
@@ -838,7 +835,7 @@ function ShopContent() {
           ))}
           <button
             onClick={handleResetFilters}
-            className="px-3 py-1.5 text-[11px] font-bold text-[#D92670] hover:underline flex items-center gap-1 cursor-pointer"
+            className="px-3 py-1.5 text-[11px] font-bold text-[#A80C14] hover:underline flex items-center gap-1 cursor-pointer"
           >
             <RotateCcw className="w-3 h-3" /> Clear all
           </button>
@@ -849,14 +846,14 @@ function ShopContent() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Desktop Sidebar Filters */}
         <aside className="hidden lg:block lg:col-span-3 space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-pink-100">
+          <div className="flex items-center justify-between pb-4 border-b border-[#F8D2D5]">
             <h3 className="font-extrabold text-sm uppercase tracking-wider text-stone-900 flex items-center gap-2">
-              <SlidersHorizontal className="w-4 h-4 text-[#D92670]" /> Filter Catalog
+              <SlidersHorizontal className="w-4 h-4 text-[#A80C14]" /> Filter Catalog
             </h3>
             {hasActiveFilters && (
               <button
                 onClick={handleResetFilters}
-                className="text-xs text-[#D92670] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                className="text-xs text-[#A80C14] hover:underline font-bold flex items-center gap-1 cursor-pointer"
               >
                 <RotateCcw className="w-3 h-3" /> Reset All
               </button>
@@ -898,8 +895,8 @@ function ShopContent() {
               ))}
             </div>
           ) : (
-            <div className="py-20 text-center bg-white rounded-3xl border border-pink-100 p-8 space-y-4 shadow-xs">
-              <div className="w-16 h-16 bg-pink-50 rounded-full flex items-center justify-center mx-auto text-[#D92670]">
+            <div className="py-20 text-center bg-white rounded-3xl border border-[#F8D2D5] p-8 space-y-4 shadow-xs">
+              <div className="w-16 h-16 bg-[#FDF2F3] rounded-full flex items-center justify-center mx-auto text-[#A80C14]">
                 <Sparkles className="w-8 h-8" />
               </div>
               {isEmptyCatalog ? (
@@ -917,7 +914,7 @@ function ShopContent() {
                   </p>
                   <button
                     onClick={handleResetFilters}
-                    className="px-6 py-2.5 bg-[#D92670] hover:bg-[#C2185B] text-white font-bold text-xs uppercase tracking-wider rounded-full transition-colors shadow-sm cursor-pointer"
+                    className="px-6 py-2.5 bg-[#A80C14] hover:bg-[#8C0A10] text-white font-bold text-xs uppercase tracking-wider rounded-full transition-colors shadow-sm cursor-pointer"
                   >
                     Clear All Filters
                   </button>
@@ -933,9 +930,9 @@ function ShopContent() {
       {isMobileFilterOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 lg:hidden flex justify-end">
           <div className="w-full max-w-xs bg-white h-full overflow-y-auto p-6 space-y-6 flex flex-col">
-            <div className="flex items-center justify-between pb-4 border-b border-pink-100 shrink-0">
+            <div className="flex items-center justify-between pb-4 border-b border-[#F8D2D5] shrink-0">
               <h3 className="font-extrabold text-sm uppercase tracking-wider text-stone-900 flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4 text-[#D92670]" /> Catalog Filters
+                <SlidersHorizontal className="w-4 h-4 text-[#A80C14]" /> Catalog Filters
               </h3>
               <button
                 onClick={() => setIsMobileFilterOpen(false)}
@@ -960,7 +957,7 @@ function ShopContent() {
               )}
             </div>
 
-            <div className="pt-4 border-t border-pink-100 flex gap-2 shrink-0">
+            <div className="pt-4 border-t border-[#F8D2D5] flex gap-2 shrink-0">
               <button
                 onClick={() => {
                   handleResetFilters();
@@ -972,7 +969,7 @@ function ShopContent() {
               </button>
               <button
                 onClick={() => setIsMobileFilterOpen(false)}
-                className="flex-1 py-3 bg-[#D92670] text-white font-bold text-xs rounded-full shadow-md cursor-pointer"
+                className="flex-1 py-3 bg-[#A80C14] text-white font-bold text-xs rounded-full shadow-md cursor-pointer"
               >
                 Show {filteredProducts.length} Results
               </button>

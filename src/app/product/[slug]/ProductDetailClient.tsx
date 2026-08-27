@@ -436,13 +436,13 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
       {/* Breadcrumbs */}
       <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-[11px] sm:text-xs text-stone-500">
-        <Link href="/" className="hover:text-[#D92670] transition-colors shrink-0">Home</Link>
+        <Link href="/" className="hover:text-[#A80C14] transition-colors shrink-0">Home</Link>
         <ChevronRight className="w-3 h-3 shrink-0" />
-        <Link href="/shop" className="hover:text-[#D92670] transition-colors shrink-0">Shop</Link>
+        <Link href="/shop" className="hover:text-[#A80C14] transition-colors shrink-0">Shop</Link>
         <ChevronRight className="w-3 h-3 shrink-0" />
         <Link
           href={`/shop?category=${encodeURIComponent(product?.category || '')}`}
-          className="hover:text-[#D92670] transition-colors truncate max-w-[100px] sm:max-w-none"
+          className="hover:text-[#A80C14] transition-colors truncate max-w-[100px] sm:max-w-none"
         >
           {product?.category}
         </Link>
@@ -471,7 +471,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                     aria-label={`View image ${idx + 1} of ${imagesList.length}`}
                     aria-current={selectedImageIndex === idx}
                     className={`relative w-[68px] h-[84px] sm:w-20 sm:h-24 rounded-2xl overflow-hidden flex-shrink-0 snap-start border-2 transition-all cursor-pointer group/thumb ${selectedImageIndex === idx
-                      ? 'border-[#D92670] ring-2 ring-pink-200 scale-[1.03]'
+                      ? 'border-[#A80C14] ring-2 ring-[#F8D2D5] scale-[1.03]'
                       : 'border-transparent opacity-70 hover:opacity-100 active:scale-95'
                       }`}
                   >
@@ -495,7 +495,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
             onMouseMove={handleMouseMove}
-            className="relative aspect-[4/5] w-full sm:aspect-[3/4] rounded-3xl overflow-hidden bg-stone-100 border border-pink-100 shadow-md group cursor-crosshair flex-grow"
+            className="relative aspect-[4/5] w-full sm:aspect-[3/4] rounded-3xl overflow-hidden bg-stone-100 border border-[#F8D2D5] shadow-md group cursor-crosshair flex-grow"
           >
             <SmartImage
               src={imagesList[selectedImageIndex] || imagesList[0]}
@@ -519,7 +519,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
             />
 
             {product?.isFlashSale && (
-              <span className="absolute top-3 left-3 px-2.5 py-1 sm:px-3 sm:py-1.5 bg-[#D92670] text-white font-black text-[10px] sm:text-xs uppercase tracking-wider rounded-xl shadow-md z-10">
+              <span className="absolute top-3 left-3 px-2.5 py-1 sm:px-3 sm:py-1.5 bg-[#A80C14] text-white font-black text-[10px] sm:text-xs uppercase tracking-wider rounded-xl shadow-md z-10">
                 -{product?.discountPercentage}% OFF
               </span>
             )}
@@ -555,7 +555,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               <div className="flex flex-wrap items-center gap-1.5">
                 <Link
                   href={`/shop?category=${encodeURIComponent(product?.category || '')}`}
-                  className="px-2.5 py-1 rounded-full bg-[#FFF0F6] border border-pink-200 text-[10px] font-bold text-[#D92670] hover:bg-pink-100 transition-colors"
+                  className="px-2.5 py-1 rounded-full bg-[#FFF0F6] border border-[#F8D2D5] text-[10px] font-bold text-[#A80C14] hover:bg-[#FDF2F3] transition-colors"
                 >
                   {product?.category}
                 </Link>
@@ -600,7 +600,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 <span className="text-xs font-bold text-stone-800 font-mono">
                   {ratingValue.toFixed(1)} / 5.0
                 </span>
-                <span className="text-xs text-stone-400 font-medium group-hover/rating:text-[#D92670] underline-offset-2 group-hover/rating:underline transition-colors">
+                <span className="text-xs text-stone-400 font-medium group-hover/rating:text-[#A80C14] underline-offset-2 group-hover/rating:underline transition-colors">
                   ({reviewsList.length} review{reviewsList.length === 1 ? '' : 's'})
                 </span>
               </button>
@@ -611,15 +611,15 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               <button
                 onClick={() => toggleWishlist(product)}
                 aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-                className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all cursor-pointer active:scale-90 ${isWishlisted ? 'bg-pink-100 border-[#D92670] text-[#D92670]' : 'border-stone-200 text-stone-400 hover:text-[#D92670] hover:border-pink-200'
+                className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all cursor-pointer active:scale-90 ${isWishlisted ? 'bg-[#FDF2F3] border-[#A80C14] text-[#A80C14]' : 'border-stone-200 text-stone-400 hover:text-[#A80C14] hover:border-[#F8D2D5]'
                   }`}
               >
-                <Heart className={`w-[18px] h-[18px] ${isWishlisted ? 'fill-[#D92670]' : ''}`} />
+                <Heart className={`w-[18px] h-[18px] ${isWishlisted ? 'fill-[#A80C14]' : ''}`} />
               </button>
               <button
                 onClick={handleShare}
                 aria-label="Share this product"
-                className="w-10 h-10 rounded-full border border-stone-200 text-stone-400 hover:text-[#D92670] hover:border-pink-200 flex items-center justify-center transition-all cursor-pointer active:scale-90"
+                className="w-10 h-10 rounded-full border border-stone-200 text-stone-400 hover:text-[#A80C14] hover:border-[#F8D2D5] flex items-center justify-center transition-all cursor-pointer active:scale-90"
               >
                 <Share2 className="w-[18px] h-[18px]" />
               </button>
@@ -627,7 +627,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           </div>
 
           {/* Pricing & Stock Card (stacks mobile-first, row on desktop) */}
-          <div className="p-4 sm:p-5 bg-[#FFF0F6] rounded-3xl border border-pink-200/80 shadow-xs flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="p-4 sm:p-5 bg-[#FFF0F6] rounded-3xl border border-[#F8D2D5]/80 shadow-xs flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
               <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                 <span className="text-[26px] sm:text-3xl font-extrabold text-stone-900 leading-none">
@@ -638,20 +638,20 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                     <span className="text-xs sm:text-sm text-stone-400 line-through">
                       {formatCurrency(product.originalPrice)}
                     </span>
-                    <span className="px-2 py-0.5 bg-[#D92670]/10 text-[#D92670] text-[10px] font-black rounded-md shrink-0">
+                    <span className="px-2 py-0.5 bg-[#A80C14]/10 text-[#A80C14] text-[10px] font-black rounded-md shrink-0">
                       SAVE {Math.round(((product.originalPrice - currentPrice) / product.originalPrice) * 100)}%
                     </span>
                   </span>
                 )}
               </div>
               <p className="text-[11px] text-stone-500 mt-1.5">
-                Variation: <span className="font-bold text-[#D92670]">{selectedColor} / {selectedSize}</span>
+                Variation: <span className="font-bold text-[#A80C14]">{selectedColor} / {selectedSize}</span>
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               {product?.freeDeliveryQuantity && product.freeDeliveryQuantity > 0 && (
-                <span className="bg-[#D92670]/10 text-[#D92670] border border-[#D92670]/20 px-2.5 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1 shrink-0">
+                <span className="bg-[#A80C14]/10 text-[#A80C14] border border-[#A80C14]/20 px-2.5 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1 shrink-0">
                   <Truck className="w-3.5 h-3.5 shrink-0" />
                   <span>Free Delivery @ {product.freeDeliveryQuantity}+ pcs</span>
                 </span>
@@ -668,7 +668,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           <div className="space-y-2.5">
             <div className="flex items-center justify-between gap-2">
               <label className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-700">
-                Color: <span className="text-[#D92670] normal-case tracking-normal">{selectedColor}</span>
+                Color: <span className="text-[#A80C14] normal-case tracking-normal">{selectedColor}</span>
               </label>
               <span className="text-[11px] text-stone-400 font-medium">{colorsList.length} available</span>
             </div>
@@ -683,8 +683,8 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                     onClick={() => handleSelectColor(col.name)}
                     aria-pressed={isSelected}
                     className={`flex items-center gap-2 pl-2 pr-3.5 min-h-[40px] rounded-full border text-xs font-bold transition-all cursor-pointer active:scale-95 ${isSelected
-                      ? 'border-[#D92670] bg-[#D92670] text-white shadow-xs'
-                      : 'border-stone-200 text-stone-700 hover:border-pink-200 bg-white'
+                      ? 'border-[#A80C14] bg-[#A80C14] text-white shadow-xs'
+                      : 'border-stone-200 text-stone-700 hover:border-[#F8D2D5] bg-white'
                       }`}
                   >
                     <span className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'border-white/60' : 'border-stone-300'}`} style={{ backgroundColor: col.hex }}>
@@ -701,11 +701,11 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2 text-xs">
               <label className="font-bold uppercase tracking-wider text-stone-700">
-                Size: <span className="text-[#D92670] normal-case tracking-normal">{selectedSize}</span>
+                Size: <span className="text-[#A80C14] normal-case tracking-normal">{selectedSize}</span>
               </label>
               <button
                 onClick={() => setIsSizeGuideOpen(true)}
-                className="text-[#D92670] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
+                className="text-[#A80C14] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
               >
                 <Ruler className="w-3.5 h-3.5" /> Size Guide
               </button>
@@ -723,10 +723,10 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                     disabled={isSoldOut}
                     aria-pressed={isSelected}
                     className={`min-w-[52px] h-11 px-3 text-xs font-bold rounded-xl border transition-all flex items-center justify-center cursor-pointer ${isSelected
-                      ? 'border-[#D92670] bg-[#D92670] text-white shadow-xs scale-[1.03]'
+                      ? 'border-[#A80C14] bg-[#A80C14] text-white shadow-xs scale-[1.03]'
                       : isSoldOut
                         ? 'border-stone-100 text-stone-300 line-through cursor-not-allowed bg-stone-50'
-                        : 'border-stone-200 text-stone-800 hover:bg-pink-50 active:scale-95'
+                        : 'border-stone-200 text-stone-800 hover:bg-[#FDF2F3] active:scale-95'
                       }`}
                   >
                     {sz}
@@ -751,7 +751,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                   type="button"
                   onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
                   disabled={quantity <= 1}
-                  className="w-10 h-10 rounded-full bg-white text-stone-800 font-bold flex items-center justify-center shadow-xs border border-stone-200 hover:bg-pink-100 active:scale-90 disabled:opacity-40 disabled:hover:bg-white transition-all cursor-pointer"
+                  className="w-10 h-10 rounded-full bg-white text-stone-800 font-bold flex items-center justify-center shadow-xs border border-stone-200 hover:bg-[#FDF2F3] active:scale-90 disabled:opacity-40 disabled:hover:bg-white transition-all cursor-pointer"
                   aria-label="Decrease quantity"
                 >
                   <Minus className="w-4 h-4" />
@@ -765,7 +765,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                   type="button"
                   onClick={() => setQuantity((prev) => Math.min(currentStock, prev + 1))}
                   disabled={quantity >= currentStock}
-                  className="w-10 h-10 rounded-full bg-white text-stone-800 font-bold flex items-center justify-center shadow-xs border border-stone-200 hover:bg-pink-100 active:scale-90 disabled:opacity-40 disabled:hover:bg-white transition-all cursor-pointer"
+                  className="w-10 h-10 rounded-full bg-white text-stone-800 font-bold flex items-center justify-center shadow-xs border border-stone-200 hover:bg-[#FDF2F3] active:scale-90 disabled:opacity-40 disabled:hover:bg-white transition-all cursor-pointer"
                   aria-label="Increase quantity"
                 >
                   <Plus className="w-4 h-4" />
@@ -774,7 +774,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
               <div className="text-right">
                 <span className="text-[10px] text-stone-400 uppercase tracking-wider block">Subtotal</span>
-                <span className="font-extrabold text-[#D92670] font-mono text-base">
+                <span className="font-extrabold text-[#A80C14] font-mono text-base">
                   {formatCurrency(currentPrice * quantity)}
                 </span>
               </div>
@@ -822,7 +822,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               <button
                 onClick={handleBuyNow}
                 disabled={isOutOfStock}
-                className="flex-1 py-3.5 px-6 bg-[#D92670] hover:bg-[#C2185B] disabled:bg-stone-300 disabled:cursor-not-allowed disabled:text-stone-500 text-white text-xs lg:text-sm font-extrabold rounded-full transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                className="flex-1 py-3.5 px-6 bg-[#A80C14] hover:bg-[#8C0A10] disabled:bg-stone-300 disabled:cursor-not-allowed disabled:text-stone-500 text-white text-xs lg:text-sm font-extrabold rounded-full transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95"
               >
                 <Zap className="w-4 h-4 fill-white" />
                 <span>Buy Now</span>
@@ -833,15 +833,15 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           {/* Trust Badges */}
           <div className="grid grid-cols-3 gap-2 pt-1">
             <div className="flex flex-col items-center gap-1 rounded-2xl border border-stone-200/80 bg-white px-1.5 py-3 text-center">
-              <Banknote className="w-[18px] h-[18px] text-[#D92670] shrink-0" />
+              <Banknote className="w-[18px] h-[18px] text-[#A80C14] shrink-0" />
               <span className="text-[10px] font-bold text-stone-600 leading-tight">Cash on<br />Delivery</span>
             </div>
             <div className="flex flex-col items-center gap-1 rounded-2xl border border-stone-200/80 bg-white px-1.5 py-3 text-center">
-              <RefreshCcw className="w-[18px] h-[18px] text-[#D92670] shrink-0" />
+              <RefreshCcw className="w-[18px] h-[18px] text-[#A80C14] shrink-0" />
               <span className="text-[10px] font-bold text-stone-600 leading-tight">30-Day<br />Returns</span>
             </div>
             <div className="flex flex-col items-center gap-1 rounded-2xl border border-stone-200/80 bg-white px-1.5 py-3 text-center">
-              <Truck className="w-[18px] h-[18px] text-[#D92670] shrink-0" />
+              <Truck className="w-[18px] h-[18px] text-[#A80C14] shrink-0" />
               <span className="text-[10px] font-bold text-stone-600 leading-tight">Fast<br />Delivery</span>
             </div>
           </div>
@@ -849,9 +849,9 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
       </div>
 
       {/* Specification & Review Tabs */}
-      <div ref={tabsRef} className="pt-6 sm:pt-8 border-t border-pink-100 space-y-5 sm:space-y-6 scroll-mt-20">
+      <div ref={tabsRef} className="pt-6 sm:pt-8 border-t border-[#F8D2D5] space-y-5 sm:space-y-6 scroll-mt-20">
         <div
-          className="flex gap-1 overflow-x-auto no-scrollbar flex-nowrap w-full border-b border-pink-100"
+          className="flex gap-1 overflow-x-auto no-scrollbar flex-nowrap w-full border-b border-[#F8D2D5]"
           role="tablist"
           aria-label="Product information"
         >
@@ -865,7 +865,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 aria-selected={isActive}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-shrink-0 flex items-center gap-1.5 pb-3 pt-1.5 px-3 sm:px-4 text-[11px] sm:text-sm font-bold border-b-2 -mb-px transition-all cursor-pointer ${isActive
-                  ? 'border-[#D92670] text-[#D92670]'
+                  ? 'border-[#A80C14] text-[#A80C14]'
                   : 'border-transparent text-stone-400 hover:text-stone-600'
                   }`}
               >
@@ -877,16 +877,16 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         </div>
 
         {activeTab === 'specs' && (
-          <div role="tabpanel" className="p-4 sm:p-6 bg-white rounded-3xl border border-pink-100 space-y-4 text-xs sm:text-sm leading-relaxed">
+          <div role="tabpanel" className="p-4 sm:p-6 bg-white rounded-3xl border border-[#F8D2D5] space-y-4 text-xs sm:text-sm leading-relaxed">
             <div className="flex items-center gap-2">
-              <Shirt className="w-4 h-4 text-[#D92670]" />
-              <h3 className="font-bold text-base sm:text-lg text-[#D92670]">Fabric &amp; Craftsmanship</h3>
+              <Shirt className="w-4 h-4 text-[#A80C14]" />
+              <h3 className="font-bold text-base sm:text-lg text-[#A80C14]">Fabric &amp; Craftsmanship</h3>
             </div>
             <p className="text-stone-600">{product?.description || 'Luxury modest fashion item.'}</p>
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-stone-600 pt-1">
               {(product?.features || ['Premium tailoring', 'Soft luxury fabric']).map((feat, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <Check className="w-3.5 h-3.5 text-[#D92670] shrink-0 mt-0.5" />
+                  <Check className="w-3.5 h-3.5 text-[#A80C14] shrink-0 mt-0.5" />
                   <span>{feat}</span>
                 </li>
               ))}
@@ -900,7 +900,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 { label: 'Occasion', value: product?.occasion },
                 { label: 'Weather', value: product?.weather }
               ].filter((a) => a.value).map((attr) => (
-                <span key={attr.label} className="px-3 py-1.5 rounded-full bg-[#FFF0F6] border border-pink-100 text-[10px] font-bold text-stone-600">
+                <span key={attr.label} className="px-3 py-1.5 rounded-full bg-[#FFF0F6] border border-[#F8D2D5] text-[10px] font-bold text-stone-600">
                   <span className="text-stone-400 uppercase tracking-wide mr-1">{attr.label}:</span> {attr.value}
                 </span>
               ))}
@@ -909,15 +909,15 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         )}
 
         {activeTab === 'care' && (
-          <div role="tabpanel" className="p-4 sm:p-6 bg-white rounded-3xl border border-pink-100 space-y-3 text-xs sm:text-sm">
+          <div role="tabpanel" className="p-4 sm:p-6 bg-white rounded-3xl border border-[#F8D2D5] space-y-3 text-xs sm:text-sm">
             <div className="flex items-center gap-2">
-              <Droplets className="w-4 h-4 text-[#D92670]" />
-              <h3 className="font-bold text-base sm:text-lg text-[#D92670]">Garment Care Instructions</h3>
+              <Droplets className="w-4 h-4 text-[#A80C14]" />
+              <h3 className="font-bold text-base sm:text-lg text-[#A80C14]">Garment Care Instructions</h3>
             </div>
             <ul className="space-y-2 text-stone-600">
               {(product?.careInstructions || ['Dry clean recommended', 'Steam iron low heat']).map((c, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <Check className="w-3.5 h-3.5 text-[#D92670] shrink-0 mt-0.5" />
+                  <Check className="w-3.5 h-3.5 text-[#A80C14] shrink-0 mt-0.5" />
                   <span>{c}</span>
                 </li>
               ))}
@@ -926,29 +926,29 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         )}
 
         {activeTab === 'shipping' && (
-          <div role="tabpanel" className="p-4 sm:p-6 bg-white rounded-3xl border border-pink-100 space-y-4 text-xs sm:text-sm text-stone-600">
+          <div role="tabpanel" className="p-4 sm:p-6 bg-white rounded-3xl border border-[#F8D2D5] space-y-4 text-xs sm:text-sm text-stone-600">
             <div className="flex items-center gap-2">
-              <Truck className="w-4 h-4 text-[#D92670]" />
-              <h3 className="font-bold text-base sm:text-lg text-[#D92670]">Express Logistics</h3>
+              <Truck className="w-4 h-4 text-[#A80C14]" />
+              <h3 className="font-bold text-base sm:text-lg text-[#A80C14]">Express Logistics</h3>
             </div>
             <p>Fast delivery across Bangladesh. Easy returns and exchanges within 30 days.</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <div className="flex items-start gap-2 bg-stone-50 border border-stone-100 rounded-2xl p-3">
-                <Truck className="w-4 h-4 text-[#D92670] shrink-0 mt-0.5" />
+                <Truck className="w-4 h-4 text-[#A80C14] shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold text-stone-800 text-xs">Inside Dhaka</p>
                   <p className="text-[11px] text-stone-500">1–2 business days</p>
                 </div>
               </div>
               <div className="flex items-start gap-2 bg-stone-50 border border-stone-100 rounded-2xl p-3">
-                <Truck className="w-4 h-4 text-[#D92670] shrink-0 mt-0.5" />
+                <Truck className="w-4 h-4 text-[#A80C14] shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold text-stone-800 text-xs">Outside Dhaka</p>
                   <p className="text-[11px] text-stone-500">2–4 business days</p>
                 </div>
               </div>
               <div className="flex items-start gap-2 bg-stone-50 border border-stone-100 rounded-2xl p-3">
-                <RefreshCcw className="w-4 h-4 text-[#D92670] shrink-0 mt-0.5" />
+                <RefreshCcw className="w-4 h-4 text-[#A80C14] shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold text-stone-800 text-xs">Easy Returns</p>
                   <p className="text-[11px] text-stone-500">Within 30 days</p>
@@ -978,7 +978,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 </h3>
                 <button
                   onClick={() => setIsWriteReviewOpen(true)}
-                  className="px-4 py-2.5 min-h-[40px] bg-[#D92670] text-white font-bold text-xs rounded-full hover:bg-[#C2185B] active:scale-95 transition-all shadow-xs cursor-pointer"
+                  className="px-4 py-2.5 min-h-[40px] bg-[#A80C14] text-white font-bold text-xs rounded-full hover:bg-[#8C0A10] active:scale-95 transition-all shadow-xs cursor-pointer"
                 >
                   Write a Review
                 </button>
@@ -986,7 +986,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
               {/* Reviews Statistics Widget */}
               {totalReviewsCount > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 p-4 sm:p-6 bg-stone-50 rounded-3xl border border-pink-100/50">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 p-4 sm:p-6 bg-stone-50 rounded-3xl border border-[#F8D2D5]/50">
                   {/* Left: Overall Rating */}
                   <div className="md:col-span-4 flex md:flex-col items-center justify-center text-center p-2 md:p-4 border-b md:border-b-0 md:border-r border-stone-200/60 gap-3 md:gap-0">
                     <div className="text-4xl sm:text-5xl font-black text-stone-900 font-mono">
@@ -1012,7 +1012,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                     <p className="text-xs text-stone-500 font-medium md:mt-3">
                       Based on {totalReviewsCount} {totalReviewsCount === 1 ? 'review' : 'reviews'}
                     </p>
-                    <p className="text-[11px] text-[#D92670] font-bold md:mt-1">
+                    <p className="text-[11px] text-[#A80C14] font-bold md:mt-1">
                       100% Verified Purchases
                     </p>
                   </div>
@@ -1027,7 +1027,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                           <span className="w-10 text-right shrink-0">{stars} star</span>
                           <div className="flex-1 h-2.5 sm:h-3 bg-stone-200/70 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-[#D92670] rounded-full transition-all duration-500"
+                              className="h-full bg-[#A80C14] rounded-full transition-all duration-500"
                               style={{ width: `${percentage}%` }}
                             />
                           </div>
@@ -1042,7 +1042,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               )}
 
               {reviewsList.length === 0 && (
-                <div className="p-6 sm:p-8 bg-white rounded-2xl border border-dashed border-pink-200 text-center space-y-1.5">
+                <div className="p-6 sm:p-8 bg-white rounded-2xl border border-dashed border-[#F8D2D5] text-center space-y-1.5">
                   <Star className="w-6 h-6 text-stone-300 mx-auto" />
                   <p className="text-xs font-bold text-stone-900">No reviews yet</p>
                   <p className="text-[11px] text-stone-500">Be the first to share your experience with this piece.</p>
@@ -1051,10 +1051,10 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 {reviewsList.map((rev) => (
-                  <div key={rev.id} className="p-4 sm:p-5 bg-white rounded-2xl border border-pink-100 space-y-2 text-xs">
+                  <div key={rev.id} className="p-4 sm:p-5 bg-white rounded-2xl border border-[#F8D2D5] space-y-2 text-xs">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="w-7 h-7 rounded-full bg-[#FFF0F6] border border-pink-100 text-[#D92670] font-black text-[11px] flex items-center justify-center shrink-0">
+                        <span className="w-7 h-7 rounded-full bg-[#FFF0F6] border border-[#F8D2D5] text-[#A80C14] font-black text-[11px] flex items-center justify-center shrink-0">
                           {rev.author.trim().charAt(0).toUpperCase() || '?'}
                         </span>
                         <span className="font-bold text-stone-900 truncate">{rev.author}</span>
@@ -1081,7 +1081,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
       </div>
 
       {/* New Arrivals Product Carousel */}
-      <NewArrivalSection
+      <NewArrivalSection place='product_details'
         products={products.filter((p) => p.id !== product.id)}
         title="YOU MAY ALSO LIKE / NEW ARRIVALS"
         subtitle="Explore more of our latest modest fashion creations"
@@ -1099,7 +1099,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[85vh] flex flex-col animate-fade-in">
             <div className="sticky top-0 bg-white border-b border-stone-100 px-5 py-4 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
-                <Ruler className="w-4 h-4 text-[#D92670]" />
+                <Ruler className="w-4 h-4 text-[#A80C14]" />
                 <h3 className="font-serif font-bold text-base sm:text-lg text-stone-900">Size Guide</h3>
               </div>
               <button
@@ -1114,7 +1114,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
             <div className="overflow-y-auto p-5 space-y-4">
               {isOneSize ? (
                 <div className="text-center py-6 space-y-2">
-                  <Shirt className="w-8 h-8 text-[#D92670] mx-auto" />
+                  <Shirt className="w-8 h-8 text-[#A80C14] mx-auto" />
                   <p className="text-sm font-bold text-stone-900">One Size (Free Size)</p>
                   <p className="text-xs text-stone-500 leading-relaxed max-w-[280px] mx-auto">
                     This piece comes in a relaxed free-size cut designed to fit most body types comfortably.
@@ -1136,12 +1136,12 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                         {SIZE_GUIDE_ROWS.map((row) => (
                           <tr
                             key={row.size}
-                            className={selectedSize.toUpperCase() === row.size ? 'bg-pink-50/60' : ''}
+                            className={selectedSize.toUpperCase() === row.size ? 'bg-[#FDF2F3]/60' : ''}
                           >
                             <td className="px-3 py-2.5 font-bold text-stone-900">
                               {row.size}
                               {selectedSize.toUpperCase() === row.size && (
-                                <span className="ml-1.5 text-[#D92670]">●</span>
+                                <span className="ml-1.5 text-[#A80C14]">●</span>
                               )}
                             </td>
                             <td className="px-3 py-2.5 text-stone-600 font-mono text-[11px]">{row.bust}</td>
@@ -1194,7 +1194,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
             {!user ? (
               <div className="p-6 text-center space-y-4">
-                <div className="w-12 h-12 bg-pink-50 text-[#D92670] rounded-full flex items-center justify-center mx-auto">
+                <div className="w-12 h-12 bg-[#FDF2F3] text-[#A80C14] rounded-full flex items-center justify-center mx-auto">
                   <Star className="w-6 h-6 fill-current" />
                 </div>
                 <h4 className="font-bold text-base text-stone-900 font-sans">Sign In Required</h4>
@@ -1211,7 +1211,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                   </button>
                   <Link
                     href="/account"
-                    className="flex-1 py-3 min-h-[44px] bg-[#D92670] hover:bg-[#C2185B] text-white font-bold text-xs rounded-xl text-center transition-colors shadow-sm flex items-center justify-center"
+                    className="flex-1 py-3 min-h-[44px] bg-[#A80C14] hover:bg-[#8C0A10] text-white font-bold text-xs rounded-xl text-center transition-colors shadow-sm flex items-center justify-center"
                   >
                     Sign In
                   </Link>
@@ -1237,7 +1237,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                         value={newReview.author}
                         onChange={(e) => setNewReview({ ...newReview, author: e.target.value })}
                         placeholder="e.g. Ayesha R."
-                        className="w-full px-4 py-3 min-h-[44px] bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670]"
+                        className="w-full px-4 py-3 min-h-[44px] bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14]"
                       />
                     </div>
 
@@ -1274,7 +1274,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                         value={newReview.comment}
                         onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
                         placeholder="How was the fabric, fit, and delivery experience?"
-                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670]"
+                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14]"
                       />
                       <p className="text-[10px] text-stone-400 text-right">{newReview.comment.length}/1000</p>
                     </div>
@@ -1294,7 +1294,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                       <button
                         type="submit"
                         disabled={isSubmittingReview}
-                        className="px-5 py-3 min-h-[44px] bg-[#D92670] hover:bg-[#C2185B] text-white font-bold text-xs rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50 active:scale-95"
+                        className="px-5 py-3 min-h-[44px] bg-[#A80C14] hover:bg-[#8C0A10] text-white font-bold text-xs rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50 active:scale-95"
                       >
                         {isSubmittingReview ? 'Submitting…' : 'Submit Review'}
                       </button>
@@ -1317,9 +1317,9 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
       {/* Sticky Bottom Purchase Bar for Mobile — offset sits above MobileBottomNav,
           including its env(safe-area-inset-bottom) padding on notched phones */}
-      <div className="md:hidden fixed bottom-[calc(62px+env(safe-area-inset-bottom))] left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-pink-100 px-3 py-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] flex items-center justify-between gap-3 safe-bottom animate-fade-in">
+      <div className="md:hidden fixed bottom-[calc(62px+env(safe-area-inset-bottom))] left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#F8D2D5] px-3 py-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] flex items-center justify-between gap-3 safe-bottom animate-fade-in">
         <div className="flex flex-col min-w-0 shrink-0">
-          <span className="font-extrabold text-[#D92670] font-mono text-sm leading-tight truncate">
+          <span className="font-extrabold text-[#A80C14] font-mono text-sm leading-tight truncate">
             {formatCurrency(currentPrice * quantity)}
           </span>
           <span className="text-[9px] text-stone-400 truncate">
@@ -1338,7 +1338,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           <button
             onClick={handleBuyNow}
             disabled={isOutOfStock}
-            className="flex-1 py-3 px-3 min-h-[44px] bg-[#D92670] disabled:bg-stone-300 disabled:text-stone-500 hover:bg-[#C2185B] text-white text-[11px] font-extrabold rounded-full transition-all shadow-md flex items-center justify-center gap-1 cursor-pointer active:scale-95 disabled:cursor-not-allowed"
+            className="flex-1 py-3 px-3 min-h-[44px] bg-[#A80C14] disabled:bg-stone-300 disabled:text-stone-500 hover:bg-[#8C0A10] text-white text-[11px] font-extrabold rounded-full transition-all shadow-md flex items-center justify-center gap-1 cursor-pointer active:scale-95 disabled:cursor-not-allowed"
           >
             <Zap className="w-3.5 h-3.5 fill-white" />
             <span>{isOutOfStock ? 'Sold Out' : 'Buy Now'}</span>

@@ -162,7 +162,7 @@ export function ProductZoomModal({ isOpen, onClose, imageUrl, title }: ProductZo
           step="10"
           value={zoomLevel}
           onChange={handleSliderChange}
-          className="w-28 sm:w-36 accent-[#D92670] cursor-pointer"
+          className="w-28 sm:w-36 accent-[#A80C14] cursor-pointer"
           aria-label="Zoom Percentage Slider"
         />
       </div>

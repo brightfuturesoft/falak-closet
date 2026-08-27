@@ -34,7 +34,7 @@ export default function HowToOrderClient() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       <div className="text-center max-w-xl mx-auto space-y-3">
-        <span className="px-3.5 py-1 bg-pink-100 text-[#D92670] text-xs font-bold rounded-full uppercase tracking-wider inline-flex items-center gap-1.5">
+        <span className="px-3.5 py-1 bg-[#FDF2F3] text-[#A80C14] text-xs font-bold rounded-full uppercase tracking-wider inline-flex items-center gap-1.5">
           <HelpCircle className="w-3.5 h-3.5" /> Customer Service Guide
         </span>
         <h1 className="font-sans text-3xl sm:text-4xl font-extrabold text-stone-900">
@@ -54,9 +54,9 @@ export default function HowToOrderClient() {
         ].map((item) => {
           const Icon = item.icon;
           return (
-            <div key={item.step} className="p-5 bg-white rounded-3xl border border-pink-100 shadow-xs space-y-3 text-center">
-              <span className="font-mono font-bold text-[#D92670] text-xs uppercase tracking-wider block">Step {item.step}</span>
-              <div className="w-10 h-10 rounded-2xl bg-pink-50 text-[#D92670] flex items-center justify-center mx-auto">
+            <div key={item.step} className="p-5 bg-white rounded-3xl border border-[#F8D2D5] shadow-xs space-y-3 text-center">
+              <span className="font-mono font-bold text-[#A80C14] text-xs uppercase tracking-wider block">Step {item.step}</span>
+              <div className="w-10 h-10 rounded-2xl bg-[#FDF2F3] text-[#A80C14] flex items-center justify-center mx-auto">
                 <Icon className="w-5 h-5" />
               </div>
               <h3 className="font-bold text-sm text-stone-900">{item.title}</h3>
@@ -70,16 +70,16 @@ export default function HowToOrderClient() {
         <h2 className="font-bold text-xl text-stone-900 text-center">Frequently Asked Questions</h2>
         <div className="space-y-3 max-w-2xl mx-auto">
           {faqs.map((faq, idx) => (
-            <div key={idx} className="bg-white rounded-2xl border border-pink-100 overflow-hidden shadow-xs">
+            <div key={idx} className="bg-white rounded-2xl border border-[#F8D2D5] overflow-hidden shadow-xs">
               <button
                 onClick={() => setOpenFaqIndex(openFaqIndex === idx ? null : idx)}
                 className="w-full p-4 text-left font-bold text-xs sm:text-sm text-stone-900 flex items-center justify-between cursor-pointer"
               >
                 <span>{faq.question}</span>
-                <ChevronDown className={`w-4 h-4 text-[#D92670] transition-transform ${openFaqIndex === idx ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 text-[#A80C14] transition-transform ${openFaqIndex === idx ? 'rotate-180' : ''}`} />
               </button>
               {openFaqIndex === idx && (
-                <div className="p-4 pt-0 text-xs text-stone-600 border-t border-pink-50 bg-pink-50/20">
+                <div className="p-4 pt-0 text-xs text-stone-600 border-t border-[#F8D2D5] bg-[#FDF2F3]/20">
                   {faq.answer}
                 </div>
               )}

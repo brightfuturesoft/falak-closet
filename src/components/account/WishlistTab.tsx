@@ -18,7 +18,7 @@ export function WishlistTab() {
             <Link
               key={item.id}
               href={`/product/${item.slug}`}
-              className="group bg-white rounded-2xl border border-stone-200/70 hover:border-[#D92670]/40 hover:shadow-md overflow-hidden transition-all"
+              className="group bg-white rounded-2xl border border-stone-200/70 hover:border-[#A80C14]/40 hover:shadow-md overflow-hidden transition-all"
             >
               <div className="relative aspect-[3/4] bg-stone-50 overflow-hidden">
                 {item.images?.[0] ? (
@@ -35,17 +35,17 @@ export function WishlistTab() {
                   </div>
                 )}
                 <span className="absolute top-2 right-2 w-7 h-7 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-xs">
-                  <Heart className="w-3.5 h-3.5 text-[#D92670] fill-[#D92670]" />
+                  <Heart className="w-3.5 h-3.5 text-[#A80C14] fill-[#A80C14]" />
                 </span>
               </div>
 
               <div className="p-3 space-y-2">
-                <p className="font-bold text-[#0C163A] text-xs line-clamp-1">{item.name}</p>
+                <p className="font-bold text-[#0D153A] text-xs line-clamp-1">{item.name}</p>
                 <div className="flex items-center justify-between gap-2">
-                  <p className="font-mono text-[#D92670] font-extrabold text-sm">
+                  <p className="font-mono text-[#A80C14] font-extrabold text-sm">
                     {formatCurrency(item.price)}
                   </p>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-stone-400 group-hover:text-[#D92670] uppercase tracking-wide transition-colors">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-stone-400 group-hover:text-[#A80C14] uppercase tracking-wide transition-colors">
                     View <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                   </span>
                 </div>
@@ -55,18 +55,18 @@ export function WishlistTab() {
         </div>
       ) : (
         <div className="p-10 text-center bg-white rounded-3xl border border-stone-200/70 space-y-4">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-pink-50 border border-pink-100 flex items-center justify-center">
-            <Heart className="w-7 h-7 text-[#D92670]" />
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-[#FDF2F3] border border-[#F8D2D5] flex items-center justify-center">
+            <Heart className="w-7 h-7 text-[#A80C14]" />
           </div>
           <div className="space-y-1">
-            <h3 className="font-serif font-bold text-base text-[#0C163A]">Your wishlist is empty</h3>
+            <h3 className="font-serif font-bold text-base text-[#0D153A]">Your wishlist is empty</h3>
             <p className="text-xs text-stone-500 max-w-xs mx-auto">
               Tap the heart on any product to save it here for later.
             </p>
           </div>
           <Link
             href="/shop"
-            className="inline-flex items-center gap-1.5 px-6 py-2.5 bg-[#D92670] hover:bg-[#C2185B] text-white text-xs font-bold rounded-full transition-colors"
+            className="inline-flex items-center gap-1.5 px-6 py-2.5 bg-[#A80C14] hover:bg-[#8C0A10] text-white text-xs font-bold rounded-full transition-colors"
           >
             Discover Collections <ArrowRight className="w-3.5 h-3.5" />
           </Link>

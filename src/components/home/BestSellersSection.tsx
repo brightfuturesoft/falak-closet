@@ -104,11 +104,11 @@ export function BestSellersSection({ products }: BestSellersSectionProps) {
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-      <div className="bg-white border border-pink-100 rounded-3xl p-4 sm:p-7 space-y-4 sm:space-y-6 shadow-xs relative overflow-hidden">
+      <div className="bg-white border border-[#F8D2D5] rounded-3xl p-4 sm:p-7 space-y-4 sm:space-y-6 shadow-xs relative overflow-hidden">
         {/* Header Row */}
-        <div className="flex items-center justify-between border-b border-pink-100/60 pb-3 sm:pb-4 relative z-10">
+        <div className="flex items-center justify-between border-b border-[#F8D2D5]/60 pb-3 sm:pb-4 relative z-10">
           <div className="space-y-0.5">
-            <h2 className="font-sans font-black text-[#0C163A] text-base sm:text-lg tracking-wider uppercase leading-tight">
+            <h2 className="font-sans font-black text-[#0D153A] text-base sm:text-lg tracking-wider uppercase leading-tight">
               BEST SELLING
             </h2>
             <p className="text-[11px] sm:text-xs text-stone-500 leading-relaxed">
@@ -118,7 +118,7 @@ export function BestSellersSection({ products }: BestSellersSectionProps) {
 
           <Link
             href="/shop?sort=popular"
-            className="inline-flex min-h-[36px] sm:min-h-[40px] items-center justify-center px-4 bg-[#0C163A] hover:bg-black text-white rounded-full text-xs font-bold transition-colors shadow-xs active:scale-95 cursor-pointer"
+            className="inline-flex min-h-[36px] sm:min-h-[40px] items-center justify-center px-4 bg-[#0D153A] hover:bg-black text-white rounded-full text-xs font-bold transition-colors shadow-xs active:scale-95 cursor-pointer"
           >
             Shop All
           </Link>

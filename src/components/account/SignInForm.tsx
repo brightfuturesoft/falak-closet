@@ -49,7 +49,7 @@ export function SignInForm({ onSignIn, onSwitchMode }: SignInFormProps) {
           type="button"
           id="forgot-password-link"
           onClick={() => onSwitchMode('forgot')}
-          className="text-[11px] text-[#D92670] font-bold hover:text-[#C2185B] hover:underline cursor-pointer transition-colors"
+          className="text-[11px] text-[#A80C14] font-bold hover:text-[#8C0A10] hover:underline cursor-pointer transition-colors"
         >
           Forgot password?
         </button>

@@ -41,7 +41,7 @@ export const INITIAL_CATEGORIES: Category[] = [
       { id: 'sub-kimono', name: 'Kimono Abayas', slug: 'kimono-abayas', description: 'Wide sleeve Japanese kimono cut' },
       { id: 'sub-butterfly', name: 'Butterfly Abayas', slug: 'butterfly-abayas', description: 'Farasha butterfly silhouette' },
       { id: 'sub-umbrella', name: 'Umbrella Abayas', slug: 'umbrella-abayas', description: 'Flared umbrella cut bottom' },
-      { id: 'sub-[#0C163A]', name: 'Inner Slip Dresses', slug: 'inner-slip-dresses', description: 'Under-abaya matching slip dresses' }
+      { id: 'sub-[#0D153A]', name: 'Inner Slip Dresses', slug: 'inner-slip-dresses', description: 'Under-abaya matching slip dresses' }
     ]
   },
   {

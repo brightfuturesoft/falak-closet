@@ -180,7 +180,7 @@ export default function TopProgressBar() {
         width: `${progress}%`,
         opacity: progress === 100 ? 0 : 1,
         // High-end vibrant gradient styling using tailwind or inline background
-        background: 'linear-gradient(to right, #ec4899, #D92670, #f43f5e)',
+        background: 'linear-gradient(to right, #ec4899, #A80C14, #f43f5e)',
         boxShadow: '0 0 10px rgba(217, 38, 112, 0.5), 0 0 5px rgba(217, 38, 112, 0.3)',
       }}
     />

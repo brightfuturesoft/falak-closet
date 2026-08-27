@@ -131,7 +131,7 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
     <div id="receipt-portal">
       {/* ── Backdrop (screen only) ── */}
       <div
-        className="no-print fixed inset-0 z-[90] bg-[#0C163A]/60 backdrop-blur-[2px] animate-fade-in"
+        className="no-print fixed inset-0 z-[90] bg-[#0D153A]/60 backdrop-blur-[2px] animate-fade-in"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -164,7 +164,7 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
               <button
                 type="button"
                 onClick={handlePrint}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#D92670] hover:bg-[#C2185B] text-white text-xs font-bold rounded-full shadow-md shadow-[#D92670]/30 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#A80C14] hover:bg-[#8C0A10] text-white text-xs font-bold rounded-full shadow-md shadow-[#A80C14]/30 transition-colors cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" /> Print Receipt
               </button>
@@ -177,12 +177,12 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
             className="w-full max-w-[800px] bg-white text-stone-900 shadow-2xl rounded-none print:shadow-none print:rounded-none print:max-w-none receipt-sheet"
           >
             {/* Letterhead */}
-            <div className="px-8 sm:px-10 pt-8 pb-5 border-b-2 border-[#0C163A] flex items-start justify-between gap-4">
+            <div className="px-8 sm:px-10 pt-8 pb-5 border-b-2 border-[#0D153A] flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <p className="font-serif font-black text-2xl sm:text-[28px] leading-none text-[#0C163A] tracking-tight">
+                <p className="font-serif font-black text-2xl sm:text-[28px] leading-none text-[#0D153A] tracking-tight">
                   Falak Closet
                 </p>
-                <p className="text-[10px] uppercase tracking-[0.25em] text-[#D92670] font-bold mt-1.5">
+                <p className="text-[10px] uppercase tracking-[0.25em] text-[#A80C14] font-bold mt-1.5">
                   Premium Modest Fashion
                 </p>
                 <p className="text-[10px] text-stone-500 mt-2 leading-relaxed max-w-[300px]">
@@ -190,11 +190,11 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
                 </p>
               </div>
               <div className="text-right shrink-0">
-                <p className="font-serif font-extrabold text-xl sm:text-2xl text-[#0C163A] uppercase tracking-wide">
+                <p className="font-serif font-extrabold text-xl sm:text-2xl text-[#0D153A] uppercase tracking-wide">
                   Invoice
                 </p>
                 <p className="text-[10px] text-stone-500 mt-0.5">/ Order Receipt</p>
-                <p className="mt-3 text-[11px] font-mono font-bold text-[#0C163A]">#{order.id}</p>
+                <p className="mt-3 text-[11px] font-mono font-bold text-[#0D153A]">#{order.id}</p>
                 <p className="text-[10px] text-stone-500">{formatDate(order.date)}</p>
               </div>
             </div>
@@ -203,19 +203,19 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
             <div className="grid grid-cols-3 divide-x divide-stone-200 border-b border-stone-200 text-center">
               <div className="py-3 px-2">
                 <p className="text-[9px] uppercase tracking-widest text-stone-400 font-bold">Order Status</p>
-                <p className={`text-[11px] font-black mt-1 tracking-wide ${order.status === 'Cancelled' ? 'text-rose-600' : 'text-[#0C163A]'}`}>
+                <p className={`text-[11px] font-black mt-1 tracking-wide ${order.status === 'Cancelled' ? 'text-rose-600' : 'text-[#0D153A]'}`}>
                   {statusLabel(order.status)}
                 </p>
               </div>
               <div className="py-3 px-2">
                 <p className="text-[9px] uppercase tracking-widest text-stone-400 font-bold">Courier Tracking</p>
-                <p className="text-[11px] font-mono font-bold mt-1 text-[#0C163A]">
+                <p className="text-[11px] font-mono font-bold mt-1 text-[#0D153A]">
                   {order.trackingNumber || '—'}
                 </p>
               </div>
               <div className="py-3 px-2">
                 <p className="text-[9px] uppercase tracking-widest text-stone-400 font-bold">Est. Delivery</p>
-                <p className="text-[11px] font-bold mt-1 text-[#0C163A]">
+                <p className="text-[11px] font-bold mt-1 text-[#0D153A]">
                   {order.estimatedDelivery || '2-3 Business Days'}
                 </p>
               </div>
@@ -228,7 +228,7 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
                   Billed / Shipped To
                 </p>
                 <div className="text-[11px] leading-relaxed text-stone-700 space-y-0.5">
-                  <p className="font-bold text-[13px] text-[#0C163A]">{sh.fullName || 'Valued Client'}</p>
+                  <p className="font-bold text-[13px] text-[#0D153A]">{sh.fullName || 'Valued Client'}</p>
                   <p className="font-mono">{sh.phone || 'N/A'}</p>
                   {(sh.fullAddress || sh.street) && <p>{sh.fullAddress || sh.street}</p>}
                   <p>
@@ -243,7 +243,7 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
                 <div className="text-[11px] leading-relaxed text-stone-700 space-y-0.5 sm:ml-auto sm:max-w-[240px]">
                   <p>
                     <span className="text-stone-400">Method: </span>
-                    <span className="font-bold text-[#0C163A]">
+                    <span className="font-bold text-[#0D153A]">
                       {order.paymentMethod || 'Cash on Delivery (COD)'}
                     </span>
                   </p>
@@ -270,7 +270,7 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
                   {order.promoCode && (
                     <p>
                       <span className="text-stone-400">Coupon: </span>
-                      <span className="font-mono font-bold text-[#0C163A]">{order.promoCode}</span>
+                      <span className="font-mono font-bold text-[#0D153A]">{order.promoCode}</span>
                     </p>
                   )}
                 </div>
@@ -281,7 +281,7 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
             <div className="px-8 sm:px-10 py-5">
               <table className="w-full text-[11px] border-collapse">
                 <thead>
-                  <tr className="bg-[#0C163A] text-white">
+                  <tr className="bg-[#0D153A] text-white">
                     <th className="text-left font-bold uppercase tracking-wider text-[9px] py-2.5 pl-3 pr-2 rounded-l-md">
                       Item
                     </th>
@@ -302,7 +302,7 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
                     return (
                       <tr key={i} className="border-b border-stone-100">
                         <td className="py-2.5 pl-3 pr-2">
-                          <p className="font-bold text-[#0C163A] leading-snug">{itemName}</p>
+                          <p className="font-bold text-[#0D153A] leading-snug">{itemName}</p>
                           {(item.selectedColor || item.selectedSize) && (
                             <p className="text-[9px] text-stone-400 mt-0.5">
                               {[item.selectedColor, item.selectedSize].filter(Boolean).join(' · ')}
@@ -313,7 +313,7 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
                         <td className="text-right py-2.5 px-2 font-mono text-stone-600">
                           {formatCurrency(unitPrice)}
                         </td>
-                        <td className="text-right py-2.5 pl-2 pr-3 font-mono font-bold text-[#0C163A]">
+                        <td className="text-right py-2.5 pl-2 pr-3 font-mono font-bold text-[#0D153A]">
                           {formatCurrency(unitPrice * item.quantity)}
                         </td>
                       </tr>
@@ -341,9 +341,9 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
                       {order.shippingFee === 0 ? 'FREE' : formatCurrency(order.shippingFee ?? 60)}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center border-t-2 border-[#0C163A] pt-2 mt-1.5">
-                    <span className="font-black text-[13px] text-[#0C163A] uppercase tracking-wide">Total Paid</span>
-                    <span className="font-mono font-black text-lg text-[#0C163A]">
+                  <div className="flex justify-between items-center border-t-2 border-[#0D153A] pt-2 mt-1.5">
+                    <span className="font-black text-[13px] text-[#0D153A] uppercase tracking-wide">Total Paid</span>
+                    <span className="font-mono font-black text-lg text-[#0D153A]">
                       {formatCurrency(order.total)}
                     </span>
                   </div>
@@ -363,7 +363,7 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
               {/* </div> */}
 
               <div className="mt-5 border-t border-dashed border-stone-300 pt-3 text-center">
-                <p className="text-[11px] font-bold text-[#0C163A]">
+                <p className="text-[11px] font-bold text-[#0D153A]">
                   Thank you for shopping with Falak Closet!
                 </p>
                 <p className="text-[9px] text-stone-400 leading-relaxed mt-1">

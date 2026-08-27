@@ -35,7 +35,7 @@ export function PromoBannerSection({ banner }: PromoBannerSectionProps) {
       <div className={`grid grid-cols-1 gap-4 sm:gap-6 ${banner ? 'lg:grid-cols-3' : ''}`}>
         {/* Main Banner Card — admin-managed (Live Promotion Banners, top row) */}
         {banner && (
-          <div className="lg:col-span-2 bg-gradient-to-r from-[#D92670] via-[#C2185B] to-[#D92670] rounded-3xl p-5 sm:p-8 text-white relative overflow-hidden shadow-xl flex flex-col justify-between gap-5 sm:gap-6">
+          <div className="lg:col-span-2 bg-gradient-to-r from-[#A80C14] via-[#8C0A10] to-[#A80C14] rounded-3xl p-5 sm:p-8 text-white relative overflow-hidden shadow-xl flex flex-col justify-between gap-5 sm:gap-6">
             {/* Admin-uploaded art (optional) sits behind the brand gradient */}
             {banner.bannerImage && (
               // eslint-disable-next-line @next/next/no-img-element
@@ -79,7 +79,7 @@ export function PromoBannerSection({ banner }: PromoBannerSectionProps) {
                     </span>
                   </div>
                 </div>
-                <span className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all ${copiedCode ? 'bg-emerald-500 text-white' : 'bg-[#F2C76E] text-[#0C163A] group-hover:scale-110'}`}>
+                <span className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all ${copiedCode ? 'bg-emerald-500 text-white' : 'bg-[#F2C76E] text-[#0D153A] group-hover:scale-110'}`}>
                   {copiedCode ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 </span>
               </button>
@@ -93,7 +93,7 @@ export function PromoBannerSection({ banner }: PromoBannerSectionProps) {
             <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-4 relative z-10">
               <Link
                 href={shopHref}
-                className="inline-flex min-h-[44px] items-center justify-center gap-2 px-6 bg-[#F2C76E] hover:bg-[#E5B550] text-[#0C163A] font-extrabold text-xs uppercase tracking-wider rounded-full transition-all shadow-md hover:scale-105 active:scale-95 cursor-pointer"
+                className="inline-flex min-h-[44px] items-center justify-center gap-2 px-6 bg-[#F2C76E] hover:bg-[#E5B550] text-[#0D153A] font-extrabold text-xs uppercase tracking-wider rounded-full transition-all shadow-md hover:scale-105 active:scale-95 cursor-pointer"
               >
                 <span>Shop the Offer</span>
                 <ArrowRight className="w-4 h-4" />
@@ -113,12 +113,12 @@ export function PromoBannerSection({ banner }: PromoBannerSectionProps) {
         {/* Perks / Free Shipping Highlight Box — evergreen, always renders */}
         <div className="bg-white border border-stone-200/80 rounded-3xl p-5 sm:p-6 flex flex-col justify-between gap-5 sm:gap-6 shadow-xs">
           <div className="space-y-3.5 sm:space-y-4">
-            <div className="w-11 h-11 rounded-2xl bg-pink-50 text-[#D92670] flex items-center justify-center">
+            <div className="w-11 h-11 rounded-2xl bg-[#FDF2F3] text-[#A80C14] flex items-center justify-center">
               <Truck className="w-5 h-5" />
             </div>
 
             <div className="space-y-1">
-              <h4 className="font-serif font-bold text-sm sm:text-base text-[#0C163A]">
+              <h4 className="font-serif font-bold text-sm sm:text-base text-[#0D153A]">
                 Free Delivery Offer
               </h4>
               <p className="text-[11px] sm:text-xs text-stone-600 leading-relaxed">
@@ -141,7 +141,7 @@ export function PromoBannerSection({ banner }: PromoBannerSectionProps) {
 
           <Link
             href="/shipping"
-            className="inline-flex min-h-[44px] items-center justify-center w-full py-2.5 bg-[#0C163A] hover:bg-[#122050] text-[#FFFBF0] text-center font-bold text-xs uppercase tracking-wider rounded-xl transition-all active:scale-95 cursor-pointer"
+            className="inline-flex min-h-[44px] items-center justify-center w-full py-2.5 bg-[#0D153A] hover:bg-[#122050] text-[#FFFBF0] text-center font-bold text-xs uppercase tracking-wider rounded-xl transition-all active:scale-95 cursor-pointer"
           >
             Delivery Info &amp; Policies
           </Link>
