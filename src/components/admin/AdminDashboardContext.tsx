@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Product } from '@/data/products';
 import { playNewOrderSound } from '@/lib/soundNotification';
 import { useCart, OrderRecord } from '@/context/CartContext';
-import { getSocket } from '@/lib/socketClient';
+import { getSocket, isSocketEnabled } from '@/lib/socketClient';
 import { cloudinaryPublicIdFromUrl, deleteCloudinaryImage } from '@/lib/cloudinary';
 import { PromoVoucherData } from '@/components/admin/PromoFormModal';
 import { ToastMessage } from '@/components/admin/ToastNotification';
@@ -277,19 +277,22 @@ export function AdminDashboardProvider({ children }: { children: React.ReactNode
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAllData();
 
-    // 2. Connect to Socket.io Server
-    const socket = getSocket();
-    socket.emit('join_admin');
+    // 2. Socket.io live alerts — only when a socket server is configured
+    //    (see src/lib/socketClient.ts). Without one (Vercel polling mode) we
+    //    skip the connection entirely; the periodic sync below is the
+    //    realtime channel and already plays the sound + toast + prepend.
+    const socket = isSocketEnabled ? getSocket() : null;
+    if (socket) socket.emit('join_admin');
 
     const onConnect = () => setIsSocketConnected(true);
     const onDisconnect = () => setIsSocketConnected(false);
 
-    if (socket.connected) {
+    if (socket?.connected) {
       setIsSocketConnected(true);
     }
 
-    socket.on('connect', onConnect);
-    socket.on('disconnect', onDisconnect);
+    socket?.on('connect', onConnect);
+    socket?.on('disconnect', onDisconnect);
 
     // 3. Real-Time Socket Event Listener for New Product Purchase
     const handleSocketOrderAlert = (incomingOrder: OrderRecord) => {
@@ -320,17 +323,18 @@ export function AdminDashboardProvider({ children }: { children: React.ReactNode
       setIncomingOrderSignal({ order: incomingOrder, seq: incomingOrderSeqRef.current });
     };
 
-    socket.on('new_order_alert', handleSocketOrderAlert);
+    socket?.on('new_order_alert', handleSocketOrderAlert);
 
-    // 4. Background safety sync every 30s
+    // 4. Periodic sync — the primary realtime channel in polling mode, and
+    //    the safety net that reconciles counts when sockets are enabled.
     const interval = setInterval(() => {
       fetchAllData();
     }, 30000);
 
     return () => {
-      socket.off('connect', onConnect);
-      socket.off('disconnect', onDisconnect);
-      socket.off('new_order_alert', handleSocketOrderAlert);
+      socket?.off('connect', onConnect);
+      socket?.off('disconnect', onDisconnect);
+      socket?.off('new_order_alert', handleSocketOrderAlert);
       clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

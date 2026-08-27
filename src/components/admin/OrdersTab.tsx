@@ -108,9 +108,8 @@ function SortableHeader({
       <button
         type="button"
         onClick={() => onSort(sortKey)}
-        className={`inline-flex items-center gap-1 hover:text-stone-900 transition-colors cursor-pointer ${
-          isActive ? 'text-stone-900' : ''
-        }`}
+        className={`inline-flex items-center gap-1 hover:text-stone-900 transition-colors cursor-pointer ${isActive ? 'text-stone-900' : ''
+          }`}
         title={`Sort by ${label.toLowerCase()}`}
       >
         <span>{label}</span>
@@ -435,7 +434,7 @@ export function OrdersTab({
 
       {/* Order summary */}
       <td className="py-4 pr-4 text-stone-700">
-        <p className="font-semibold text-stone-900">{order.items.length} item(s)</p>
+        <p className="font-semibold text-stone-900">{order?.items?.length} item(s)</p>
         <p className="text-[10px] text-stone-500 truncate max-w-[140px]">
           {order.items.map((i) => i.product?.name || (i as { name?: string }).name || 'Modest Fashion Item').join(', ')}
         </p>
@@ -646,11 +645,10 @@ export function OrdersTab({
               <button
                 key={st}
                 onClick={() => applyStatusFilter(st)}
-                className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                  statusFilter === st
+                className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${statusFilter === st
                     ? 'bg-stone-900 text-white shadow-sm font-bold'
                     : 'bg-stone-100 text-stone-700 hover:bg-stone-200 border border-stone-200'
-                }`}
+                  }`}
               >
                 <span>{st}</span>
                 <span className="text-[10px] font-mono opacity-80">({counts?.[st] ?? 0})</span>
@@ -841,11 +839,10 @@ export function OrdersTab({
                         key={p}
                         type="button"
                         onClick={() => setPage(p)}
-                        className={`min-w-8 h-8 px-2 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
-                          p === pagination.page
+                        className={`min-w-8 h-8 px-2 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${p === pagination.page
                             ? 'bg-stone-900 text-white shadow-sm'
                             : 'bg-stone-100 text-stone-700 hover:bg-stone-200 border border-stone-200'
-                        }`}
+                          }`}
                         aria-current={p === pagination.page ? 'page' : undefined}
                       >
                         {p}
