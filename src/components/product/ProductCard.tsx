@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { SmartImage } from '@/components/ui/SmartImage';
-import { Heart, ShoppingBag, ArrowRight, Star } from 'lucide-react';
+import { Heart, ShoppingBag, ArrowRight, Star, X } from 'lucide-react';
 import { Product, type ProductColor } from '@/data/products';
 import { useCart } from '@/context/CartContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
@@ -65,19 +65,6 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
     setActiveImageIndex(resolveImageIndex(initialColorObj, product?.images ?? []));
   }
 
-  const handleWishlistToggle = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleWishlist(product);
-
-    showToast({
-      type: 'wishlist',
-      title: isWishlisted ? 'Removed from Wishlist' : 'Saved to Wishlist',
-      subtitle: product?.name,
-      image: product?.images[activeImageIndex] || product?.images[0]
-    });
-  };
-
   const currentImage = product?.images[activeImageIndex] || product?.images[0] || FALLBACK_IMAGE;
 
   const productUrl = activeColor
@@ -87,8 +74,8 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
   // Stock for the active color: variation matrix first, then the flat product stock.
   const activeColorStock = activeColor && product?.variations?.length
     ? product.variations
-        .filter((v) => v.colorName === activeColor.name)
-        .reduce((sum, v) => sum + (v.stock ?? 0), 0)
+      .filter((v) => v.colorName === activeColor.name)
+      .reduce((sum, v) => sum + (v.stock ?? 0), 0)
     : (product?.stock ?? 10);
   const isSoldOut = activeColorStock <= 0;
 
@@ -97,196 +84,346 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
       ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
       : 0;
 
-  const needsSizeChoice = sizesList.length > 1;
+  // Local state for Wishlist Toast, Auth Modal, and login forms
+  const [showWishlistToast, setShowWishlistToast] = React.useState(false);
+  const [wishlistToastText, setWishlistToastText] = React.useState('');
+  const [showAuthModal, setShowAuthModal] = React.useState(false);
+  const [authEmail, setAuthEmail] = React.useState('');
+  const [authPassword, setAuthPassword] = React.useState('');
+  const [isSubmittingAuth, setIsSubmittingAuth] = React.useState(false);
+  const [authError, setAuthError] = React.useState('');
 
-  /** One-size products add straight to cart; multi-size ones link to the page to pick a size. */
-  const handleQuickAdd = (e: React.MouseEvent) => {
+  // Auto-hide toast timer
+  React.useEffect(() => {
+    if (!showWishlistToast) return;
+    const timer = setTimeout(() => {
+      setShowWishlistToast(false);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [showWishlistToast]);
+
+  const handleWishlistClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isSoldOut || needsSizeChoice || !product) return;
 
-    const size = sizesList[0];
-    addToCart(product, activeColor?.name || 'Standard', size, 1);
+    // Check if user is authenticated
+    const savedUser = localStorage.getItem('falak_user_account');
+    if (!savedUser) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    // Toggle wishlist item
+    toggleWishlist(product);
+    const nextState = !isWishlisted;
+    setWishlistToastText(nextState ? 'Added to Wishlist' : 'Removed from Wishlist');
+    setShowWishlistToast(true);
+  };
+
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!authEmail || !authPassword) return;
+    setIsSubmittingAuth(true);
+    setAuthError('');
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: authEmail.trim(), password: authPassword }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setAuthError(data.error || 'Sign-in failed. Please check credentials.');
+        return;
+      }
+
+      const profile = {
+        name: data.user.name,
+        email: data.user.email,
+        phone: data.user.phone || '',
+        district: data.user.district || 'Dhaka',
+        fullAddress: data.user.fullAddress || '',
+      };
+      
+      localStorage.setItem('falak_user_account', JSON.stringify(profile));
+      setShowAuthModal(false);
+      setAuthEmail('');
+      setAuthPassword('');
+
+      // Auto-add to wishlist now that we are signed in
+      toggleWishlist(product);
+      setWishlistToastText('Added to Wishlist');
+      setShowWishlistToast(true);
+
+      // Notify other parts of the app
+      window.dispatchEvent(new Event('storage'));
+    } catch {
+      setAuthError('Connection issue. Please try again.');
+    } finally {
+      setIsSubmittingAuth(false);
+    }
+  };
+
+  const handleAddToCartClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isSoldOut) {
+      showToast({
+        type: 'info',
+        title: 'Sold Out',
+        subtitle: 'This variation is sold out.'
+      });
+      return;
+    }
+
+    const defaultSize = sizesList[0] || 'Free Size';
+    addToCart(product, activeColor?.name || '', defaultSize, 1);
+
     trackEvent('add_to_cart', {
-      productId: product.id,
-      productName: product.name,
-      price: product.price,
-      color: activeColor?.name || 'Standard',
-      size,
-      quantity: 1
+      content_ids: [product.id],
+      content_name: product.name,
+      value: product.price,
+      currency: 'BDT'
     });
+
     showToast({
       type: 'cart',
       title: 'Added to Cart',
-      subtitle: `${product.name} · ${activeColor?.name || 'Standard'}`,
+      subtitle: `${product.name} (${activeColor?.name || 'Standard'})`,
       image: currentImage,
-      price: product.price,
-      actionLink: '/cart',
-      actionText: 'Checkout'
+      price: product.price
     });
   };
 
   return (
-    <div className="group relative bg-white rounded-3xl border border-pink-100 p-2.5 sm:p-3 shadow-xs hover:shadow-lg hover:border-pink-200 transition-all h-full duration-300 flex flex-col overflow-hidden active:scale-[0.98]">
-      {/* Top Image Container */}
-      <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-stone-100">
-        <Link href={productUrl} className="block relative w-full h-full" aria-label={product?.name}>
-          <SmartImage
-            src={currentImage}
-            alt={product?.name}
-            fill
-            sizes="(max-width: 640px) 46vw, (max-width: 1024px) 31vw, 20vw"
-            className={`object-cover transition-transform duration-500 group-hover:scale-105 ${isSoldOut ? 'grayscale-[0.6]' : ''}`}
-          />
-        </Link>
+    <>
+      <div className="group relative bg-white rounded-3xl border border-stone-200/60 p-2.5 sm:p-3 shadow-xs hover:shadow-md hover:border-pink-200 transition-all h-full duration-300 flex flex-col overflow-hidden active:scale-[0.98]">
+        {/* Top Image Container */}
+        <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-stone-100">
+          <Link href={productUrl} className="block relative w-full h-full" aria-label={product?.name}>
+            <SmartImage
+              src={currentImage}
+              alt={product?.name}
+              fill
+              sizes="(max-width: 640px) 46vw, (max-width: 1024px) 31vw, 20vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          </Link>
 
-        {/* Status badges — top right, stacked so they never fight for width */}
-        <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10 pointer-events-none">
-          {isSoldOut && (
-            <span className="px-2 py-0.5 bg-stone-900/85 text-white text-[9px] font-black uppercase tracking-wider rounded-full backdrop-blur-xs">
-              Sold Out
-            </span>
-          )}
-          {product?.isFlashSale && discountPct > 0 && (
-            <span className="px-2 py-0.5 bg-[#9B050B] text-white text-[9px] font-black rounded-full shadow-sm">
-              -{discountPct}%
-            </span>
-          )}
-          {product?.isNewArrival && (
-            <span className="px-2 py-0.5 bg-[#F2C76E] text-[#0C163A] text-[9px] font-black uppercase tracking-wider rounded-full shadow-sm">
-              New
-            </span>
-          )}
-          {product?.isBestSeller && !product?.isNewArrival && (
-            <span className="px-2 py-0.5 bg-[#0C163A] text-[#F2C76E] text-[9px] font-black uppercase tracking-wider rounded-full shadow-sm">
-              Best
-            </span>
-          )}
+          {/* Floating Favorite (Wishlist) Icon — Top Left */}
+          <button
+            type="button"
+            onClick={handleWishlistClick}
+            className="absolute top-2.5 left-2.5 z-20 p-2 rounded-full bg-white/80 hover:bg-white text-stone-700 hover:text-[#D92670] shadow-sm backdrop-blur-xs transition-all duration-300 cursor-pointer active:scale-90"
+            aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          >
+            <Heart className={`w-4 h-4 transition-transform duration-200 ${isWishlisted ? 'fill-[#D92670] text-[#D92670] scale-110' : 'text-stone-600'}`} />
+          </button>
+
+          {/* Status badges — top right */}
+          <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10 pointer-events-none">
+            {isSoldOut ? (
+              <span className="px-2 py-0.5 bg-stone-900/85 text-white text-[9px] font-black uppercase tracking-wider rounded-md backdrop-blur-xs">
+                Sold Out
+              </span>
+            ) : discountPct > 0 ? (
+              <span className="px-2 py-0.5 bg-stone-900/85 text-white text-[9px] font-black uppercase tracking-wider rounded-md backdrop-blur-xs shadow-xs">
+                {discountPct}% OFF
+              </span>
+            ) : product?.isBestSeller ? (
+              <span className="px-2 py-0.5 bg-stone-900/85 text-white text-[9px] font-black uppercase tracking-wider rounded-md backdrop-blur-xs shadow-xs">
+                HOT ITEM
+              </span>
+            ) : null}
+          </div>
         </div>
 
-        {/* Wishlist Heart — 40px touch target on every breakpoint */}
-        <button
-          onClick={handleWishlistToggle}
-          className={`absolute top-2 left-2 w-10 h-10 rounded-full backdrop-blur-xs transition-all shadow-xs z-10 cursor-pointer flex items-center justify-center active:scale-90 ${isWishlisted
-            ? 'bg-[#D92670] text-white'
-            : 'bg-white/90 text-stone-700 hover:bg-[#D92670] hover:text-white'
-            }`}
-          aria-label={isWishlisted ? `Remove ${product?.name} from wishlist` : `Save ${product?.name} to wishlist`}
-          aria-pressed={isWishlisted}
-        >
-          <Heart className={`w-[18px] h-[18px] ${isWishlisted ? 'fill-white' : ''}`} />
-        </button>
-
-        {/* Quick action — bottom right over the image.
-            Mobile: always visible. Desktop: slides in on hover. */}
-        {isSoldOut ? (
-          <span className="absolute bottom-2 right-2 w-10 h-10 rounded-full bg-stone-200 text-stone-400 flex items-center justify-center z-10 cursor-not-allowed shadow-sm" title="Sold out">
-            <ShoppingBag className="w-[18px] h-[18px]" />
-          </span>
-        ) : needsSizeChoice ? (
-          <Link
-            href={productUrl}
-            onClick={(e) => e.stopPropagation()}
-            className="absolute bottom-2 right-2 w-10 h-10 rounded-full bg-[#0C163A]/90 hover:bg-[#0C163A] text-[#F2C76E] flex items-center justify-center z-10 shadow-md transition-all sm:opacity-0 sm:translate-y-1 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 active:scale-90 cursor-pointer"
-            aria-label={`View ${product?.name} — pick a size`}
-            title="Pick a size"
-          >
-            <ArrowRight className="w-[18px] h-[18px]" />
+        {/* Product Information Below Image */}
+        <div className="pt-2.5 px-1 pb-0.5 flex flex-col gap-1.5 flex-1">
+          <Link href={productUrl} className="block">
+            <h3 className="font-bold text-stone-900 text-xs sm:text-sm line-clamp-1 group-hover:text-[#D92670] transition-colors leading-snug">
+              {product?.name}
+            </h3>
           </Link>
-        ) : (
-          <button
-            onClick={handleQuickAdd}
-            className="absolute bottom-2 right-2 w-10 h-10 rounded-full bg-[#D92670] hover:bg-[#C2185B] text-white flex items-center justify-center z-10 shadow-md transition-all sm:opacity-0 sm:translate-y-1 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 active:scale-90 cursor-pointer"
-            aria-label={`Add ${product?.name} to cart`}
-            title="Quick add to cart"
-          >
-            <ShoppingBag className="w-[18px] h-[18px]" />
-          </button>
-        )}
 
-        {/* Selected Color chip — bottom left of image */}
-        {activeColor && (
-          <div className="absolute bottom-2.5 left-2.5 px-2 py-0.5 bg-black/75 backdrop-blur-xs rounded-full text-[10px] font-semibold text-white flex items-center gap-1.5 shadow-xs pointer-events-none z-[5] max-w-[70%]">
-            <span
-              className="w-2 h-2 rounded-full border border-white/60 flex-shrink-0"
-              style={{ backgroundColor: activeColor.hex }}
-            />
-            <span className="truncate">{activeColor.name}</span>
-          </div>
-        )}
-      </div>
+          {/* Interactive Color Swatches Row (fixed height keeps grids aligned) */}
+          {product?.colors && product.colors.length > 1 ? (
+            <div className="px-2 flex items-center flex-nowrap gap-2.5 h-7 py-1 overflow-x-auto no-scrollbar w-full px-0.5" role="group" aria-label="Available colors">
+              {product.colors.map((color) => {
+                const isSelected = activeColor?.name === color.name;
+                return (
+                  <button
+                    key={color.name}
+                    type="button"
+                    onClick={() => {
+                      setActiveColor(color);
+                      const images = product.images ?? [];
+                      if (typeof color.imageIndex === 'number' && images[color.imageIndex]) {
+                        setActiveImageIndex(color.imageIndex);
+                      } else if (color.images?.length && images.includes(color.images[0])) {
+                        setActiveImageIndex(images.indexOf(color.images[0]));
+                      }
+                    }}
+                    aria-label={`Color: ${color.name}`}
+                    aria-pressed={isSelected}
+                    className={`relative w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full transition-all duration-200 cursor-pointer flex-shrink-0 after:content-[''] after:absolute after:-inset-1.5 after:rounded-full border border-stone-200/50 hover:scale-110 active:scale-95
+                      ${isSelected
+                        ? 'ring-2 ring-[#0C163A] ring-offset-2 scale-110 shadow-xs z-10 bg-white'
+                        : 'hover:border-stone-400'
+                      }`}
+                    style={{ backgroundColor: color.hex }}
+                    title={color.name}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            /* Placeholder spacer to align card heights perfectly when there are no swatches */
+            <div className="h-7" aria-hidden="true" />
+          )}
 
-      {/* Product Information Below Image */}
-      <div className="pt-2.5 px-1 pb-0.5 flex flex-col gap-1.5 flex-1">
-        <Link href={productUrl} className="block">
-          <h3 className="font-bold text-stone-900 text-xs sm:text-sm line-clamp-1 group-hover:text-[#D92670] transition-colors leading-snug">
-            {product?.name}
-          </h3>
-        </Link>
-
-        {/* Rating — compact single-star + score, only when there's data */}
-        {(product?.rating > 0 || product?.reviewCount > 0) && (
-          <div className="flex items-center gap-1 text-[10px] text-stone-500">
-            <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
-            <span className="font-bold text-stone-700">{(product?.rating || 0).toFixed(1)}</span>
-            {product?.reviewCount > 0 && <span className="text-stone-400">({product.reviewCount})</span>}
-          </div>
-        )}
-
-        {/* Interactive Color Swatches Row (fixed height keeps grids aligned) */}
-        {product?.colors && product.colors.length > 1 ? (
-          <div className="flex items-center flex-nowrap gap-2.5 h-7 py-1 overflow-x-auto no-scrollbar w-full px-0.5" role="group" aria-label="Available colors">
-            {product.colors.map((color) => {
-              const isSelected = activeColor?.name === color.name;
-              return (
-                <button
-                  key={color.name}
-                  onClick={() => {
-                    setActiveColor(color);
-                    const images = product.images ?? [];
-                    if (typeof color.imageIndex === 'number' && images[color.imageIndex]) {
-                      setActiveImageIndex(color.imageIndex);
-                    } else if (color.images?.length && images.includes(color.images[0])) {
-                      setActiveImageIndex(images.indexOf(color.images[0]));
-                    }
-                  }}
-                  aria-label={`Color: ${color.name}`}
-                  aria-pressed={isSelected}
-                  className={`relative w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full transition-all duration-200 cursor-pointer flex-shrink-0 after:content-[''] after:absolute after:-inset-1.5 after:rounded-full border border-stone-200/50 hover:scale-110 active:scale-95
-                    ${isSelected
-                      ? 'ring-2 ring-[#0C163A] ring-offset-2 scale-110 shadow-xs z-10 bg-white'
-                      : 'hover:border-stone-400'
-                    }`}
-                  style={{ backgroundColor: color.hex }}
-                  title={color.name}
-                />
-              );
-            })}
-          </div>
-        ) : (
-          /* Placeholder spacer to align card heights perfectly when there are no swatches */
-          <div className="h-7" aria-hidden="true" />
-        )}
-
-        {/* Price Row — price, old price, save pill */}
-        <div className="flex items-center justify-between gap-1 mt-auto pt-0.5">
-          <div className="flex items-baseline gap-1 min-w-0">
+          {/* Price Row */}
+          <div className="flex items-center gap-2 mt-auto pt-0.5">
             <span className="font-extrabold text-stone-900 text-sm sm:text-base">
               ৳ {product?.price}
             </span>
             {product?.originalPrice > product?.price && (
-              <span className="text-[10px] sm:text-xs text-stone-400 line-through font-mono shrink-0">
+              <span className="px-2 py-0.5 bg-pink-50 text-[#D92670] text-[10px] font-bold rounded-full line-through font-mono">
                 ৳ {product?.originalPrice}
               </span>
             )}
           </div>
-          {!product?.isFlashSale && discountPct >= 10 && (
-            <span className="px-1.5 py-0.5 bg-[#D92670]/10 text-[#D92670] text-[9px] font-black rounded-md shrink-0">
-              -{discountPct}%
-            </span>
-          )}
+
+          {/* Bottom Cart Button (left) and Selected Color Name + Dot (right) */}
+          <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-stone-100">
+            <button
+              type="button"
+              onClick={handleAddToCartClick}
+              disabled={isSoldOut}
+              className={`p-2 rounded-full transition-all duration-300 shadow-xs cursor-pointer active:scale-95
+                ${isSoldOut 
+                  ? 'bg-stone-100 text-stone-400 border border-stone-200 cursor-not-allowed'
+                  : 'bg-[#FFF5F7] border border-pink-100 hover:bg-[#D92670] text-[#D92670] hover:text-white'
+                }`}
+              aria-label="Add to cart"
+            >
+              <ShoppingBag className="w-4 h-4" />
+            </button>
+
+            {activeColor && (
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-[9px] text-stone-500 font-extrabold uppercase tracking-wider font-sans truncate max-w-[80px]">
+                  {activeColor.name}
+                </span>
+                <span 
+                  className="w-2.5 h-2.5 rounded-full border border-stone-200/50 shadow-xs flex-shrink-0" 
+                  style={{ backgroundColor: activeColor.hex }}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Glass Apple Toast Feedback */}
+      {showWishlistToast && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] w-[90%] max-w-xs bg-white/70 backdrop-blur-xl border border-white/20 rounded-2xl px-4 py-3 shadow-[0_10px_35px_rgba(217,38,112,0.15)] flex items-center gap-3.5 animate-in slide-in-from-top-10 fade-in duration-300">
+          <div className="w-9 h-9 rounded-full bg-white/90 flex items-center justify-center text-[#D92670] shrink-0 border border-pink-100/60 shadow-xs">
+            <Heart className={`w-4 h-4 ${wishlistToastText.includes('Added') ? 'fill-[#D92670]' : ''}`} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-stone-800 font-extrabold text-xs">{wishlistToastText}</p>
+            <p className="text-stone-500 text-[10px] truncate">{product?.name}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Auth Modal Sign In (Apple Glass Style) */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-[#0C163A]/25 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white/80 backdrop-blur-xl border border-white/30 rounded-3xl p-6 shadow-2xl max-w-sm w-full relative animate-in zoom-in-95 duration-200 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setShowAuthModal(false);
+                setAuthError('');
+              }}
+              className="absolute top-4 right-4 p-1.5 text-stone-400 hover:text-stone-600 rounded-full hover:bg-stone-100 transition-colors"
+              aria-label="Close modal"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="w-12 h-12 rounded-full bg-pink-50 text-[#D92670] flex items-center justify-center mx-auto mb-4 border border-pink-100">
+              <Heart className="w-6 h-6 fill-current" />
+            </div>
+
+            <h3 className="font-serif font-extrabold text-stone-900 text-lg mb-1">
+              Add to Wishlist
+            </h3>
+            <p className="text-xs text-stone-500 leading-relaxed mb-5">
+              Please sign in to save your favorite abayas, hijabs, and couture collections to your wishlist.
+            </p>
+
+            <form onSubmit={handleAuthSubmit} className="space-y-3.5 text-left">
+              <div>
+                <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={authEmail}
+                  onChange={(e) => setAuthEmail(e.target.value)}
+                  placeholder="name@email.com"
+                  className="w-full text-xs px-3.5 py-2.5 bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D92670]/20 focus:border-[#D92670]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={authPassword}
+                  onChange={(e) => setAuthPassword(e.target.value)}
+                  placeholder="Enter password"
+                  className="w-full text-xs px-3.5 py-2.5 bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D92670]/20 focus:border-[#D92670]"
+                />
+              </div>
+
+              {authError && (
+                <p className="text-[11px] font-bold text-red-500 mt-1">
+                  {authError}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={isSubmittingAuth}
+                className="w-full py-2.5 bg-[#D92670] hover:bg-[#C2185B] text-white font-bold text-xs rounded-xl shadow-md transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+              >
+                {isSubmittingAuth ? 'Signing in...' : 'Sign In'}
+              </button>
+            </form>
+
+            <div className="mt-4 text-center">
+              <Link
+                href="/account"
+                onClick={() => setShowAuthModal(false)}
+                className="text-[11px] font-bold text-[#D92670] hover:underline"
+              >
+                Don&apos;t have an account? Sign Up
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -155,7 +155,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#FFFBF0]/95 backdrop-blur-md border-b border-[#F2C76E]/40 shadow-xs">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-pink-100/80 shadow-xs">
       {/* Main Top Header Bar */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4">
@@ -178,21 +178,21 @@ export function Header() {
                 onBlur={() => setTimeout(() => setIsSearchFocused(false), 250)}
                 placeholder="Search abayas, hijabs, colors (emerald, black)..."
                 aria-label="Search store products"
-                className="w-full pl-5 pr-10 py-2.5 bg-white border-2 border-[#9B050B] rounded-full text-sm text-[#0C163A] placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[#9B050B]/30 transition-all shadow-xs"
+                className="w-full pl-5 pr-10 py-2.5 bg-white border border-[#D92670] focus:border-[#D92670] rounded-full text-sm text-[#0C163A] placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[#D92670]/10 transition-all shadow-xs"
               />
 
               {searchQuery ? (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-stone-400 hover:text-[#9B050B] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-stone-400 hover:text-[#D92670] transition-colors"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               ) : (
                 <button
                   type="submit"
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#9B050B] hover:scale-110 transition-transform cursor-pointer"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#D92670] hover:scale-110 transition-transform cursor-pointer"
                 >
                   <Search className="w-4.5 h-4.5" />
                 </button>
@@ -201,21 +201,21 @@ export function Header() {
 
             {/* Desktop Autocomplete Dropdown */}
             {isSearchFocused && searchResults.length > 0 && (
-              <div className="absolute left-0 top-full mt-2.5 w-[480px] max-w-xl bg-[#FFFBF0] border-2 border-[#F2C76E] rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 font-sans">
+              <div className="absolute left-0 top-full mt-2.5 w-[480px] max-w-xl bg-white border border-pink-100 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 font-sans">
 
                 {/* Header Meta Bar */}
-                <div className="px-3.5 py-2.5 bg-[#F2C76E]/25 border-b border-[#F2C76E]/40 text-xs font-bold text-[#0C163A] uppercase tracking-wider flex items-center justify-between">
+                <div className="px-3.5 py-2.5 bg-pink-50/55 border-b border-pink-100/60 text-xs font-bold text-[#D92670] uppercase tracking-wider flex items-center justify-between">
                   <span className="flex items-center gap-1.5 font-serif">
-                    <Sparkles className="w-3.5 h-3.5 text-[#9B050B]" />
+                    <Sparkles className="w-3.5 h-3.5 text-[#D92670]" />
                     <span>Product Suggestions</span>
                   </span>
-                  <span className="font-mono text-[10px] bg-white px-2.5 py-0.5 rounded-full border border-[#F2C76E]/60 text-[#9B050B]">
+                  <span className="font-mono text-[10px] bg-white px-2.5 py-0.5 rounded-full border border-pink-200 text-[#D92670]">
                     {searchResults.length} {searchResults.length === 1 ? 'Item' : 'Items'} Found
                   </span>
                 </div>
 
                 {/* Results List */}
-                <div className="divide-y divide-[#F2C76E]/25 max-h-[70vh] overflow-y-auto">
+                <div className="divide-y divide-pink-50 max-h-[70vh] overflow-y-auto">
                   {searchResults.map((prod) => {
                     const matchedVar = getMatchedVariation(prod, searchQuery);
                     const displayImage = matchedVar?.image || prod.images?.[0] || '';
@@ -225,22 +225,22 @@ export function Header() {
                         key={prod.id}
                         href={matchedVar?.colorName ? `/product/${prod.slug}?color=${encodeURIComponent(matchedVar.colorName)}` : `/product/${prod.slug}`}
                         onClick={() => setIsSearchFocused(false)}
-                        className="flex items-center gap-3 p-3 hover:bg-[#F2C76E]/30 transition-colors group text-left cursor-pointer"
+                        className="flex items-center gap-3 p-3 hover:bg-pink-50/70 transition-colors group text-left cursor-pointer"
                       >
                         {/* Thumbnail Image */}
-                        <div className="relative w-14 h-16 rounded-xl overflow-hidden bg-stone-100 shrink-0 border border-[#F2C76E]/50 shadow-xs">
+                        <div className="relative w-14 h-16 rounded-xl overflow-hidden bg-stone-100 shrink-0 border border-pink-100/80 shadow-xs">
                           <SafeImage src={displayImage} alt={prod.name} className="object-cover group-hover:scale-105 transition-transform duration-300" />
                         </div>
 
                         {/* Title, Category & Color Swatch Info */}
                         <div className="flex-1 min-w-0 space-y-1">
-                          <p className="font-serif font-bold text-sm text-[#0C163A] group-hover:text-[#9B050B] transition-colors line-clamp-1">
+                          <p className="font-sans font-bold text-sm text-[#0C163A] group-hover:text-[#D92670] transition-colors line-clamp-1">
                             {prod.name}
                           </p>
 
                           {/* Matched Color Variation Badge */}
                           {matchedVar ? (
-                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-[#9B050B]/10 border border-[#9B050B]/30 rounded-md text-xs font-bold text-[#9B050B]">
+                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-pink-50 text-[#D92670] border border-pink-100 rounded-md text-xs font-bold">
                               <span
                                 className="w-2.5 h-2.5 rounded-full border border-stone-300 shrink-0 shadow-xs"
                                 style={{ backgroundColor: matchedVar.hex }}
@@ -271,7 +271,7 @@ export function Header() {
 
                         {/* Price Column */}
                         <div className="text-right shrink-0">
-                          <span className="font-extrabold text-sm text-[#9B050B] font-mono block">
+                          <span className="font-extrabold text-sm text-[#D92670] font-mono block">
                             {formatCurrency(prod.price)}
                           </span>
                           {prod.originalPrice > prod.price && (
@@ -289,7 +289,7 @@ export function Header() {
                 <button
                   type="button"
                   onClick={handleSearchSubmit}
-                  className="w-full py-3 bg-[#9B050B] hover:bg-[#B8000A] text-[#FFFBF0] font-bold text-xs text-center transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-inner"
+                  className="w-full py-3 bg-[#D92670] hover:bg-[#C2185B] text-white font-bold text-xs text-center transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-inner"
                 >
                   <span>View All Search Results for &quot;{searchQuery}&quot;</span>
                   <span>→</span>
@@ -302,12 +302,12 @@ export function Header() {
           {/* Cart Icon - Only visible on Desktop (lg:) screens */}
           <Link
             href={'/cart'}
-            className="hidden lg:flex relative p-2.5 text-[#0C163A] hover:text-[#9B050B] transition-colors rounded-full hover:bg-[#F2C76E]/20 cursor-pointer items-center gap-1.5 shrink-0"
+            className="hidden lg:flex relative p-2.5 text-[#0C163A] hover:text-[#D92670] transition-colors rounded-full hover:bg-pink-50 cursor-pointer items-center gap-1.5 shrink-0"
             aria-label="Shopping Cart"
           >
             <ShoppingBag className="w-6 h-6 stroke-[1.8]" />
             {cartCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-[#9B050B] text-[#FFFBF0] text-xs font-bold rounded-full flex items-center justify-center shadow-xs">
+              <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-[#D92670] text-white text-xs font-bold rounded-full flex items-center justify-center shadow-xs">
                 {cartCount}
               </span>
             )}
@@ -316,15 +316,15 @@ export function Header() {
       </div>
 
       {/* Desktop Pill Navigation Row */}
-      <div className="hidden lg:block bg-[#FFFBF0] border-t border-[#F2C76E]/30 py-3">
+      <div className="hidden lg:block bg-white border-t border-pink-100/60 py-3">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <nav className="flex items-center gap-3">
             {/* Home Pill */}
             <Link
               href="/"
               className={`px-5 py-2 rounded-full text-sm font-semibold flex items-center gap-2 transition-all ${pathname === '/'
-                ? 'bg-[#9B050B] text-[#FFFBF0] shadow-xs'
-                : 'bg-white hover:bg-[#F2C76E]/20 border border-[#F2C76E]/50 text-[#0C163A] hover:text-[#9B050B]'
+                ? 'bg-[#D92670] text-white shadow-xs'
+                : 'bg-white hover:bg-pink-50/60 border border-stone-200 text-[#0C163A] hover:text-[#D92670]'
                 }`}
             >
               <Home className="w-4 h-4" />
@@ -335,8 +335,8 @@ export function Header() {
             <Link
               href="/shop"
               className={`px-5 py-2 rounded-full text-sm font-medium flex items-center gap-2 transition-all ${pathname === '/shop'
-                ? 'bg-[#9B050B] text-[#FFFBF0] shadow-xs font-semibold'
-                : 'bg-white hover:bg-[#F2C76E]/20 border border-[#F2C76E]/50 text-[#0C163A] hover:text-[#9B050B]'
+                ? 'bg-[#D92670] text-white shadow-xs font-semibold'
+                : 'bg-white hover:bg-pink-50/60 border border-stone-200 text-[#0C163A] hover:text-[#D92670]'
                 }`}
             >
               <LayoutGrid className="w-4 h-4" />
@@ -347,8 +347,8 @@ export function Header() {
             <Link
               href="/live-promotions"
               className={`px-5 py-2 rounded-full text-sm font-medium flex items-center gap-2 transition-all ${pathname === '/live-promotions'
-                ? 'bg-[#9B050B] text-[#FFFBF0] shadow-xs font-semibold'
-                : 'bg-white hover:bg-[#F2C76E]/20 border border-[#F2C76E]/50 text-[#0C163A] hover:text-[#9B050B]'
+                ? 'bg-[#D92670] text-white shadow-xs font-semibold'
+                : 'bg-white hover:bg-pink-50/60 border border-stone-200 text-[#0C163A] hover:text-[#D92670]'
                 }`}
             >
               <Sparkles className="w-4 h-4" />
@@ -359,8 +359,8 @@ export function Header() {
             <Link
               href="/track"
               className={`px-5 py-2 rounded-full text-sm font-medium flex items-center gap-2 transition-all ${pathname === '/track'
-                ? 'bg-[#9B050B] text-[#FFFBF0] shadow-xs font-semibold'
-                : 'bg-white hover:bg-[#F2C76E]/20 border border-[#F2C76E]/50 text-[#0C163A] hover:text-[#9B050B]'
+                ? 'bg-[#D92670] text-white shadow-xs font-semibold'
+                : 'bg-white hover:bg-pink-50/60 border border-stone-200 text-[#0C163A] hover:text-[#D92670]'
                 }`}
             >
               <Truck className="w-4 h-4" />
@@ -371,9 +371,9 @@ export function Header() {
           {/* Login Pill Right Side */}
           <Link
             href="/account"
-            className="px-5 py-2 rounded-full text-sm font-medium bg-white hover:bg-[#F2C76E]/20 border border-[#F2C76E]/50 text-[#0C163A] hover:text-[#9B050B] flex items-center gap-2 transition-all"
+            className="px-5 py-2 rounded-full text-sm font-medium bg-white hover:bg-pink-50/60 border border-stone-200 text-[#0C163A] hover:text-[#D92670] flex items-center gap-2 transition-all"
           >
-            <User className="w-4 h-4 text-[#9B050B]" />
+            <User className="w-4 h-4 text-[#D92670]" />
             <span>{userName ? userName : 'Login'}</span>
           </Link>
         </div>
