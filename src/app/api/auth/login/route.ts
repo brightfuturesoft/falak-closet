@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyPassword } from '@/lib/authCrypto';
+import { verifyPassword, hashPassword, needsRehash } from '@/lib/authCrypto';
+import { signUserSessionToken, USER_SESSION_COOKIE, USER_COOKIE_OPTIONS } from '@/lib/session';
 
 export async function POST(req: Request) {
   try {
@@ -47,8 +48,16 @@ export async function POST(req: Request) {
       );
     }
 
-    // Return only safe fields — never expose passwordHash or resetOtp
-    return NextResponse.json({
+    // Upgrade legacy shared-salt hashes to per-user-salt format on successful login.
+    if (needsRehash(user.passwordHash)) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash: hashPassword(password) },
+      });
+    }
+
+    // Establish the httpOnly server session.
+    const response = NextResponse.json({
       success: true,
       user: {
         id: user.id,
@@ -58,7 +67,11 @@ export async function POST(req: Request) {
         district: user.district,
         fullAddress: user.fullAddress,
       },
+      wishlist: user.wishlist ?? [],
+      cart: user.cart ?? [],
     });
+    response.cookies.set(USER_SESSION_COOKIE, signUserSessionToken(user.id), USER_COOKIE_OPTIONS);
+    return response;
   } catch (error) {
     console.error('[login]', error);
     return NextResponse.json(

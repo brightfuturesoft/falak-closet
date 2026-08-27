@@ -2,8 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { SmartImage } from '@/components/ui/SmartImage';
-import { Heart, ShoppingBag, ArrowRight, Star, X } from 'lucide-react';
+import { Heart, ShoppingBag, Zap, Star, X } from 'lucide-react';
 import { Product, type ProductColor } from '@/data/products';
 import { useCart } from '@/context/CartContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
@@ -31,7 +32,8 @@ function resolveImageIndex(color: ProductColor | null, images: string[]): number
 }
 
 export function ProductCard({ product, selectedColor }: ProductCardProps) {
-  const { addToCart, toggleWishlist, isInWishlist } = useCart();
+  const router = useRouter();
+  const { addToCart, toggleWishlist, isInWishlist, isAuthenticated } = useCart();
   const { trackEvent } = useAnalytics();
   const { showToast } = useToast();
   const isWishlisted = isInWishlist(product?.id);
@@ -107,8 +109,7 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
     e.stopPropagation();
 
     // Check if user is authenticated
-    const savedUser = localStorage.getItem('falak_user_account');
-    if (!savedUser) {
+    if (!isAuthenticated) {
       setShowAuthModal(true);
       return;
     }
@@ -139,15 +140,6 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
         return;
       }
 
-      const profile = {
-        name: data.user.name,
-        email: data.user.email,
-        phone: data.user.phone || '',
-        district: data.user.district || 'Dhaka',
-        fullAddress: data.user.fullAddress || '',
-      };
-      
-      localStorage.setItem('falak_user_account', JSON.stringify(profile));
       setShowAuthModal(false);
       setAuthEmail('');
       setAuthPassword('');
@@ -158,7 +150,7 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
       setShowWishlistToast(true);
 
       // Notify other parts of the app
-      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new Event('falak:auth-changed'));
     } catch {
       setAuthError('Connection issue. Please try again.');
     } finally {
@@ -194,8 +186,31 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
       title: 'Added to Cart',
       subtitle: `${product.name} (${activeColor?.name || 'Standard'})`,
       image: currentImage,
-      price: product.price
+      price: product.price,
+      actionLink: "/checkout",
+      actionText: "Order Now"
     });
+  };
+
+  /** Buy Now — skips the cart, goes straight to checkout with only this item. */
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isSoldOut) {
+      showToast({ type: 'info', title: 'Sold Out', subtitle: 'This variation is sold out.' });
+      return;
+    }
+
+    const color = activeColor?.name || '';
+    const size = sizesList[0] || 'Free Size';
+    const params = new URLSearchParams({
+      buyNow: product.id,
+      color,
+      size,
+      qty: '1',
+    });
+    router.push(`/checkout?${params.toString()}`);
   };
 
   return (
@@ -297,32 +312,66 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
             )}
           </div>
 
-          {/* Bottom Cart Button (left) and Selected Color Name + Dot (right) */}
-          <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-stone-100">
-            <button
-              type="button"
-              onClick={handleAddToCartClick}
-              disabled={isSoldOut}
-              className={`p-2 rounded-full transition-all duration-300 shadow-xs cursor-pointer active:scale-95
-                ${isSoldOut 
-                  ? 'bg-stone-100 text-stone-400 border border-stone-200 cursor-not-allowed'
-                  : 'bg-[#FFF5F7] border border-pink-100 hover:bg-[#D92670] text-[#D92670] hover:text-white'
-                }`}
-              aria-label="Add to cart"
-            >
-              <ShoppingBag className="w-4 h-4" />
-            </button>
+          {/* Bottom: Bag + Buy Now (inline sm+) + Color dot | Buy Now full-width on mobile */}
+          <div className="flex flex-col pt-2.5 mt-2 border-t border-stone-100 gap-2">
 
-            {activeColor && (
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-[9px] text-stone-500 font-extrabold uppercase tracking-wider font-sans truncate max-w-[80px]">
-                  {activeColor.name}
-                </span>
-                <span 
-                  className="w-2.5 h-2.5 rounded-full border border-stone-200/50 shadow-xs flex-shrink-0" 
-                  style={{ backgroundColor: activeColor.hex }}
-                />
-              </div>
+            {/* Row 1: Bag icon — Buy Now pill (sm+ only) — color dot */}
+            <div className="flex items-center gap-1.5">
+              {/* Add to Cart bag */}
+              <button
+                type="button"
+                onClick={handleAddToCartClick}
+                disabled={isSoldOut}
+                className={`p-2 rounded-full transition-all duration-300 shadow-xs cursor-pointer active:scale-95 flex-shrink-0
+                  ${isSoldOut
+                    ? 'bg-stone-100 text-stone-400 border border-stone-200 cursor-not-allowed'
+                    : 'bg-[#FFF5F7] border border-pink-100 hover:bg-[#D92670] text-[#D92670] hover:text-white'
+                  }`}
+                aria-label="Add to cart"
+              >
+                <ShoppingBag className="w-4 h-4" />
+              </button>
+
+              {/* Buy Now — inline pill, visible on sm+ only */}
+              {!isSoldOut && (
+                <button
+                  type="button"
+                  onClick={handleBuyNow}
+                  className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#D92670] hover:bg-[#C2185B] text-white text-[10px] font-bold shadow-xs transition-all duration-200 active:scale-95 cursor-pointer flex-shrink-0"
+                  aria-label="Buy Now"
+                >
+                  <Zap className="w-3 h-3" />
+                  Buy Now
+                </button>
+              )}
+
+              {/* Push color dot to right */}
+              <div className="flex-1" />
+
+              {activeColor && (
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-[9px] text-stone-500 font-extrabold uppercase tracking-wider font-sans truncate max-w-[80px]">
+                    {activeColor.name}
+                  </span>
+                  <span
+                    className="w-2.5 h-2.5 rounded-full border border-stone-200/50 shadow-xs flex-shrink-0"
+                    style={{ backgroundColor: activeColor.hex }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Row 2: Buy Now full-width — mobile only */}
+            {!isSoldOut && (
+              <button
+                type="button"
+                onClick={handleBuyNow}
+                className="sm:hidden w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#D92670] hover:bg-[#C2185B] text-white text-[11px] font-bold shadow-xs transition-all duration-200 active:scale-95 cursor-pointer"
+                aria-label="Buy Now"
+              >
+                <Zap className="w-3.5 h-3.5 fill-white" />
+                Buy Now
+              </button>
             )}
           </div>
         </div>
@@ -414,7 +463,7 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
 
             <div className="mt-4 text-center">
               <Link
-                href="/account"
+                href="/account?type=register"
                 onClick={() => setShowAuthModal(false)}
                 className="text-[11px] font-bold text-[#D92670] hover:underline"
               >

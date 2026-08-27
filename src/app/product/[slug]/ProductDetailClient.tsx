@@ -46,7 +46,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   const searchParams = useSearchParams();
   const colorQueryParam = searchParams.get('color');
   const router = useRouter();
-  const { addToCart, toggleWishlist, isInWishlist, products } = useCart();
+  const { addToCart, toggleWishlist, isInWishlist, products, user } = useCart();
   const { trackEvent } = useAnalytics();
   const { showToast } = useToast();
 
@@ -250,22 +250,14 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
     (product?.reviewsList || []).filter((r) => (r.status ?? 'approved') === 'approved')
   );
 
-  // Load user account from localStorage
-  const [userProfile, setUserProfile] = useState<{ name?: string; email?: string; phone?: string } | null>(null);
-
+  // Sync review author name when user profile is loaded from session
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('falak_user_account');
-      if (saved) {
-        const profile = JSON.parse(saved);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setUserProfile(profile);
-        if (profile.name) {
-          setNewReview((prev) => ({ ...prev, author: profile.name }));
-        }
-      }
-    } catch { }
-  }, []);
+    if (user?.name) {
+      Promise.resolve().then(() => {
+        setNewReview((prev) => ({ ...prev, author: user.name }));
+      });
+    }
+  }, [user]);
 
   // Lock body scroll while any owned modal is open
   useEffect(() => {
@@ -300,8 +292,8 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...newReview,
-          email: userProfile?.email || '',
-          phone: userProfile?.phone || '',
+          email: user?.email || '',
+          phone: user?.phone || '',
         }),
       });
       const data = await res.json();
@@ -379,13 +371,19 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
   const handleBuyNow = () => {
     if (!product || isOutOfStock) return;
-    addToCart(product, selectedColor, selectedSize, quantity);
     trackEvent('begin_checkout', {
       source: 'buy_now_button',
       productId: product.id,
       price: product.price * quantity
     });
-    router.push('/checkout');
+    // Navigate with buyNow params — checkout uses ONLY this item, cart untouched.
+    const params = new URLSearchParams({
+      buyNow: product.id,
+      color: selectedColor,
+      size: selectedSize,
+      qty: String(quantity),
+    });
+    router.push(`/checkout?${params.toString()}`);
   };
 
   const handleShare = async () => {
@@ -1194,7 +1192,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               </button>
             </div>
 
-            {!userProfile ? (
+            {!user ? (
               <div className="p-6 text-center space-y-4">
                 <div className="w-12 h-12 bg-pink-50 text-[#D92670] rounded-full flex items-center justify-center mx-auto">
                   <Star className="w-6 h-6 fill-current" />
