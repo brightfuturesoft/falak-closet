@@ -254,7 +254,6 @@ export function AdminDashboardProvider({ children }: { children: React.ReactNode
 
     refreshProductsFromApi();
     setIsRefreshing(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshProductsFromApi]);
 
   // Real-Time Socket Listener & Sound Alert Notification
@@ -273,7 +272,6 @@ export function AdminDashboardProvider({ children }: { children: React.ReactNode
     const onDisconnect = () => setIsSocketConnected(false);
 
     if (socket.connected) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsSocketConnected(true);
     }
 

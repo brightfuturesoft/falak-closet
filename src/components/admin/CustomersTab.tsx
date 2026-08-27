@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Users, MapPin, Search, MessageSquare, ShieldCheck, Ban, Globe,
   ShieldAlert, ShoppingCart, X, Package, Tag, Palette, Ruler,
   Hash, DollarSign, ShoppingBag, Download, Copy, Check, Crown,
-  ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, UserX,
+  ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, UserX, Loader2,
 } from 'lucide-react';
 import { OrderRecord } from '@/context/CartContext';
 import { Product } from '@/data/products';
@@ -24,20 +24,8 @@ interface DbCartItem {
   quantity: number;
 }
 
-interface UserDbRecord {
-  _id?: string;
-  email: string;
-  phone: string;
-  name: string;
-  district: string;
-  fullAddress: string;
-  ip?: string;
-  isBlocked?: boolean;
-  createdAt?: string;
-  cart?: DbCartItem[];
-}
-
-interface UnifiedCustomer {
+/** One row as returned by GET /api/customers (server-aggregated + paginated). */
+interface ApiCustomer {
   id: string;
   name: string;
   email: string;
@@ -48,8 +36,35 @@ interface UnifiedCustomer {
   totalOrders: number;
   totalSpent: number;
   isBlocked: boolean;
-  registeredDate: string;
+  registeredAt: string | null;
   cart: DbCartItem[];
+}
+
+interface CustomersPagination {
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+interface CustomersCounts {
+  all: number;
+  vip: number;
+  active: number;
+  blocked: number;
+  cart: number;
+}
+
+interface CustomersStats {
+  totalCustomers: number;
+  vipCount: number;
+  blockedCount: number;
+  lifetimeRevenue: number;
+  openCartsCount: number;
+  openCartValue: number;
+  registeredCount: number;
+  guestCount: number;
+  maxSpend: number;
 }
 
 interface ResolvedCartItem {
@@ -64,11 +79,14 @@ interface ResolvedCartItem {
 
 type CustomerTier = 'blocked' | 'vip' | 'active';
 
-const customerTier = (c: UnifiedCustomer): CustomerTier => {
+const customerTier = (c: ApiCustomer): CustomerTier => {
   if (c.isBlocked) return 'blocked';
   if (c.totalSpent > 10000 || c.totalOrders >= 2) return 'vip';
   return 'active';
 };
+
+const FALLBACK_IP = '103.24.12.89';
+const PAGE_SIZE_OPTIONS = [8, 16, 24];
 
 // ─── Small building blocks ────────────────────────────────────────────────────
 
@@ -158,6 +176,7 @@ function StatCard({
 
 type SortKey = 'name' | 'orders' | 'spent';
 type SortDir = 'asc' | 'desc';
+type StatusFilter = 'all' | 'vip' | 'active' | 'blocked' | 'cart';
 
 function SortableHeader({
   label,
@@ -200,6 +219,18 @@ function SortableHeader({
   );
 }
 
+/** Centered window of page numbers, e.g. 1 … 4 5 6 … 12 */
+function pageWindow(current: number, total: number, span = 5): (number | '…')[] {
+  if (total <= span + 2) return Array.from({ length: total }, (_, i) => i + 1);
+  const start = Math.max(2, current - Math.floor((span - 2) / 2));
+  const end = Math.min(total - 1, start + span - 3);
+  const middle: number[] = [];
+  for (let p = start; p <= end; p++) middle.push(p);
+  return [1, start > 2 ? '…' : null, ...middle, end < total - 1 ? '…' : null, total].filter(
+    (p): p is number | '…' => p !== null
+  );
+}
+
 // ─── Cart Detail Modal ────────────────────────────────────────────────────────
 
 function CartDetailModal({
@@ -207,7 +238,7 @@ function CartDetailModal({
   products,
   onClose,
 }: {
-  customer: UnifiedCustomer;
+  customer: ApiCustomer;
   products: Product[];
   onClose: () => void;
 }) {
@@ -370,192 +401,110 @@ function CartDetailModal({
 
 // ─── Main Tab ─────────────────────────────────────────────────────────────────
 
-const PAGE_SIZE = 8;
-
-type StatusFilter = 'all' | 'vip' | 'active' | 'blocked' | 'cart';
-
 export function CustomersTab({ orders, products }: CustomersTabProps) {
   const { addToast } = useAdminDashboard();
 
+  // The provider recreates `addToast` on every render (toasts, socket state,
+  // 30s order syncs). A ref keeps it out of `fetchCustomers`'s dependencies so
+  // those re-renders never trigger a spurious customers refetch.
+  const addToastRef = useRef(addToast);
+  useEffect(() => {
+    addToastRef.current = addToast;
+  }, [addToast]);
+
+  // Server-side pagination state — every change below refetches /api/customers.
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [sortKey, setSortKey] = useState<SortKey>('spent');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
 
-  const [dbUsers, setDbUsers] = useState<UserDbRecord[]>([]);
+  // API response state
+  const [customers, setCustomers] = useState<ApiCustomer[]>([]);
+  const [pagination, setPagination] = useState<CustomersPagination>({
+    page: 1,
+    pageSize: PAGE_SIZE_OPTIONS[0],
+    totalItems: 0,
+    totalPages: 1,
+  });
+  const [counts, setCounts] = useState<CustomersCounts>({ all: 0, vip: 0, active: 0, blocked: 0, cart: 0 });
+  const [stats, setStats] = useState<CustomersStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [blockedIps, setBlockedIps] = useState<Set<string>>(new Set());
-  const [cartModalCustomer, setCartModalCustomer] = useState<UnifiedCustomer | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const [cartModalCustomer, setCartModalCustomer] = useState<ApiCustomer | null>(null);
   const [copiedPhone, setCopiedPhone] = useState<string | null>(null);
 
-  // Load registered users from User collection
-  const loadUsersAndSecurity = async () => {
-    try {
-      const res = await fetch('/api/user/all');
-      const data = await res.json();
-      if (data.users) {
-        setDbUsers(data.users);
+  const buildParams = useCallback(
+    (overrides?: { pageSize?: number }) =>
+      new URLSearchParams({
+        page: String(page),
+        pageSize: String(overrides?.pageSize ?? pageSize),
+        query: debouncedQuery,
+        filter: statusFilter,
+        sort: sortKey,
+        dir: sortDir,
+      }),
+    [page, pageSize, debouncedQuery, statusFilter, sortKey, sortDir]
+  );
+
+  const fetchCustomers = useCallback(
+    async (signal?: AbortSignal) => {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`/api/customers?${buildParams()}`, {
+          signal,
+          cache: 'no-store',
+        });
+        const data = await res.json().catch(() => null);
+
+        if (!res.ok || !data?.success) {
+          throw new Error(data?.error || `HTTP ${res.status}`);
+        }
+
+        setCustomers(data.customers || []);
+        setPagination(data.pagination);
+        setCounts(data.counts);
+        setStats(data.stats);
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') return;
+        addToastRef.current('error', `Could not load customers: ${(err as Error).message}`);
+      } finally {
+        if (!signal?.aborted) setIsLoading(false);
       }
-    } catch { }
+    },
+    [buildParams]
+  );
 
-    try {
-      const res = await fetch('/api/security/block-ip');
-      const data = await res.json();
-      const localBlocked = JSON.parse(localStorage.getItem('falak_blocked_ips') || '[]');
-      const allBlocked = [...(data.blockedIps || []), ...localBlocked];
-      setBlockedIps(new Set(allBlocked.map((b: { ip: string }) => b.ip)));
-    } catch {
-      const localBlocked = JSON.parse(localStorage.getItem('falak_blocked_ips') || '[]');
-      setBlockedIps(new Set(localBlocked.map((b: { ip: string }) => b.ip)));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // Fetch whenever any pagination/filter/sort param changes. An AbortController
+  // cancels the stale request when params change again mid-flight.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetches resolve async, but the rule flags the setState calls inside
-    loadUsersAndSecurity();
-  }, []);
+    const controller = new AbortController();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetchCustomers flips isLoading synchronously before its first await
+    fetchCustomers(controller.signal);
+    return () => controller.abort();
+  }, [fetchCustomers]);
 
-  // Build unified customer dictionary combining User Collection & Order Logs
-  const customerMap: Record<string, UnifiedCustomer> = useMemo(() => {
-    const map: Record<string, UnifiedCustomer> = {};
+  // Debounce the search box so we hit the API once typing settles, not per key.
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(t);
+  }, [query]);
 
-    // First seed from User Collection DB
-    dbUsers.forEach((u) => {
-      const key = u.phone || u.email;
-      if (!key) return;
-      map[key] = {
-        id: u._id || key,
-        name: u.name,
-        email: u.email,
-        phone: u.phone,
-        district: u.district || 'Dhaka',
-        address: u.fullAddress || 'Dhaka, Bangladesh',
-        ip: u.ip || '103.24.12.89',
-        totalOrders: 0,
-        totalSpent: 0,
-        isBlocked: u.isBlocked || blockedIps.has(u.ip || ''),
-        registeredDate: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Registered',
-        cart: u.cart ?? [],
-      };
-    });
+  // Live-ness: when the layout's order feed changes (socket alert or its 30s
+  // sync), refetch the current page so new buyers appear without a manual reload.
+  const ordersCount = orders.length;
+  const lastOrdersCountRef = useRef(ordersCount);
+  useEffect(() => {
+    if (lastOrdersCountRef.current === ordersCount) return;
+    lastOrdersCountRef.current = ordersCount;
+    fetchCustomers();
+  }, [ordersCount, fetchCustomers]);
 
-    // Then aggregate orders
-    orders.forEach((o) => {
-      const key = o.shippingAddress.phone || o.userEmail || 'Guest';
-      const ip = o.userIp || '103.24.12.89';
-
-      if (!map[key]) {
-        map[key] = {
-          id: o.id,
-          name: o.shippingAddress.fullName,
-          email: o.userEmail || `${o.shippingAddress.phone}@falakcloset.com`,
-          phone: o.shippingAddress.phone,
-          district: o.shippingAddress.district || o.shippingAddress.city || 'Dhaka',
-          address: o.shippingAddress.fullAddress || o.shippingAddress.street || 'Dhaka, Bangladesh',
-          ip: ip,
-          totalOrders: 1,
-          totalSpent: o.total,
-          isBlocked: blockedIps.has(ip),
-          // eslint-disable-next-line react-hooks/purity -- display-only fallback timestamp for orders missing createdAt
-          registeredDate: new Date(o.createdAt || Date.now()).toLocaleDateString(),
-          cart: [],
-        };
-      } else {
-        map[key].totalOrders += 1;
-        map[key].totalSpent += o.total;
-        if (!map[key].ip || map[key].ip === '103.24.12.89') {
-          map[key].ip = ip;
-        }
-        if (blockedIps.has(ip)) {
-          map[key].isBlocked = true;
-        }
-      }
-    });
-
-    return map;
-  }, [dbUsers, orders, blockedIps]);
-
-  const allCustomers = useMemo(() => Object.values(customerMap), [customerMap]);
-
-  // Derived stats for KPI cards
-  const stats = useMemo(() => {
-    const vipCount = allCustomers.filter((c) => customerTier(c) === 'vip').length;
-    const blockedCount = allCustomers.filter((c) => customerTier(c) === 'blocked').length;
-    const lifetimeRevenue = allCustomers.reduce((s, c) => s + c.totalSpent, 0);
-    const openCarts = allCustomers.filter((c) => c.cart.length > 0);
-    const openCartValue = openCarts.reduce(
-      (s, c) =>
-        s +
-        c.cart.reduce((sum, i) => {
-          const product = products.find((p) => p.id === i.productId);
-          return sum + (product?.price ?? 0) * i.quantity;
-        }, 0),
-      0
-    );
-    const registeredCount = Math.min(dbUsers.length, allCustomers.length);
-    return {
-      vipCount,
-      blockedCount,
-      lifetimeRevenue,
-      openCartsCount: openCarts.length,
-      openCartValue,
-      registeredCount,
-      guestCount: Math.max(0, allCustomers.length - registeredCount),
-    };
-  }, [allCustomers, dbUsers.length, products]);
-
-  // Search + status filter
-  const filteredCustomers = useMemo(() => {
-    return allCustomers.filter((c) => {
-      if (statusFilter !== 'all') {
-        if (statusFilter === 'cart' && c.cart.length === 0) return false;
-        if (statusFilter !== 'cart' && customerTier(c) !== statusFilter) return false;
-      }
-      if (!query.trim()) return true;
-      const q = query.toLowerCase();
-      return (
-        c.name.toLowerCase().includes(q) ||
-        c.phone.includes(q) ||
-        c.email.toLowerCase().includes(q) ||
-        c.district.toLowerCase().includes(q) ||
-        c.ip.includes(q)
-      );
-    });
-  }, [allCustomers, query, statusFilter]);
-
-  // Sorting
-  const sortedCustomers = useMemo(() => {
-    const list = [...filteredCustomers];
-    const dir = sortDir === 'asc' ? 1 : -1;
-    list.sort((a, b) => {
-      switch (sortKey) {
-        case 'name':
-          return a.name.localeCompare(b.name) * dir;
-        case 'orders':
-          return (a.totalOrders - b.totalOrders) * dir;
-        case 'spent':
-        default:
-          return (a.totalSpent - b.totalSpent) * dir;
-      }
-    });
-    return list;
-  }, [filteredCustomers, sortKey, sortDir]);
-
-  const totalPages = Math.max(1, Math.ceil(sortedCustomers.length / PAGE_SIZE));
-  const clampedPage = Math.min(page, totalPages);
-  const pagedCustomers = sortedCustomers.slice(
-    (clampedPage - 1) * PAGE_SIZE,
-    clampedPage * PAGE_SIZE
-  );
-  const maxSpent = useMemo(
-    () => allCustomers.reduce((m, c) => Math.max(m, c.totalSpent), 0),
-    [allCustomers]
-  );
-
-  // Reset to first page whenever the result set changes
+  // Param setters that also reset to the first page — the server would clamp
+  // anyway, but starting from page 1 is what the user expects after filtering.
   const applyQuery = (value: string) => {
     setQuery(value);
     setPage(1);
@@ -576,6 +525,11 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
     setPage(1);
   };
 
+  const applyPageSize = (size: number) => {
+    setPageSize(size);
+    setPage(1);
+  };
+
   const copyPhone = async (phone: string) => {
     if (!phone) return;
     try {
@@ -587,94 +541,113 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
     }
   };
 
-  const handleToggleBlockIp = async (customer: UnifiedCustomer) => {
-    const targetIp = customer.ip || '103.24.12.89';
-    const isCurrentlyBlocked = blockedIps.has(targetIp);
+  // Optimistic block/unblock: flip the row immediately, hit the security API,
+  // then refetch so counts/stats stay truthful. Reverts on failure.
+  const handleToggleBlockIp = async (customer: ApiCustomer) => {
+    const targetIp = customer.ip || FALLBACK_IP;
+    const wasBlocked = customer.isBlocked;
 
-    if (isCurrentlyBlocked) {
-      try {
-        await fetch(`/api/security/block-ip?ip=${encodeURIComponent(targetIp)}`, { method: 'DELETE' });
-      } catch { }
+    setCustomers((prev) =>
+      prev.map((c) => (c.id === customer.id ? { ...c, isBlocked: !wasBlocked } : c))
+    );
 
-      setBlockedIps((prev) => {
-        const next = new Set(prev);
-        next.delete(targetIp);
-        const array = Array.from(next).map((ip) => ({ ip, reason: 'Admin Ban' }));
-        localStorage.setItem('falak_blocked_ips', JSON.stringify(array));
-        return next;
-      });
+    try {
+      const res = wasBlocked
+        ? await fetch(`/api/security/block-ip?ip=${encodeURIComponent(targetIp)}`, { method: 'DELETE' })
+        : await fetch('/api/security/block-ip', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ip: targetIp,
+              reason: `Blocked for customer ${customer.name}`,
+              blockedBy: 'Admin',
+            }),
+          });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.success) throw new Error(body?.error || `HTTP ${res.status}`);
 
-      addToast('success', `Unblocked IP ${targetIp} for ${customer.name}.`);
-    } else {
-      try {
-        await fetch('/api/security/block-ip', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ip: targetIp, reason: `Blocked for customer ${customer.name}`, blockedBy: 'Admin' })
-        });
-      } catch { }
-
-      setBlockedIps((prev) => {
-        const next = new Set(prev);
-        next.add(targetIp);
-        const array = Array.from(next).map((ip) => ({ ip, reason: 'Admin Ban' }));
-        localStorage.setItem('falak_blocked_ips', JSON.stringify(array));
-        return next;
-      });
-
-      addToast('warning', `Blocked IP ${targetIp} for ${customer.name}.`);
+      addToast(wasBlocked ? 'success' : 'warning', `${wasBlocked ? 'Unblocked' : 'Blocked'} IP ${targetIp} for ${customer.name}.`);
+      fetchCustomers();
+    } catch (err) {
+      setCustomers((prev) =>
+        prev.map((c) => (c.id === customer.id ? { ...c, isBlocked: wasBlocked } : c))
+      );
+      addToast('error', `Could not update block for ${customer.name}: ${(err as Error).message}`);
     }
   };
 
-  const exportToCSV = () => {
-    if (sortedCustomers.length === 0) return;
-    const headers = ['Name', 'Email', 'Phone', 'District', 'IP', 'Total Orders', 'Lifetime Spent (BDT)', 'Tier', 'Cart Items', 'Cart Value (BDT)', 'Registered'];
-    const rows = sortedCustomers.map((c) => {
-      const cartCount = c.cart.reduce((s, i) => s + i.quantity, 0);
-      const cartValue = c.cart.reduce((s, i) => {
-        const product = products.find((p) => p.id === i.productId);
-        return s + (product?.price ?? 0) * i.quantity;
-      }, 0);
-      const tierLabel = customerTier(c) === 'blocked' ? 'Blocked' : customerTier(c) === 'vip' ? 'VIP' : 'Active';
-      return [
-        `"${c.name}"`,
-        `"${c.email}"`,
-        c.phone,
-        `"${c.district}"`,
-        c.ip,
-        c.totalOrders,
-        c.totalSpent,
-        tierLabel,
-        cartCount,
-        cartValue,
-        `"${c.registeredDate}"`,
-      ];
-    });
+  // CSV export re-queries the API with the same search/filter/sort but a large
+  // page size, so the export always matches what the table is showing.
+  const exportToCSV = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const res = await fetch(`/api/customers?${buildParams({ pageSize: 500 })}`, {
+        cache: 'no-store',
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) throw new Error(data?.error || `HTTP ${res.status}`);
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Falak_Closet_Customers_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    addToast('success', `Exported ${sortedCustomers.length} customer records to CSV.`);
+      const rows: string[][] = (data.customers as ApiCustomer[]).map((c) => {
+        const cartCount = c.cart.reduce((s, i) => s + i.quantity, 0);
+        const cartValue = c.cart.reduce((s, i) => {
+          const product = products.find((p) => p.id === i.productId);
+          return s + (product?.price ?? 0) * i.quantity;
+        }, 0);
+        const tierLabel = customerTier(c) === 'blocked' ? 'Blocked' : customerTier(c) === 'vip' ? 'VIP' : 'Active';
+        return [
+          `"${c.name}"`,
+          `"${c.email}"`,
+          c.phone,
+          `"${c.district}"`,
+          c.ip,
+          String(c.totalOrders),
+          String(c.totalSpent),
+          tierLabel,
+          String(cartCount),
+          String(cartValue),
+          `"${c.registeredAt ? new Date(c.registeredAt).toLocaleDateString() : '—'}"`,
+        ];
+      });
+
+      if (rows.length === 0) {
+        addToast('info', 'No customers to export with the current filters.');
+        return;
+      }
+
+      const headers = ['Name', 'Email', 'Phone', 'District', 'IP', 'Total Orders', 'Lifetime Spent (BDT)', 'Tier', 'Cart Items', 'Cart Value (BDT)', 'Registered'];
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `Falak_Closet_Customers_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      addToast('success', `Exported ${rows.length} customer records to CSV.`);
+    } catch (err) {
+      addToast('error', `Export failed: ${(err as Error).message}`);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const filterPills: { id: StatusFilter; label: string; count: number }[] = [
-    { id: 'all', label: 'All Customers', count: allCustomers.length },
-    { id: 'vip', label: 'VIP Patrons', count: stats.vipCount },
-    { id: 'active', label: 'Active', count: allCustomers.length - stats.vipCount - stats.blockedCount },
-    { id: 'blocked', label: 'Blocked', count: stats.blockedCount },
-    { id: 'cart', label: 'Open Carts', count: stats.openCartsCount },
+    { id: 'all', label: 'All Customers', count: counts.all },
+    { id: 'vip', label: 'VIP Patrons', count: counts.vip },
+    { id: 'active', label: 'Active', count: counts.active },
+    { id: 'blocked', label: 'Blocked', count: counts.blocked },
+    { id: 'cart', label: 'Open Carts', count: counts.cart },
   ];
 
-  const tableRows = (c: UnifiedCustomer) => {
+  const maxSpent = stats?.maxSpend ?? 0;
+  const showSkeleton = isLoading && customers.length === 0;
+  const showEmpty = !isLoading && customers.length === 0;
+
+  const tableRows = (c: ApiCustomer) => {
     const cleanPhone = c.phone.replace(/[^0-9]/g, '');
     const waUrl = `https://wa.me/88${cleanPhone}`;
     const tier = customerTier(c);
-    const isBanned = blockedIps.has(c.ip);
     const cartCount = c.cart.reduce((s, i) => s + i.quantity, 0);
     const cartValue = c.cart.reduce((s, i) => {
       const product = products.find((p) => p.id === i.productId);
@@ -685,7 +658,7 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
 
     return (
       <tr
-        key={c.phone || c.email}
+        key={c.id}
         className={`transition-colors ${tier === 'blocked' ? 'bg-red-50/40 hover:bg-red-50/70' : 'hover:bg-stone-50'}`}
       >
         {/* Customer */}
@@ -798,13 +771,13 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
               type="button"
               onClick={() => handleToggleBlockIp(c)}
               className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors cursor-pointer ${
-                isBanned
+                c.isBlocked
                   ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
                   : 'bg-red-50 hover:bg-[#9B050B] text-[#9B050B] hover:text-white border-red-200 hover:border-[#9B050B]'
               }`}
-              title={isBanned ? `Unblock IP ${c.ip}` : `Block IP ${c.ip} for ${c.name}`}
+              title={c.isBlocked ? `Unblock IP ${c.ip}` : `Block IP ${c.ip} for ${c.name}`}
             >
-              {isBanned ? <ShieldCheck className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
+              {c.isBlocked ? <ShieldCheck className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
             </button>
           </div>
         </td>
@@ -812,11 +785,10 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
     );
   };
 
-  const mobileCards = (c: UnifiedCustomer) => {
+  const mobileCards = (c: ApiCustomer) => {
     const cleanPhone = c.phone.replace(/[^0-9]/g, '');
     const waUrl = `https://wa.me/88${cleanPhone}`;
     const tier = customerTier(c);
-    const isBanned = blockedIps.has(c.ip);
     const cartCount = c.cart.reduce((s, i) => s + i.quantity, 0);
     const cartValue = c.cart.reduce((s, i) => {
       const product = products.find((p) => p.id === i.productId);
@@ -826,7 +798,7 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
 
     return (
       <div
-        key={c.phone || c.email}
+        key={c.id}
         className={`p-4 rounded-2xl border space-y-3 ${
           tier === 'blocked' ? 'bg-red-50/40 border-red-200' : 'bg-stone-50 border-stone-200'
         }`}
@@ -911,13 +883,13 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
             type="button"
             onClick={() => handleToggleBlockIp(c)}
             className={`flex-1 py-2 flex items-center justify-center gap-1.5 rounded-xl border text-[11px] font-bold transition-colors cursor-pointer ${
-              isBanned
+              c.isBlocked
                 ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
                 : 'bg-red-50 hover:bg-[#9B050B] text-[#9B050B] hover:text-white border-red-200'
             }`}
           >
-            {isBanned ? <ShieldCheck className="w-3.5 h-3.5" /> : <Ban className="w-3.5 h-3.5" />}
-            {isBanned ? 'Unblock IP' : 'Block IP'}
+            {c.isBlocked ? <ShieldCheck className="w-3.5 h-3.5" /> : <Ban className="w-3.5 h-3.5" />}
+            {c.isBlocked ? 'Unblock IP' : 'Block IP'}
           </button>
         </div>
       </div>
@@ -935,33 +907,33 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
         />
       )}
 
-      {/* KPI Summary Cards */}
+      {/* KPI Summary Cards (server-aggregated over ALL customers) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={Users}
           label="Customers"
-          value={allCustomers.length}
-          sub={`${stats.registeredCount} registered · ${stats.guestCount} guest`}
+          value={stats?.totalCustomers ?? '—'}
+          sub={stats ? `${stats.registeredCount} registered · ${stats.guestCount} guest` : 'loading…'}
         />
         <StatCard
           icon={Crown}
           label="VIP Patrons"
-          value={stats.vipCount}
+          value={stats?.vipCount ?? '—'}
           sub="৳10k+ spent or 2+ orders"
           tone="amber"
         />
         <StatCard
           icon={DollarSign}
           label="Lifetime Revenue"
-          value={formatCurrency(stats.lifetimeRevenue)}
+          value={stats ? formatCurrency(stats.lifetimeRevenue) : '—'}
           sub="across all customers"
           tone="emerald"
         />
         <StatCard
           icon={ShoppingCart}
           label="Open Carts"
-          value={stats.openCartsCount}
-          sub={stats.openCartValue > 0 ? `${formatCurrency(stats.openCartValue)} recoverable` : 'no active carts'}
+          value={stats?.openCartsCount ?? '—'}
+          sub={stats && stats.openCartValue > 0 ? `${formatCurrency(stats.openCartValue)} recoverable` : 'no active carts'}
           tone="rose"
         />
       </div>
@@ -969,7 +941,7 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
       {/* Filter & Search Controls */}
       <div className="p-5 sm:p-6 bg-white rounded-3xl border border-stone-200 shadow-sm space-y-4">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          {/* Status Filter Pills */}
+          {/* Status Filter Pills (server-counted within the current search) */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto text-xs font-bold scrollbar-none">
             {filterPills.map((f) => (
               <button
@@ -996,16 +968,30 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
                 value={query}
                 onChange={(e) => applyQuery(e.target.value)}
                 placeholder="Search name, phone, IP, district..."
-                className="w-full pl-9 pr-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-900"
+                className="w-full pl-9 pr-8 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-900"
               />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => applyQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
+                  title="Clear search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
             <button
               onClick={exportToCSV}
-              disabled={sortedCustomers.length === 0}
+              disabled={isExporting || pagination.totalItems === 0}
               className="px-4 py-2 bg-stone-900 hover:bg-stone-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
             >
-              <Download className="w-4 h-4 text-[#F2C76E]" />
-              <span className="hidden sm:inline">Export CSV</span>
+              {isExporting ? (
+                <Loader2 className="w-4 h-4 text-[#F2C76E] animate-spin" />
+              ) : (
+                <Download className="w-4 h-4 text-[#F2C76E]" />
+              )}
+              <span className="hidden sm:inline">{isExporting ? 'Exporting…' : 'Export CSV'}</span>
             </button>
           </div>
         </div>
@@ -1013,28 +999,49 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
 
       {/* Customer Directory */}
       <div className="p-5 sm:p-6 bg-white rounded-3xl border border-stone-200 shadow-sm space-y-4">
-        {/* Result count */}
-        <div className="flex items-center justify-between">
+        {/* Result count + rows-per-page */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <span className="text-xs font-mono text-stone-500">
             Showing{' '}
             <strong className="text-stone-900">
-              {sortedCustomers.length === 0 ? 0 : (clampedPage - 1) * PAGE_SIZE + 1}–
-              {Math.min(clampedPage * PAGE_SIZE, sortedCustomers.length)}
+              {pagination.totalItems === 0 ? 0 : (pagination.page - 1) * pagination.pageSize + 1}–
+              {Math.min(pagination.page * pagination.pageSize, pagination.totalItems)}
             </strong>{' '}
-            of {sortedCustomers.length} customer{sortedCustomers.length !== 1 ? 's' : ''}
-            {statusFilter !== 'all' && <span className="text-stone-400"> (filtered from {allCustomers.length})</span>}
+            of {pagination.totalItems} customer{pagination.totalItems !== 1 ? 's' : ''}
+            {statusFilter !== 'all' && stats && (
+              <span className="text-stone-400"> (filtered from {stats.totalCustomers})</span>
+            )}
           </span>
-          {stats.blockedCount > 0 && (
-            <span className="hidden sm:flex items-center gap-1.5 text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 rounded-full px-2.5 py-1">
-              <UserX className="w-3 h-3" /> {stats.blockedCount} blocked IP{stats.blockedCount !== 1 ? 's' : ''}
-            </span>
-          )}
+
+          <div className="flex items-center gap-3">
+            {stats && stats.blockedCount > 0 && (
+              <span className="hidden sm:flex items-center gap-1.5 text-[10px] font-bold text-red-700 bg-red-50 border border-red-200 rounded-full px-2.5 py-1">
+                <UserX className="w-3 h-3" /> {stats.blockedCount} blocked IP{stats.blockedCount !== 1 ? 's' : ''}
+              </span>
+            )}
+            {/* Rows per page — server-side page size */}
+            <label className="flex items-center gap-2 text-[10px] font-mono text-stone-500 uppercase tracking-wide">
+              Rows
+              <select
+                value={pageSize}
+                onChange={(e) => applyPageSize(Number(e.target.value))}
+                className="bg-stone-50 border border-stone-200 rounded-lg px-2 py-1.5 text-xs font-mono text-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900 cursor-pointer"
+                title="Rows per page"
+              >
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <option key={size} value={size}>
+                    {size} / page
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
 
-        {/* Loading skeleton */}
-        {isLoading ? (
+        {/* Loading skeleton (first load) */}
+        {showSkeleton ? (
           <div className="space-y-3 animate-pulse">
-            {[...Array(6)].map((_, i) => (
+            {[...Array(pageSize)].map((_, i) => (
               <div key={i} className="flex items-center gap-4 py-3">
                 <div className="w-9 h-9 rounded-full bg-stone-200 flex-shrink-0" />
                 <div className="flex-1 space-y-2">
@@ -1047,7 +1054,7 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
               </div>
             ))}
           </div>
-        ) : sortedCustomers.length === 0 ? (
+        ) : showEmpty ? (
           /* Empty state */
           <div className="py-16 text-center space-y-3">
             <div className="w-14 h-14 mx-auto rounded-2xl bg-stone-100 border border-stone-200 flex items-center justify-center">
@@ -1065,8 +1072,8 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
               <button
                 type="button"
                 onClick={() => {
-                  setQuery('');
-                  setStatusFilter('all');
+                  applyQuery('');
+                  applyStatusFilter('all');
                 }}
                 className="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer inline-flex items-center gap-1.5"
               >
@@ -1076,8 +1083,8 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
           </div>
         ) : (
           <>
-            {/* Desktop table */}
-            <div className="hidden lg:block overflow-x-auto">
+            {/* Desktop table — dimmed during background refetches */}
+            <div className={`hidden lg:block overflow-x-auto transition-opacity ${isLoading ? 'opacity-60 pointer-events-none' : ''}`}>
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-stone-200 text-stone-500 font-mono text-[11px]">
@@ -1092,34 +1099,61 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-100 font-sans">
-                  {pagedCustomers.map(tableRows)}
+                  {customers.map(tableRows)}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile cards */}
-            <div className="lg:hidden space-y-3">{pagedCustomers.map(mobileCards)}</div>
+            <div className={`lg:hidden space-y-3 transition-opacity ${isLoading ? 'opacity-60 pointer-events-none' : ''}`}>
+              {customers.map(mobileCards)}
+            </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-2 border-t border-stone-100">
+            {/* Server-side pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-stone-100">
                 <span className="text-[10px] font-mono text-stone-400">
-                  Page {clampedPage} of {totalPages}
+                  Page {pagination.page} of {pagination.totalPages} · {pagination.totalItems} total
                 </span>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                   <button
                     type="button"
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={clampedPage === 1}
-                    className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 disabled:opacity-40 disabled:cursor-not-allowed border border-stone-200 rounded-lg text-xs font-bold text-stone-700 transition-colors cursor-pointer flex items-center gap-1"
+                    disabled={pagination.page === 1}
+                    className="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 disabled:opacity-40 disabled:cursor-not-allowed border border-stone-200 rounded-lg text-xs font-bold text-stone-700 transition-colors cursor-pointer flex items-center gap-0.5"
+                    title="Previous page"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" /> Prev
                   </button>
+
+                  {pageWindow(pagination.page, pagination.totalPages).map((p, idx) =>
+                    p === '…' ? (
+                      <span key={`ellipsis-${idx}`} className="px-1.5 text-stone-400 text-xs font-mono">
+                        …
+                      </span>
+                    ) : (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setPage(p)}
+                        className={`min-w-8 h-8 px-2 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
+                          p === pagination.page
+                            ? 'bg-stone-900 text-white shadow-sm'
+                            : 'bg-stone-100 text-stone-700 hover:bg-stone-200 border border-stone-200'
+                        }`}
+                        aria-current={p === pagination.page ? 'page' : undefined}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+
                   <button
                     type="button"
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={clampedPage === totalPages}
-                    className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 disabled:opacity-40 disabled:cursor-not-allowed border border-stone-200 rounded-lg text-xs font-bold text-stone-700 transition-colors cursor-pointer flex items-center gap-1"
+                    onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+                    disabled={pagination.page === pagination.totalPages}
+                    className="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 disabled:opacity-40 disabled:cursor-not-allowed border border-stone-200 rounded-lg text-xs font-bold text-stone-700 transition-colors cursor-pointer flex items-center gap-0.5"
+                    title="Next page"
                   >
                     Next <ChevronRight className="w-3.5 h-3.5" />
                   </button>
