@@ -313,9 +313,9 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
           </div>
 
           {/* Bottom: Bag + Buy Now (inline sm+) + Color dot | Buy Now full-width on mobile */}
-          <div className="flex flex-col pt-2.5 mt-2 border-t border-stone-100 gap-2">
+          <div className="flex  flex-col pt-2.5 mt-2 border-t border-stone-100 gap-2">
             {/* Row 1: Bag icon — Buy Now pill (sm+ only) — color dot */}
-            <div className="flex items-center gap-[1.2px]">
+            <div className="flex justify-around items-center gap-[1.2px]">
               {/* Add to Cart bag */}
               <button
                 type="button"
@@ -336,7 +336,7 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
                 <button
                   type="button"
                   onClick={handleBuyNow}
-                  className="flex justify-center w-[80%] sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#A80C14] hover:bg-[#8C0A10] text-white text-[10px] font-bold shadow-xs transition-all duration-200 active:scale-95 cursor-pointer flex-shrink-0"
+                  className="flex justify-center w-[70%] sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#A80C14] hover:bg-[#8C0A10] text-white text-[10px] font-bold shadow-xs transition-all duration-200 active:scale-95 cursor-pointer flex-shrink-0"
                   aria-label="Buy Now"
                 >
                   <Zap className="w-3.5 h-3.5 fill-white" />
