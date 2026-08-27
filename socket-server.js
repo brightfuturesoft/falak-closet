@@ -1,7 +1,8 @@
 const http = require('http');
 const { Server } = require('socket.io');
 
-const PORT = process.env.SOCKET_PORT || 3001;
+// Railway/Render/Fly inject PORT; keep SOCKET_PORT as an explicit override.
+const PORT = process.env.PORT || process.env.SOCKET_PORT || 3001;
 
 const server = http.createServer((req, res) => {
   if (req.url === '/health') {
