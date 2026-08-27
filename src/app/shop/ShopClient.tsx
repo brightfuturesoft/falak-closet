@@ -396,7 +396,7 @@ function FilterPanel({
                           key={sub.id}
                           onClick={() => setParam('subCategory', subSelected ? 'All' : sub.name)}
                           className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center justify-between gap-2 cursor-pointer ${
-                            subSelected ? 'bg-[#9B050B] text-white' : 'text-stone-600 hover:bg-stone-100'
+                            subSelected ? 'bg-[#D92670] text-white' : 'text-stone-600 hover:bg-stone-100'
                           }`}
                         >
                           <span className="truncate">• {sub.name}</span>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Mail, Lock, LogIn } from 'lucide-react';
 import { InputField, PasswordInput, SubmitButton } from './fields';
 import type { AuthMode } from '@/app/account/useAccount';
 
@@ -32,6 +33,8 @@ export function SignInForm({ onSignIn, onSwitchMode }: SignInFormProps) {
         placeholder="e.g. sarah@example.com"
         required
         disabled={isLoading}
+        icon={Mail}
+        autoComplete="email"
       />
       <PasswordInput
         label="Password"
@@ -39,18 +42,21 @@ export function SignInForm({ onSignIn, onSwitchMode }: SignInFormProps) {
         onChange={setPassword}
         required
         disabled={isLoading}
+        icon={Lock}
       />
-      <div className="flex justify-end">
+      <div className="flex justify-end -mt-1">
         <button
           type="button"
           id="forgot-password-link"
           onClick={() => onSwitchMode('forgot')}
-          className="text-[11px] text-[#9B050B] font-bold hover:underline cursor-pointer"
+          className="text-[11px] text-[#D92670] font-bold hover:text-[#C2185B] hover:underline cursor-pointer transition-colors"
         >
           Forgot password?
         </button>
       </div>
-      <SubmitButton loading={isLoading}>Sign In to Account</SubmitButton>
+      <SubmitButton loading={isLoading}>
+        <LogIn className="w-4 h-4" /> Sign In
+      </SubmitButton>
     </form>
   );
 }

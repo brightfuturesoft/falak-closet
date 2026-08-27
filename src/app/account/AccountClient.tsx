@@ -39,23 +39,30 @@ export default function AccountClient({ initialUser }: AccountClientProps) {
   } = account;
 
   return (
-    <div className="max-w-5xl mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-10 space-y-6 pb-36 lg:pb-12">
+    <div className="max-w-5xl mx-auto px-3.5 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6 pb-36 lg:pb-12">
       {userProfile ? (
         <>
           {/* Profile Header */}
           <AccountHeader user={userProfile} onLogout={logout} />
 
           {/* Tabs */}
-          <div className="flex bg-[#FFFBF0] p-1 rounded-2xl border border-[#F2C76E]/60 text-xs font-bold gap-1 shadow-xs">
-            {(['orders', 'wishlist', 'addresses'] as ActiveTab[]).map(tab => (
+          <div
+            className="grid grid-cols-3 gap-1 bg-white p-1.5 rounded-full border border-stone-200/80 shadow-xs"
+            role="tablist"
+            aria-label="Account sections"
+          >
+            {(['orders', 'wishlist', 'addresses'] as ActiveTab[]).map((tab) => (
               <button
                 key={tab}
                 id={`account-tab-${tab}`}
+                role="tab"
+                aria-selected={activeTab === tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-2.5 px-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer text-center ${activeTab === tab
-                  ? 'bg-[#9B050B] text-[#FFFBF0] shadow-xs font-extrabold'
-                  : 'text-[#0C163A]/70 hover:text-[#9B050B]'
-                  }`}
+                className={`flex items-center justify-center gap-1.5 min-h-[40px] px-2 rounded-full transition-all cursor-pointer text-center text-xs font-bold ${
+                  activeTab === tab
+                    ? 'bg-[#D92670] text-white shadow-md shadow-[#D92670]/25'
+                    : 'text-stone-500 hover:text-[#D92670] hover:bg-pink-50'
+                }`}
               >
                 {tab === 'orders' && (
                   <>

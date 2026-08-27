@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Edit3, X, Loader2, Save, Phone } from 'lucide-react';
-import { InputField } from './fields';
+import { Edit3, X, Loader2, Save, Phone, MapPin, Home, User } from 'lucide-react';
+import { InputField, SelectField } from './fields';
 import { useDistrictOptions } from '@/lib/useDistrictOptions';
 import type { UserProfile } from '@/app/account/useAccount';
 
@@ -70,14 +70,14 @@ export function AddressTab({ user, onUpdateUser, onShowFeedback }: AddressTabPro
   };
 
   return (
-    <div className="p-5 bg-white rounded-3xl border border-[#F2C76E]/60 space-y-4 text-xs">
+    <div className="p-5 sm:p-6 bg-white rounded-3xl border border-stone-200/70 space-y-5">
       <div className="flex items-center justify-between">
         <h2 className="font-serif font-bold text-base text-[#0C163A]">Profile & Address</h2>
         {!isEditing && (
           <button
             id="account-edit-address-btn"
             onClick={startEdit}
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-[#9B050B]/30 text-[#9B050B] rounded-full font-bold hover:bg-[#9B050B]/5 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2 border border-[#D92670]/30 text-[#D92670] rounded-full font-bold text-xs hover:bg-[#D92670] hover:border-[#D92670] hover:text-white transition-all cursor-pointer"
           >
             <Edit3 className="w-3.5 h-3.5" /> Edit
           </button>
@@ -85,48 +85,46 @@ export function AddressTab({ user, onUpdateUser, onShowFeedback }: AddressTabPro
       </div>
 
       {isEditing ? (
-        <form onSubmit={handleSave} className="space-y-3">
-          <InputField
-            label="Full Name"
-            value={editName}
-            onChange={setEditName}
-            placeholder="Your full name"
-            required
-          />
-          <InputField
-            label="Phone Number"
-            value={editPhone}
-            onChange={setEditPhone}
-            placeholder="01XXXXXXXXX"
-            required
-          />
-          <div className="space-y-1.5">
-            <label className="block text-[11px] font-bold uppercase tracking-wide text-[#0C163A]/70">
-              District
-            </label>
-            <select
-              value={editDistrict}
-              onChange={e => setEditDistrict(e.target.value)}
-              className="w-full px-4 py-2.5 bg-[#FFFBF0] border border-[#F2C76E]/70 rounded-xl text-[#0C163A] text-xs focus:outline-none focus:ring-2 focus:ring-[#9B050B]/25"
-            >
-              {districts.map(d => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
+        <form onSubmit={handleSave} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <InputField
+              label="Full Name"
+              value={editName}
+              onChange={setEditName}
+              placeholder="Your full name"
+              required
+              icon={User}
+            />
+            <InputField
+              label="Phone Number"
+              value={editPhone}
+              onChange={setEditPhone}
+              placeholder="01XXXXXXXXX"
+              required
+              icon={Phone}
+              inputMode="tel"
+            />
           </div>
-          <InputField
-            label="Full Address"
-            value={editAddress}
-            onChange={setEditAddress}
-            placeholder="House, road, area..."
-          />
-          <div className="flex gap-2 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <SelectField
+              label="District"
+              value={editDistrict}
+              onChange={setEditDistrict}
+              options={districts}
+            />
+            <InputField
+              label="Full Address"
+              value={editAddress}
+              onChange={setEditAddress}
+              placeholder="House, road, area…"
+              icon={Home}
+            />
+          </div>
+          <div className="flex gap-2.5 pt-1">
             <button
               type="button"
               onClick={() => setIsEditing(false)}
-              className="flex-1 py-2.5 border border-stone-300 text-stone-600 font-bold rounded-full text-xs hover:bg-stone-50 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+              className="flex-1 min-h-[44px] border border-stone-300 text-stone-600 font-bold rounded-full text-xs hover:bg-stone-50 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
             >
               <X className="w-3.5 h-3.5" /> Cancel
             </button>
@@ -134,7 +132,7 @@ export function AddressTab({ user, onUpdateUser, onShowFeedback }: AddressTabPro
               type="submit"
               id="account-save-address-btn"
               disabled={isSaving}
-              className="flex-1 py-2.5 bg-[#9B050B] text-[#FFFBF0] font-bold rounded-full text-xs hover:bg-[#B8000A] disabled:opacity-60 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+              className="flex-1 min-h-[44px] bg-[#D92670] hover:bg-[#C2185B] text-white font-bold rounded-full text-xs disabled:opacity-60 transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-[#D92670]/25"
             >
               {isSaving ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -146,12 +144,20 @@ export function AddressTab({ user, onUpdateUser, onShowFeedback }: AddressTabPro
           </div>
         </form>
       ) : (
-        <div className="p-4 bg-[#FFFBF0] rounded-2xl border border-[#F2C76E]/40 space-y-1.5">
-          <p className="font-bold text-[#0C163A] text-sm">{user.name}</p>
-          {user.fullAddress && <p className="text-stone-600">{user.fullAddress}</p>}
-          <p className="text-stone-600 font-medium">{user.district}, Bangladesh</p>
-          <p className="text-stone-600 font-mono flex items-center gap-1">
-            <Phone className="w-3 h-3" /> {user.phone || '—'}
+        <div className="p-5 bg-stone-50 rounded-2xl border border-stone-200/60 space-y-2.5 text-xs">
+          <p className="flex items-center gap-2 font-bold text-[#0C163A] text-sm">
+            <User className="w-4 h-4 text-[#D92670]" /> {user.name}
+          </p>
+          {user.fullAddress && (
+            <p className="flex items-start gap-2 text-stone-600">
+              <Home className="w-4 h-4 text-[#D92670] shrink-0 mt-0.5" /> {user.fullAddress}
+            </p>
+          )}
+          <p className="flex items-center gap-2 text-stone-600 font-medium">
+            <MapPin className="w-4 h-4 text-[#D92670]" /> {user.district}, Bangladesh
+          </p>
+          <p className="flex items-center gap-2 text-stone-600 font-mono">
+            <Phone className="w-4 h-4 text-[#D92670]" /> {user.phone || '—'}
           </p>
         </div>
       )}

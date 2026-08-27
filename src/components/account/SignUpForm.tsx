@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { User, Mail, Phone, Lock, Home, UserPlus } from 'lucide-react';
 import { InputField, PasswordInput, SubmitButton, SelectField } from './fields';
 import { useDistrictOptions } from '@/lib/useDistrictOptions';
 import type { SignUpData } from '@/app/account/useAccount';
@@ -21,6 +22,9 @@ export function SignUpForm({ onSignUp, onShowFeedback }: SignUpFormProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const { districts } = useDistrictOptions();
+
+  const passwordsMatch =
+    confirmPassword.length > 0 && password === confirmPassword;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +52,7 @@ export function SignUpForm({ onSignUp, onShowFeedback }: SignUpFormProps) {
   };
 
   return (
-    <form id="signup-form" onSubmit={handleSubmit} className="space-y-3.5">
+    <form id="signup-form" onSubmit={handleSubmit} className="space-y-4">
       <InputField
         label="Full Name"
         value={name}
@@ -56,57 +60,90 @@ export function SignUpForm({ onSignUp, onShowFeedback }: SignUpFormProps) {
         placeholder="e.g. Sarah Akhtar"
         required
         disabled={isLoading}
+        icon={User}
+        autoComplete="name"
       />
-      <InputField
-        label="Email Address"
-        type="email"
-        value={email}
-        onChange={setEmail}
-        placeholder="e.g. sarah@example.com"
-        required
-        disabled={isLoading}
-      />
-      <InputField
-        label="Phone Number"
-        type="tel"
-        value={phone}
-        onChange={setPhone}
-        placeholder="01XXXXXXXXX"
-        required
-        disabled={isLoading}
-      />
-      <SelectField
-        label="District"
-        value={district}
-        onChange={setDistrict}
-        options={districts}
-        required
-        disabled={isLoading}
-      />
-      <InputField
-        label="Full Address (optional)"
-        value={address}
-        onChange={setAddress}
-        placeholder="House, road, area..."
-        disabled={isLoading}
-      />
-      <PasswordInput
-        label="Password (min 6 chars)"
-        value={password}
-        onChange={setPassword}
-        placeholder="Create a strong password"
-        required
-        disabled={isLoading}
-      />
-      <PasswordInput
-        label="Confirm Password"
-        value={confirmPassword}
-        onChange={setConfirmPassword}
-        placeholder="Re-enter your password"
-        required
-        disabled={isLoading}
-      />
-      <SubmitButton loading={isLoading}>Create Account</SubmitButton>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <InputField
+          label="Email Address"
+          type="email"
+          value={email}
+          onChange={setEmail}
+          placeholder="sarah@example.com"
+          required
+          disabled={isLoading}
+          icon={Mail}
+          autoComplete="email"
+        />
+        <InputField
+          label="Phone Number"
+          type="tel"
+          value={phone}
+          onChange={setPhone}
+          placeholder="01XXXXXXXXX"
+          required
+          disabled={isLoading}
+          icon={Phone}
+          inputMode="tel"
+          autoComplete="tel"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <SelectField
+          label="District"
+          value={district}
+          onChange={setDistrict}
+          options={districts}
+          required
+          disabled={isLoading}
+        />
+        <InputField
+          label="Full Address"
+          value={address}
+          onChange={setAddress}
+          placeholder="House, road, area…"
+          disabled={isLoading}
+          icon={Home}
+          hint="Optional — speeds up checkout"
+          autoComplete="street-address"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <PasswordInput
+          label="Password"
+          value={password}
+          onChange={setPassword}
+          placeholder="Min 6 characters"
+          required
+          disabled={isLoading}
+          icon={Lock}
+        />
+        <PasswordInput
+          label="Confirm Password"
+          value={confirmPassword}
+          onChange={setConfirmPassword}
+          placeholder="Re-enter password"
+          required
+          disabled={isLoading}
+        />
+      </div>
+
+      {confirmPassword.length > 0 && (
+        <p
+          className={`text-[10px] font-bold pl-1 ${
+            passwordsMatch ? 'text-emerald-600' : 'text-rose-600'
+          }`}
+        >
+          {passwordsMatch ? '✓ Passwords match' : 'Passwords do not match yet'}
+        </p>
+      )}
+
+      <SubmitButton loading={isLoading}>
+        <UserPlus className="w-4 h-4" /> Create Account
+      </SubmitButton>
     </form>
   );
 }

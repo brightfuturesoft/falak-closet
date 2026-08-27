@@ -53,11 +53,11 @@ export function AllProductsSection({ products }: AllProductsSectionProps) {
 
   return (
     <section id="all-products" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-      <div className="bg-white border border-[#F2C76E]/40 rounded-3xl p-4 sm:p-7 space-y-4 sm:space-y-6 shadow-xs">
+      <div className="bg-white border border-stone-200/70 rounded-3xl p-4 sm:p-7 space-y-4 sm:space-y-6 shadow-xs">
         {/* Section Title Header */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 sm:gap-4 border-b border-[#F2C76E]/30 pb-3 sm:pb-4">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 sm:gap-4 border-b border-stone-100 pb-3 sm:pb-4">
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#9B050B]/10 border border-[#9B050B]/20 rounded-full text-[10px] sm:text-xs text-[#9B050B] font-bold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#D92670]/10 border border-[#D92670]/20 rounded-full text-[10px] sm:text-xs text-[#D92670] font-bold uppercase tracking-wider">
               <LayoutGrid className="w-3.5 h-3.5" />
               <span>Full Store Catalog</span>
             </div>
@@ -80,14 +80,14 @@ export function AllProductsSection({ products }: AllProductsSectionProps) {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search collection..."
                 aria-label="Search the collection"
-                className="w-full min-h-[42px] pl-9 pr-9 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[#9B050B] focus:border-transparent"
+                className="w-full min-h-[42px] pl-9 pr-9 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[#D92670] focus:border-transparent"
               />
               {searchTerm && (
                 <button
                   type="button"
                   onClick={() => setSearchTerm('')}
                   aria-label="Clear search"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-full text-stone-400 hover:text-[#9B050B] hover:bg-stone-100 transition-colors cursor-pointer"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-full text-stone-400 hover:text-[#D92670] hover:bg-stone-100 transition-colors cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -125,8 +125,8 @@ export function AllProductsSection({ products }: AllProductsSectionProps) {
               aria-selected={selectedCategory === cat}
               onClick={() => setSelectedCategory(cat)}
               className={`snap-start shrink-0 min-h-[38px] px-4 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer active:scale-95 inline-flex items-center ${selectedCategory === cat
-                  ? 'bg-[#9B050B] text-white shadow-sm'
-                  : 'bg-stone-100 text-stone-700 hover:bg-pink-100 hover:text-[#9B050B]'
+                  ? 'bg-[#D92670] text-white shadow-sm'
+                  : 'bg-stone-100 text-stone-700 hover:bg-pink-100 hover:text-[#D92670]'
                 }`}
             >
               {cat}
@@ -146,7 +146,7 @@ export function AllProductsSection({ products }: AllProductsSectionProps) {
               {selectedCategory !== 'All' && (
                 <button
                   onClick={() => setSelectedCategory('All')}
-                  className="inline-flex items-center gap-1 min-h-[30px] px-2.5 bg-[#9B050B]/10 border border-[#9B050B]/25 text-[#9B050B] rounded-full font-bold hover:bg-[#9B050B]/20 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 min-h-[30px] px-2.5 bg-pink-50 border border-pink-200 text-[#D92670] rounded-full font-bold hover:bg-pink-100 transition-colors cursor-pointer"
                 >
                   {selectedCategory}
                   <X className="w-3 h-3" />
@@ -155,7 +155,7 @@ export function AllProductsSection({ products }: AllProductsSectionProps) {
               {searchTerm.trim() && (
                 <button
                   onClick={() => setSearchTerm('')}
-                  className="inline-flex items-center gap-1 min-h-[30px] px-2.5 bg-[#9B050B]/10 border border-[#9B050B]/25 text-[#9B050B] rounded-full font-bold hover:bg-[#9B050B]/20 transition-colors cursor-pointer max-w-[160px]"
+                  className="inline-flex items-center gap-1 min-h-[30px] px-2.5 bg-pink-50 border border-pink-200 text-[#D92670] rounded-full font-bold hover:bg-pink-100 transition-colors cursor-pointer max-w-[160px]"
                 >
                   <span className="truncate">&ldquo;{searchTerm.trim()}&rdquo;</span>
                   <X className="w-3 h-3 shrink-0" />
@@ -163,7 +163,7 @@ export function AllProductsSection({ products }: AllProductsSectionProps) {
               )}
               <button
                 onClick={handleReset}
-                className="text-[#9B050B] font-bold hover:underline cursor-pointer ml-1"
+                className="text-[#D92670] font-bold hover:underline cursor-pointer ml-1"
               >
                 Reset All
               </button>
@@ -186,7 +186,7 @@ export function AllProductsSection({ products }: AllProductsSectionProps) {
             </p>
             <button
               onClick={handleReset}
-              className="inline-flex min-h-[40px] items-center px-5 bg-[#9B050B] text-white font-bold text-xs rounded-xl hover:bg-[#B8000A] transition-colors cursor-pointer active:scale-95"
+              className="inline-flex min-h-[40px] items-center px-5 bg-[#D92670] text-white font-bold text-xs rounded-xl hover:bg-[#C2185B] transition-colors cursor-pointer active:scale-95"
             >
               Reset Filters
             </button>
@@ -194,10 +194,10 @@ export function AllProductsSection({ products }: AllProductsSectionProps) {
         )}
 
         {/* Bottom Catalog Link Banner */}
-        <div className="pt-4 text-center border-t border-[#F2C76E]/30">
+        <div className="pt-4 text-center border-t border-stone-100">
           <Link
             href="/shop"
-            className="inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center gap-2 px-8 bg-[#0C163A] hover:bg-[#122050] text-[#FFFBF0] font-extrabold text-xs uppercase tracking-wider rounded-full transition-all shadow-md hover:scale-105 active:scale-95 cursor-pointer"
+            className="inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center gap-2 px-8 bg-[#0C163A] hover:bg-[#122050] text-white font-extrabold text-xs uppercase tracking-wider rounded-full transition-all shadow-md hover:scale-105 active:scale-95 cursor-pointer"
           >
             <span>Explore Entire Storefront Catalog</span>
             <ArrowRight className="w-4 h-4 text-[#F2C76E]" />

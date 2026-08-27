@@ -32,7 +32,7 @@ function SafeImage({ src, alt, className }: { src: string; alt: string; classNam
   if (hasError || !imgSrc) {
     return (
       <div className="w-full h-full bg-[#0C163A]/10 flex flex-col items-center justify-center p-1 text-center text-[#0C163A]">
-        <Sparkles className="w-4 h-4 text-[#9B050B]" />
+        <Sparkles className="w-4 h-4 text-[#D92670]" />
         <span className="text-[8px] font-bold mt-0.5 font-mono line-clamp-1">{alt}</span>
       </div>
     );

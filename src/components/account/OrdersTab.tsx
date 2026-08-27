@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Package, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Package, ArrowRight, AlertCircle, ShoppingBag } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import type { MineOrder } from '@/app/account/useAccount';
 
@@ -16,21 +16,34 @@ interface OrdersTabProps {
 export function OrdersTab({ orders, isLoading, error, onRetry }: OrdersTabProps) {
   if (isLoading) {
     return (
-      <div className="p-8 text-center bg-white rounded-3xl border border-[#F2C76E]/40 space-y-3">
-        <Loader2 className="w-8 h-8 text-[#9B050B] mx-auto animate-spin" />
-        <p className="text-xs text-stone-500 font-medium">Loading your orders…</p>
+      <div className="space-y-3">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="p-5 bg-white rounded-2xl border border-stone-200/70 flex items-center gap-4 animate-pulse"
+          >
+            <div className="w-11 h-11 rounded-xl bg-stone-100 shrink-0" />
+            <div className="flex-1 space-y-2">
+              <div className="h-3.5 w-1/3 rounded bg-stone-100" />
+              <div className="h-3 w-1/5 rounded bg-stone-100" />
+            </div>
+            <div className="h-8 w-24 rounded-full bg-stone-100" />
+          </div>
+        ))}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-8 text-center bg-white rounded-3xl border border-[#F2C76E]/40 space-y-3">
-        <AlertCircle className="w-8 h-8 text-[#9B050B] mx-auto" />
-        <p className="text-xs text-stone-500 font-medium">{error}</p>
+      <div className="p-8 text-center bg-white rounded-3xl border border-stone-200/70 space-y-4">
+        <div className="w-14 h-14 mx-auto rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center">
+          <AlertCircle className="w-7 h-7 text-[#D92670]" />
+        </div>
+        <p className="text-xs text-stone-500 font-medium max-w-xs mx-auto">{error}</p>
         <button
           onClick={onRetry}
-          className="px-5 py-2 bg-[#9B050B] hover:bg-[#B8000A] text-[#FFFBF0] text-xs font-bold rounded-full transition-colors cursor-pointer"
+          className="px-6 py-2.5 bg-[#D92670] hover:bg-[#C2185B] text-white text-xs font-bold rounded-full transition-colors cursor-pointer"
         >
           Try Again
         </button>
@@ -40,47 +53,56 @@ export function OrdersTab({ orders, isLoading, error, onRetry }: OrdersTabProps)
 
   if (orders.length === 0) {
     return (
-      <div className="p-8 text-center bg-white rounded-3xl border border-[#F2C76E]/40 space-y-3">
-        <Package className="w-8 h-8 text-[#9B050B] mx-auto" />
-        <p className="text-xs text-stone-500 font-medium">No orders found for this account.</p>
-        <Link href="/shop" className="inline-block px-5 py-2 bg-[#9B050B] text-[#FFFBF0] text-xs font-bold rounded-full">
-          Explore Collections
+      <div className="p-10 text-center bg-white rounded-3xl border border-stone-200/70 space-y-4">
+        <div className="w-14 h-14 mx-auto rounded-2xl bg-pink-50 border border-pink-100 flex items-center justify-center">
+          <ShoppingBag className="w-7 h-7 text-[#D92670]" />
+        </div>
+        <div className="space-y-1">
+          <h3 className="font-serif font-bold text-base text-[#0C163A]">No orders yet</h3>
+          <p className="text-xs text-stone-500 max-w-xs mx-auto">
+            When you place an order it will appear here with live tracking.
+          </p>
+        </div>
+        <Link
+          href="/shop"
+          className="inline-flex items-center gap-1.5 px-6 py-2.5 bg-[#D92670] hover:bg-[#C2185B] text-white text-xs font-bold rounded-full transition-colors"
+        >
+          Start Shopping <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {orders.map(ord => (
-        <div key={ord.id} className="p-4 sm:p-5 bg-white rounded-2xl border border-[#F2C76E]/60 shadow-xs space-y-3">
-          <div className="flex flex-wrap items-center justify-between border-b border-[#F2C76E]/30 pb-2 text-xs gap-2">
-            <div>
-              <span className="text-[10px] text-stone-400 uppercase font-mono block">Order ID</span>
-              <Link
-                href={`/track?id=${encodeURIComponent(ord.id)}`}
-                className="font-mono font-extrabold text-[#9B050B] text-sm hover:underline flex items-center gap-1 group cursor-pointer"
-              >
-                <span>#{ord.id}</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-            </div>
-            <div>
-              <span className="text-[10px] text-stone-400 uppercase font-mono block">Date</span>
-              <div className="text-stone-700 font-medium">{new Date(ord.date).toLocaleDateString()}</div>
-            </div>
-            <div>
-              <span className="text-[10px] text-stone-400 uppercase font-mono block">Total</span>
-              <div className="font-extrabold text-[#0C163A] font-mono text-sm">{formatCurrency(ord.total)}</div>
-            </div>
-            <Link
-              href={`/track?id=${encodeURIComponent(ord.id)}`}
-              className="px-3.5 py-1.5 bg-[#9B050B] hover:bg-[#B8000A] text-[#FFFBF0] rounded-full font-bold text-[11px] transition-colors flex items-center gap-1.5 shrink-0 ml-auto sm:ml-0 shadow-xs cursor-pointer"
-            >
-              <span>View Details</span><ArrowRight className="w-3 h-3" />
-            </Link>
+    <div className="space-y-3">
+      {orders.map((ord) => (
+        <Link
+          key={ord.id}
+          href={`/track?id=${encodeURIComponent(ord.id)}`}
+          className="group p-4 sm:p-5 bg-white rounded-2xl border border-stone-200/70 hover:border-[#D92670]/40 hover:shadow-md transition-all flex items-center gap-4"
+        >
+          <div className="w-11 h-11 rounded-xl bg-pink-50 border border-pink-100 flex items-center justify-center shrink-0 group-hover:bg-[#D92670] group-hover:border-[#D92670] transition-colors">
+            <Package className="w-5 h-5 text-[#D92670] group-hover:text-white transition-colors" />
           </div>
-        </div>
+
+          <div className="flex-1 min-w-0">
+            <p className="font-mono font-extrabold text-[#D92670] text-sm truncate">
+              #{ord.id}
+            </p>
+            <p className="text-[11px] text-stone-400 mt-0.5">
+              Placed {new Date(ord.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </p>
+          </div>
+
+          <div className="text-right shrink-0 space-y-1.5">
+            <p className="font-extrabold text-[#0C163A] font-mono text-sm">
+              {formatCurrency(ord.total)}
+            </p>
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-stone-400 group-hover:text-[#D92670] transition-colors uppercase tracking-wide">
+              View <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+            </span>
+          </div>
+        </Link>
       ))}
     </div>
   );

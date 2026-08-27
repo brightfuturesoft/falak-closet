@@ -102,15 +102,15 @@ export default function CheckoutClient() {
   // When the user clicks "Buy Now" on a product card, we encode the item into
   // the URL. The checkout then shows ONLY that item — the cart is untouched.
   const buyNowProductId = searchParams.get('buyNow');
-  const buyNowColor    = searchParams.get('color') ?? '';
-  const buyNowSize     = searchParams.get('size')  ?? '';
-  const buyNowQty      = Math.max(1, parseInt(searchParams.get('qty') ?? '1', 10));
+  const buyNowColor = searchParams.get('color') ?? '';
+  const buyNowSize = searchParams.get('size') ?? '';
+  const buyNowQty = Math.max(1, parseInt(searchParams.get('qty') ?? '1', 10));
 
   const buyNowProduct = useMemo(() => {
     if (!buyNowProductId) return null;
     return products.find((p) => p.id === buyNowProductId) ??
-           getProductBySlug(buyNowProductId) ??
-           null;
+      getProductBySlug(buyNowProductId) ??
+      null;
   }, [buyNowProductId, products, getProductBySlug]);
 
   const buyNowItems = useMemo(() => {
@@ -118,7 +118,7 @@ export default function CheckoutClient() {
     return [{
       product: buyNowProduct,
       selectedColor: buyNowColor || buyNowProduct.colors?.[0]?.name || '',
-      selectedSize:  buyNowSize  || buyNowProduct.sizes?.[0]  || 'Free Size',
+      selectedSize: buyNowSize || buyNowProduct.sizes?.[0] || 'Free Size',
       quantity: buyNowQty,
     }];
   }, [buyNowProduct, buyNowColor, buyNowSize, buyNowQty]);
@@ -540,11 +540,11 @@ export default function CheckoutClient() {
               <div className="min-w-0">
                 <h2 className="font-bold text-base sm:text-lg text-stone-900 flex items-center gap-2">
                   {buyNowItems ? 'Quick Order' : 'Order Summary'}
-                  <span className="px-2 py-0.5 bg-pink-50 border border-pink-100 rounded-full text-[10px] font-bold text-[#D92670]">
+                  <span className="px-2 text-xs py-0.5 bg-pink-50 border border-pink-100 rounded-full text-[10px] font-bold text-[#D92670]">
                     {activeItems.length} {activeItems.length === 1 ? 'item' : 'items'}
                   </span>
                   {buyNowItems && (
-                    <span className="px-2 py-0.5 bg-amber-50 border border-amber-200 rounded-full text-[10px] font-bold text-amber-700 flex items-center gap-1">
+                    <span className="px-2 text-xs py-0.5 bg-amber-50 border border-amber-200 rounded-full text-[10px] font-bold text-amber-700 flex items-center tex-xs gap-1">
                       ⚡ Buy Now
                     </span>
                   )}
@@ -762,8 +762,8 @@ export default function CheckoutClient() {
                   <label
                     key={z.id}
                     className={`flex items-center justify-between gap-3 min-h-[56px] p-3.5 rounded-2xl border cursor-pointer transition-all active:scale-[0.99] ${isSelected
-                        ? 'border-[#D92670] bg-pink-50 text-[#D92670] font-bold shadow-xs'
-                        : 'border-stone-200 text-stone-700 hover:border-pink-200'
+                      ? 'border-[#D92670] bg-pink-50 text-[#D92670] font-bold shadow-xs'
+                      : 'border-stone-200 text-stone-700 hover:border-pink-200'
                       }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -846,8 +846,8 @@ export default function CheckoutClient() {
                   <label
                     key={pm.id}
                     className={`flex items-start gap-3 min-h-[56px] p-3.5 rounded-2xl border cursor-pointer transition-all active:scale-[0.99] ${isSelected
-                        ? 'border-[#D92670] bg-pink-50 font-bold shadow-xs'
-                        : 'border-stone-200 text-stone-700 hover:border-pink-200'
+                      ? 'border-[#D92670] bg-pink-50 font-bold shadow-xs'
+                      : 'border-stone-200 text-stone-700 hover:border-pink-200'
                       }`}
                   >
                     <input
@@ -963,14 +963,14 @@ export default function CheckoutClient() {
                   {bkashSettings?.instructions?.map((inst: string, idx: number) => (
                     <li key={idx} className="leading-relaxed">{inst}</li>
                   )) || (
-                    <>
-                      <li>Dial *247# or open the bKash App.</li>
-                      <li>Choose &quot;Send Money&quot; and enter our number.</li>
-                      <li>Enter amount: ৳{totalAmount}.</li>
-                      <li>Use your phone number as reference.</li>
-                      <li>Confirm transaction and copy the Transaction ID.</li>
-                    </>
-                  )}
+                      <>
+                        <li>Dial *247# or open the bKash App.</li>
+                        <li>Choose &quot;Send Money&quot; and enter our number.</li>
+                        <li>Enter amount: ৳{totalAmount}.</li>
+                        <li>Use your phone number as reference.</li>
+                        <li>Confirm transaction and copy the Transaction ID.</li>
+                      </>
+                    )}
                 </ol>
               </div>
 

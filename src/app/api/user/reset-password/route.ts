@@ -45,7 +45,8 @@ export async function POST(req: Request) {
         success: true,
         message: 'OTP generated successfully.',
         // Remove demoOtp in production and send via SMS/email instead
-        demoOtp: generatedOtp,
+        // demoOtp: generatedOtp,
+        demoOtp: ''
       });
     }
 

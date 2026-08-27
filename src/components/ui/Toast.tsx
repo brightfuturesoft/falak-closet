@@ -69,7 +69,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
                   <span>{toast.title}</span>
                 </div>
-                <p className="text-xs font-bold text-stone-850 truncate">{toast.subtitle}</p>
+                <p className="text-xs font-bold text-stone-800 truncate">{toast.subtitle}</p>
                 {toast.price !== undefined && (
                   <p className="text-[11px] font-mono text-stone-500 font-bold">
                     {formatCurrency(toast.price)}

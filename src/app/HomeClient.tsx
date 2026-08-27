@@ -80,16 +80,16 @@ export default function HomeClient({
       {/* Active Filter Indicator Banner */}
       {selectedFilter && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-3 bg-[#9B050B]/10 border border-[#9B050B]/30 rounded-2xl px-4 py-2.5 text-xs text-stone-800">
+          <div className="flex items-center justify-between gap-3 bg-pink-50 border border-pink-200 rounded-2xl px-4 py-2.5 text-xs text-stone-800">
             <span className="min-w-0">
               <span className="hidden sm:inline">Filtering by{' '}</span>
               <strong className="capitalize">{selectedFilter.type}</strong>:{' '}
-              <span className="text-[#9B050B] font-bold">{selectedFilter.val}</span>
+              <span className="text-[#D92670] font-bold">{selectedFilter.val}</span>
               <span className="text-stone-500"> · {filteredProducts.length} found</span>
             </span>
             <button
               onClick={() => setSelectedFilter(null)}
-              className="inline-flex shrink-0 items-center gap-1 min-h-[32px] px-3 rounded-full bg-[#9B050B] text-[#FFFBF0] font-bold text-[11px] hover:bg-[#B8000A] transition-colors cursor-pointer active:scale-95"
+              className="inline-flex shrink-0 items-center gap-1 min-h-[32px] px-3 rounded-full bg-[#D92670] text-white font-bold text-[11px] hover:bg-[#C2185B] transition-colors cursor-pointer active:scale-95"
             >
               <X className="w-3 h-3" /> Clear
             </button>
