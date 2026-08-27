@@ -17,7 +17,7 @@ export function LatestProductsSection({
   subtitle = 'Discover our recently added modest styles'
 }: LatestProductsSectionProps) {
   // Take the first 3 products for this compact display
-  const latestList = products.slice(0, 3);
+  const latestList = products.slice(0, 5);
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
@@ -42,7 +42,7 @@ export function LatestProductsSection({
         {/* Product Cards Grid (3 columns on desktop, 2 on mobile) */}
         <div className="relative z-10">
           {latestList.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-6">
               {latestList.map((product) => (
                 <ProductCard key={product?.id} product={product} />
               ))}

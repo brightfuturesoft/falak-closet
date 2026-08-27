@@ -130,11 +130,11 @@ export default function HomeClient({
           {/* 3. NEW ARRIVALS Section */}
           <NewArrivalSection place="home" products={filteredProducts} />
 
-          {/* 4. LATEST PRODUCTS Section */}
-          <LatestProductsSection products={filteredProducts} />
-
-          {/* 5. BEST SELLERS Section */}
+          {/* 4. BEST SELLERS Section */}
           <BestSellersSection products={products} />
+
+          {/* 5. LATEST PRODUCTS Section */}
+          <LatestProductsSection products={filteredProducts} />
         </>
       )}
     </div>
