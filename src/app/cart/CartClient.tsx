@@ -185,11 +185,10 @@ export default function CartClient() {
           <div
             className="h-full bg-gradient-to-r from-[#A80C14] to-[#F5C77E] transition-all duration-500 rounded-full"
             style={{
-              width: `${
-                freeShippingProgress >= 100 || quantityFreeDelivery?.unlocked
-                  ? 100
-                  : Math.min(100, freeShippingProgress)
-              }%`
+              width: `${freeShippingProgress >= 100 || quantityFreeDelivery?.unlocked
+                ? 100
+                : Math.min(100, freeShippingProgress)
+                }%`
             }}
           />
         </div>
@@ -244,18 +243,17 @@ export default function CartClient() {
                         {item.product?.name}
                       </Link>
                       <p className="text-[11px] text-stone-400 font-mono">Code: {item.product?.code || 'FLK'}</p>
-
-                      <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-stone-600">
+                      <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-stone-600">
                         {item.selectedColor && (
-                          <span className="px-2 py-0.5 bg-[#FDF2F3] border border-[#F8D2D5] rounded-full font-bold text-[#A80C14]">
-                            Color: {item.selectedColor}
+                          <span className="font-bold text-[#A80C14]">
+                            <span className="text-stone-900">Color:</span> {item.selectedColor}
                           </span>
                         )}
-                        {item.selectedSize && (
-                          <span className="px-2 py-0.5 bg-[#FDF2F3] border border-[#F8D2D5] rounded-full font-bold text-[#A80C14]">
-                            Size: {item.selectedSize}
+                        {/* {item.selectedSize && (
+                          <span className="font-bold text-[#A80C14]">
+                            <span className="text-stone-900">Size:</span> {item.selectedSize}
                           </span>
-                        )}
+                        )} */}
                       </div>
                     </div>
                   </div>
