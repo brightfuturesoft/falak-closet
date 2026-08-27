@@ -202,19 +202,19 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
             {/* Meta strip */}
             <div className="grid grid-cols-3 divide-x divide-stone-200 border-b border-stone-200 text-center">
               <div className="py-3 px-2">
-                <p className="text-[9px] uppercase tracking-widest text-stone-400 font-bold">Order Status</p>
+                <p className="text-[9px] uppercase tracking-widest text-stone-500 font-bold">Order Status</p>
                 <p className={`text-[11px] font-black mt-1 tracking-wide ${order.status === 'Cancelled' ? 'text-rose-600' : 'text-[#0C163A]'}`}>
                   {statusLabel(order.status)}
                 </p>
               </div>
               <div className="py-3 px-2">
-                <p className="text-[9px] uppercase tracking-widest text-stone-400 font-bold">Courier Tracking</p>
+                <p className="text-[9px] uppercase tracking-widest text-stone-500 font-bold">Courier Tracking</p>
                 <p className="text-[11px] font-mono font-bold mt-1 text-[#0C163A]">
                   {order.trackingNumber || '—'}
                 </p>
               </div>
               <div className="py-3 px-2">
-                <p className="text-[9px] uppercase tracking-widest text-stone-400 font-bold">Est. Delivery</p>
+                <p className="text-[9px] uppercase tracking-widest text-stone-500 font-bold">Est. Delivery</p>
                 <p className="text-[11px] font-bold mt-1 text-[#0C163A]">
                   {order.estimatedDelivery || '2-3 Business Days'}
                 </p>
@@ -224,7 +224,7 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
             {/* Bill-to / Payment */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 px-8 sm:px-10 py-6 border-b border-stone-200">
               <div>
-                <p className="text-[9px] uppercase tracking-widest text-stone-400 font-bold border-b border-stone-200 pb-1.5 mb-2.5">
+                <p className="text-[9px] uppercase tracking-widest text-stone-500 font-bold border-b border-stone-200 pb-1.5 mb-2.5">
                   Billed / Shipped To
                 </p>
                 <div className="text-[11px] leading-relaxed text-stone-700 space-y-0.5">
@@ -237,12 +237,12 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
                 </div>
               </div>
               <div className="sm:text-right">
-                <p className="text-[9px] uppercase tracking-widest text-stone-400 font-bold border-b border-stone-200 pb-1.5 mb-2.5 sm:ml-auto sm:max-w-[240px]">
+                <p className="text-[9px] uppercase tracking-widest text-stone-500 font-bold border-b border-stone-200 pb-1.5 mb-2.5 sm:ml-auto sm:max-w-[240px]">
                   Payment Details
                 </p>
                 <div className="text-[11px] leading-relaxed text-stone-700 space-y-0.5 sm:ml-auto sm:max-w-[240px]">
                   <p>
-                    <span className="text-stone-400">Method: </span>
+                    <span className="text-stone-500">Method: </span>
                     <span className="font-bold text-[#0C163A]">
                       {order.paymentMethod || 'Cash on Delivery (COD)'}
                     </span>
@@ -250,18 +250,18 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
                   {order.paymentMethod === 'bKash Send Money (Manual)' && (
                     <>
                       <p className="font-mono">
-                        <span className="text-stone-400 font-sans">Sender: </span>
+                        <span className="text-stone-500 font-sans">Sender: </span>
                         {order.paymentSenderNumber || 'N/A'}
                       </p>
                       <p className="font-mono">
-                        <span className="text-stone-400 font-sans">TrxID: </span>
+                        <span className="text-stone-500 font-sans">TrxID: </span>
                         {order.paymentTrxId || 'N/A'}
                       </p>
                     </>
                   )}
                   {order.paymentStatus && (
                     <p>
-                      <span className="text-stone-400">Status: </span>
+                      <span className="text-stone-500">Status: </span>
                       <span className={`font-black ${order.paymentStatus === 'Verified' ? 'text-emerald-700' : order.paymentStatus === 'Rejected' ? 'text-rose-600' : 'text-amber-700'}`}>
                         {order.paymentStatus.toUpperCase()}
                       </span>
@@ -269,7 +269,7 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
                   )}
                   {order.promoCode && (
                     <p>
-                      <span className="text-stone-400">Coupon: </span>
+                      <span className="text-stone-500">Coupon: </span>
                       <span className="font-mono font-bold text-[#0C163A]">{order.promoCode}</span>
                     </p>
                   )}
@@ -304,7 +304,7 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
                         <td className="py-2.5 pl-3 pr-2">
                           <p className="font-bold text-[#0C163A] leading-snug">{itemName}</p>
                           {(item.selectedColor || item.selectedSize) && (
-                            <p className="text-[9px] text-stone-400 mt-0.5">
+                            <p className="text-[9px] text-stone-500 mt-0.5">
                               {[item.selectedColor, item.selectedSize].filter(Boolean).join(' · ')}
                             </p>
                           )}
@@ -366,7 +366,7 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
                 <p className="text-[11px] font-bold text-[#0C163A]">
                   Thank you for shopping with Falak Closet!
                 </p>
-                <p className="text-[9px] text-stone-400 leading-relaxed mt-1">
+                <p className="text-[9px] text-stone-500 leading-relaxed mt-1">
                   Exchange accepted within 7 days with this receipt and unworn items.
                   {identity.contactPhone && ` Questions? Hotline ${identity.contactPhone}.`}
                 </p>

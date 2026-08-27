@@ -27,7 +27,7 @@ export function getOrganizationSchema(identity?: SiteIdentity) {
     '@type': 'Organization',
     name: 'Falak Closet',
     url: 'https://falakcloset.com',
-    logo: 'https://falakcloset.com/logo.png',
+    logo: 'https://falakcloset.com/logo-512.png',
     description: 'Premier modest fashion couture brand featuring handcrafted abayas, luxury kaftans, silk hijabs & modest ensembles.',
     ...(identity?.contactEmail ? { email: identity.contactEmail } : {}),
     ...(identity?.address ? { address: identity.address } : {}),

@@ -45,7 +45,7 @@ export function WishlistTab() {
                   <p className="font-mono text-[#D92670] font-extrabold text-sm">
                     {formatCurrency(item.price)}
                   </p>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-stone-400 group-hover:text-[#D92670] uppercase tracking-wide transition-colors">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-stone-500 group-hover:text-[#D92670] uppercase tracking-wide transition-colors">
                     View <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                   </span>
                 </div>

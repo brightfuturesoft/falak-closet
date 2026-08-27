@@ -205,12 +205,13 @@ function FacetList({
         <div className="relative">
           <input
             type="text"
+            aria-label="Search products"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={`Search ${title.toLowerCase()}...`}
             className="w-full pl-8 pr-3 py-1.5 text-xs bg-stone-50 border border-pink-100 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#D92670]"
           />
-          <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-stone-400" />
+          <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-stone-500" />
         </div>
       )}
 
@@ -252,7 +253,7 @@ function FacetList({
         ))}
 
         {visible.length === 0 && (
-          <p className="px-3 py-2 text-[11px] text-stone-400 italic">No match for &quot;{query}&quot;</p>
+          <p className="px-3 py-2 text-[11px] text-stone-500 italic">No match for &quot;{query}&quot;</p>
         )}
       </div>
     </div>
@@ -418,7 +419,7 @@ function FilterPanel({
 
           {unmanagedCategories.length > 0 && (
             <div className="pt-2 mt-1 border-t border-dashed border-stone-200 space-y-1">
-              <p className="px-1 text-[10px] uppercase tracking-wider text-stone-400 font-bold">Other in catalog</p>
+              <p className="px-1 text-[10px] uppercase tracking-wider text-stone-500 font-bold">Other in catalog</p>
               {unmanagedCategories.map((extra) => {
                 const selected = norm(params.category) === norm(extra.value);
                 return (
@@ -831,7 +832,7 @@ function ShopContent() {
               onClick={() => setParam(chip.key, chip.key === 'wishlist' ? 'false' : 'All')}
               className="pl-3 pr-2 py-1.5 bg-white border border-pink-200 rounded-full text-[11px] font-bold text-stone-700 hover:border-[#D92670] hover:text-[#D92670] transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
-              <span className="text-stone-400 uppercase tracking-wider">{chip.label}:</span>
+              <span className="text-stone-500 uppercase tracking-wider">{chip.label}:</span>
               <span className="truncate max-w-[10rem]">{chip.value}</span>
               <X className="w-3 h-3" />
             </button>
@@ -864,7 +865,7 @@ function ShopContent() {
           </div>
 
           {isEmptyCatalog ? (
-            <p className="text-xs text-stone-400 italic px-1">
+            <p className="text-xs text-stone-500 italic px-1">
               Filters appear once the catalog has products.
             </p>
           ) : (
@@ -939,7 +940,7 @@ function ShopContent() {
               </h3>
               <button
                 onClick={() => setIsMobileFilterOpen(false)}
-                className="p-1 rounded-full text-stone-400 hover:text-stone-900 cursor-pointer"
+                className="p-1 rounded-full text-stone-500 hover:text-stone-900 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -947,7 +948,7 @@ function ShopContent() {
 
             <div className="flex-1">
               {isEmptyCatalog ? (
-                <p className="text-xs text-stone-400 italic">Filters appear once the catalog has products.</p>
+                <p className="text-xs text-stone-500 italic">Filters appear once the catalog has products.</p>
               ) : (
                 <FilterPanel
                   facets={facets}

@@ -73,7 +73,7 @@ export function AllProductsSection({ products }: AllProductsSectionProps) {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 md:w-auto">
             {/* Search Input */}
             <div className="relative flex-1 sm:w-52">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-500 pointer-events-none" />
               <input
                 type="text"
                 value={searchTerm}
@@ -87,7 +87,7 @@ export function AllProductsSection({ products }: AllProductsSectionProps) {
                   type="button"
                   onClick={() => setSearchTerm('')}
                   aria-label="Clear search"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-full text-stone-400 hover:text-[#D92670] hover:bg-stone-100 transition-colors cursor-pointer"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-full text-stone-500 hover:text-[#D92670] hover:bg-stone-100 transition-colors cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>

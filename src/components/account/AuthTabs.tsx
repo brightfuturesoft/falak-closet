@@ -128,7 +128,7 @@ export function AuthTabs({
 
         {/* Card footer */}
         <div className="px-6 py-4 bg-stone-50 border-t border-stone-100 text-center">
-          <p className="text-[10px] text-stone-400 leading-relaxed">
+          <p className="text-[10px] text-stone-500 leading-relaxed">
             Protected by secure encryption. By continuing you agree to our{' '}
             <a href="/terms" className="text-[#D92670] hover:underline">Terms</a> and{' '}
             <a href="/privacy" className="text-[#D92670] hover:underline">Privacy Policy</a>.

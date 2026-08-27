@@ -48,7 +48,7 @@ export function LatestProductsSection({
               ))}
             </div>
           ) : (
-            <div className="w-full py-12 text-center text-stone-400 font-mono text-xs">
+            <div className="w-full py-12 text-center text-stone-500 font-mono text-xs">
               No products found.
             </div>
           )}

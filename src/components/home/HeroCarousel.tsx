@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { SmartImage } from '@/components/ui/SmartImage';
 import type { HeroSlideView } from '@/lib/heroSlides';
 
 interface HeroCarouselProps {
@@ -73,9 +73,11 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
             aria-label={`${idx + 1} of ${slides.length}`}
             aria-hidden={idx !== safeIndex}
           >
-            {/* Background Image */}
+            {/* Background Image — Cloudinary srcs stream straight from
+                Cloudinary's CDN (f_auto/q_auto) via SmartImage, skipping the
+                Next optimizer hop for a faster LCP; the first slide is eager. */}
             <div className="relative w-full h-full bg-[#0C163A]">
-              <Image
+              <SmartImage
                 src={slide.image}
                 alt={slide.title}
                 fill
@@ -152,12 +154,17 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
             <button
               key={idx}
               onClick={() => setCurrentSlide(idx)}
-              className={`relative h-2 rounded-full transition-all duration-300 cursor-pointer after:content-[''] after:absolute after:-inset-2.5 ${
-                safeIndex === idx ? 'w-7 bg-[#D92670]' : 'w-2 bg-white/60 hover:bg-white'
-              }`}
+              className="flex h-7 min-w-7 items-center justify-center cursor-pointer rounded-full transition-all duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               aria-label={`Go to slide ${idx + 1}`}
-              aria-current={safeIndex === idx}
-            />
+              aria-current={safeIndex === idx ? 'true' : undefined}
+            >
+              {/* 28×28 hit area, 8px visual dot — tap-target friendly. */}
+              <span
+                className={`block h-2 rounded-full transition-all duration-300 ${
+                  safeIndex === idx ? 'w-7 bg-[#D92670]' : 'w-2 bg-white/60 hover:bg-white'
+                }`}
+              />
+            </button>
           ))}
         </div>
       </div>

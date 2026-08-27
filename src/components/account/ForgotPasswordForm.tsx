@@ -30,14 +30,14 @@ function StepIndicator({ step }: { step: 1 | 2 }) {
               className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${
                 step >= s.n
                   ? 'bg-[#D92670] text-white'
-                  : 'bg-stone-100 text-stone-400 border border-stone-200'
+                  : 'bg-stone-100 text-stone-500 border border-stone-200'
               }`}
             >
               {step > s.n ? <CheckCheck className="w-3 h-3" /> : s.n}
             </span>
             <span
               className={`text-[10px] font-bold uppercase tracking-wide ${
-                step >= s.n ? 'text-[#D92670]' : 'text-stone-400'
+                step >= s.n ? 'text-[#D92670]' : 'text-stone-500'
               }`}
             >
               {s.label}

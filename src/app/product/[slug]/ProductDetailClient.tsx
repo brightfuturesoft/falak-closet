@@ -600,7 +600,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 <span className="text-xs font-bold text-stone-800 font-mono">
                   {ratingValue.toFixed(1)} / 5.0
                 </span>
-                <span className="text-xs text-stone-400 font-medium group-hover/rating:text-[#D92670] underline-offset-2 group-hover/rating:underline transition-colors">
+                <span className="text-xs text-stone-500 font-medium group-hover/rating:text-[#D92670] underline-offset-2 group-hover/rating:underline transition-colors">
                   ({reviewsList.length} review{reviewsList.length === 1 ? '' : 's'})
                 </span>
               </button>
@@ -611,7 +611,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               <button
                 onClick={() => toggleWishlist(product)}
                 aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-                className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all cursor-pointer active:scale-90 ${isWishlisted ? 'bg-pink-100 border-[#D92670] text-[#D92670]' : 'border-stone-200 text-stone-400 hover:text-[#D92670] hover:border-pink-200'
+                className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all cursor-pointer active:scale-90 ${isWishlisted ? 'bg-pink-100 border-[#D92670] text-[#D92670]' : 'border-stone-200 text-stone-500 hover:text-[#D92670] hover:border-pink-200'
                   }`}
               >
                 <Heart className={`w-[18px] h-[18px] ${isWishlisted ? 'fill-[#D92670]' : ''}`} />
@@ -619,7 +619,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               <button
                 onClick={handleShare}
                 aria-label="Share this product"
-                className="w-10 h-10 rounded-full border border-stone-200 text-stone-400 hover:text-[#D92670] hover:border-pink-200 flex items-center justify-center transition-all cursor-pointer active:scale-90"
+                className="w-10 h-10 rounded-full border border-stone-200 text-stone-500 hover:text-[#D92670] hover:border-pink-200 flex items-center justify-center transition-all cursor-pointer active:scale-90"
               >
                 <Share2 className="w-[18px] h-[18px]" />
               </button>
@@ -635,7 +635,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 </span>
                 {product?.originalPrice && product.originalPrice > currentPrice && (
                   <span className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-xs sm:text-sm text-stone-400 line-through">
+                    <span className="text-xs sm:text-sm text-stone-500 line-through">
                       {formatCurrency(product.originalPrice)}
                     </span>
                     <span className="px-2 py-0.5 bg-[#D92670]/10 text-[#D92670] text-[10px] font-black rounded-md shrink-0">
@@ -670,7 +670,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               <label className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-700">
                 Color: <span className="text-[#D92670] normal-case tracking-normal">{selectedColor}</span>
               </label>
-              <span className="text-[11px] text-stone-400 font-medium">{colorsList.length} available</span>
+              <span className="text-[11px] text-stone-500 font-medium">{colorsList.length} available</span>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -742,7 +742,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               <label className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-700">
                 Quantity
               </label>
-              <span className="text-[11px] text-stone-400 font-medium">Available: {currentStock}</span>
+              <span className="text-[11px] text-stone-500 font-medium">Available: {currentStock}</span>
             </div>
 
             <div className="flex items-center justify-between p-2.5 bg-stone-50 border border-stone-200 rounded-2xl">
@@ -773,7 +773,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               </div>
 
               <div className="text-right">
-                <span className="text-[10px] text-stone-400 uppercase tracking-wider block">Subtotal</span>
+                <span className="text-[10px] text-stone-500 uppercase tracking-wider block">Subtotal</span>
                 <span className="font-extrabold text-[#D92670] font-mono text-base">
                   {formatCurrency(currentPrice * quantity)}
                 </span>
@@ -792,7 +792,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               ) : (
                 <div className="bg-stone-50 border border-stone-200 p-2.5 rounded-xl space-y-1.5">
                   <p className="text-stone-500 flex items-center gap-1.5">
-                    <Truck className="w-4 h-4 text-stone-400 shrink-0" />
+                    <Truck className="w-4 h-4 text-stone-500 shrink-0" />
                     <span>Buy {product.freeDeliveryQuantity - quantity} more to unlock FREE delivery</span>
                   </p>
                   {/* Progress toward the free-delivery milestone */}
@@ -866,7 +866,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-shrink-0 flex items-center gap-1.5 pb-3 pt-1.5 px-3 sm:px-4 text-[11px] sm:text-sm font-bold border-b-2 -mb-px transition-all cursor-pointer ${isActive
                   ? 'border-[#D92670] text-[#D92670]'
-                  : 'border-transparent text-stone-400 hover:text-stone-600'
+                  : 'border-transparent text-stone-500 hover:text-stone-600'
                   }`}
               >
                 <Icon className={`w-3.5 h-3.5 ${isActive ? 'fill-current' : ''}`} />
@@ -901,7 +901,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 { label: 'Weather', value: product?.weather }
               ].filter((a) => a.value).map((attr) => (
                 <span key={attr.label} className="px-3 py-1.5 rounded-full bg-[#FFF0F6] border border-pink-100 text-[10px] font-bold text-stone-600">
-                  <span className="text-stone-400 uppercase tracking-wide mr-1">{attr.label}:</span> {attr.value}
+                  <span className="text-stone-500 uppercase tracking-wide mr-1">{attr.label}:</span> {attr.value}
                 </span>
               ))}
             </div>
@@ -1064,7 +1064,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] text-stone-400 shrink-0">{rev.date}</span>
+                      <span className="text-[10px] text-stone-500 shrink-0">{rev.date}</span>
                     </div>
                     <div className="flex text-amber-400 gap-0.5">
                       {[...Array(rev.rating)].map((_, i) => (
@@ -1276,7 +1276,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                         placeholder="How was the fabric, fit, and delivery experience?"
                         className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#D92670]"
                       />
-                      <p className="text-[10px] text-stone-400 text-right">{newReview.comment.length}/1000</p>
+                      <p className="text-[10px] text-stone-500 text-right">{newReview.comment.length}/1000</p>
                     </div>
 
                     {reviewError && (
@@ -1322,7 +1322,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           <span className="font-extrabold text-[#D92670] font-mono text-sm leading-tight truncate">
             {formatCurrency(currentPrice * quantity)}
           </span>
-          <span className="text-[9px] text-stone-400 truncate">
+          <span className="text-[9px] text-stone-500 truncate">
             {selectedColor} · {selectedSize} · Qty {quantity}
           </span>
         </div>

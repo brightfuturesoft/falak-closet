@@ -229,7 +229,7 @@ function TrackContent() {
               onChange={(e) => setInputQuery(e.target.value)}
               placeholder="Enter Order ID or phone number…"
               aria-label="Order ID or phone number"
-              className="w-full min-h-[48px] pl-11 pr-4 py-3 bg-white border border-stone-200 focus:border-[#D92670] rounded-full text-sm text-[#0C163A] placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#D92670]/20 shadow-xs transition-all"
+              className="w-full min-h-[48px] pl-11 pr-4 py-3 bg-white border border-stone-200 focus:border-[#D92670] rounded-full text-sm text-[#0C163A] placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-[#D92670]/20 shadow-xs transition-all"
             />
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-[#D92670]" />
           </div>
@@ -243,7 +243,7 @@ function TrackContent() {
         </form>
 
         <div className="flex flex-wrap items-center justify-center gap-2 text-[11px]">
-          <span className="text-stone-400">Try:</span>
+          <span className="text-stone-500">Try:</span>
           <button
             type="button"
             onClick={() => setInputQuery('FLK-POS-56598')}
@@ -252,7 +252,7 @@ function TrackContent() {
             FLK-POS-56598
           </button>
           <span className="text-stone-300">·</span>
-          <span className="text-stone-400">or the phone used at checkout</span>
+          <span className="text-stone-500">or the phone used at checkout</span>
         </div>
       </div>
 
@@ -290,7 +290,7 @@ function TrackContent() {
                 key={label}
                 className="p-4 bg-stone-50 rounded-2xl border border-stone-200/60 space-y-1.5"
               >
-                <span className="flex items-center gap-1.5 text-[10px] text-stone-400 uppercase font-bold tracking-wide">
+                <span className="flex items-center gap-1.5 text-[10px] text-stone-500 uppercase font-bold tracking-wide">
                   <Icon className="w-3.5 h-3.5 text-[#D92670]" /> {label}
                 </span>
                 <span
@@ -338,7 +338,7 @@ function TrackContent() {
                               ? 'bg-[#D92670] text-white ring-4 ring-[#D92670]/20 shadow-lg shadow-[#D92670]/30 scale-110'
                               : isPassed
                                 ? 'bg-[#D92670]/90 text-white'
-                                : 'bg-stone-100 text-stone-400 border border-stone-200'
+                                : 'bg-stone-100 text-stone-500 border border-stone-200'
                           }`}
                         >
                           <Icon className="w-5 h-5" />
@@ -346,12 +346,12 @@ function TrackContent() {
                         <div className="space-y-0.5">
                           <p
                             className={`font-bold text-[11px] leading-tight ${
-                              isPassed ? 'text-[#0C163A]' : 'text-stone-400'
+                              isPassed ? 'text-[#0C163A]' : 'text-stone-500'
                             }`}
                           >
                             {step.title}
                           </p>
-                          <p className="text-[9px] text-stone-400 leading-tight">{step.desc}</p>
+                          <p className="text-[9px] text-stone-500 leading-tight">{step.desc}</p>
                         </div>
                       </div>
                     );
@@ -377,7 +377,7 @@ function TrackContent() {
                             ? 'bg-[#D92670] text-white ring-4 ring-[#D92670]/20 shadow-md shadow-[#D92670]/30'
                             : isPassed
                               ? 'bg-[#D92670]/90 text-white'
-                              : 'bg-stone-100 text-stone-400 border border-stone-200'
+                              : 'bg-stone-100 text-stone-500 border border-stone-200'
                         }`}
                       >
                         <Icon className="w-4 h-4" />
@@ -393,7 +393,7 @@ function TrackContent() {
                     <div className={`pb-5 ${isLast ? 'pb-1' : ''}`}>
                       <p
                         className={`font-bold text-xs leading-tight pt-1.5 ${
-                          isPassed ? 'text-[#0C163A]' : 'text-stone-400'
+                          isPassed ? 'text-[#0C163A]' : 'text-stone-500'
                         }`}
                       >
                         {step.title}
@@ -403,7 +403,7 @@ function TrackContent() {
                           </span>
                         )}
                       </p>
-                      <p className="text-[10px] text-stone-400 leading-tight mt-0.5">{step.desc}</p>
+                      <p className="text-[10px] text-stone-500 leading-tight mt-0.5">{step.desc}</p>
                     </div>
                   </div>
                 );
@@ -443,7 +443,7 @@ function TrackContent() {
               </p>
               <div className="space-y-1.5 text-xs text-stone-600">
                 <div className="flex justify-between gap-2">
-                  <span className="text-stone-400">Payment Method</span>
+                  <span className="text-stone-500">Payment Method</span>
                   <span className="font-bold text-[#0C163A] text-right">
                     {activeOrder.paymentMethod || 'Cash on Delivery (COD)'}
                   </span>
@@ -452,7 +452,7 @@ function TrackContent() {
                 {activeOrder.paymentMethod === 'bKash Send Money (Manual)' && (
                   <>
                     <div className="flex justify-between text-[11px]">
-                      <span className="text-stone-400">bKash Sender</span>
+                      <span className="text-stone-500">bKash Sender</span>
                       <span className="font-mono font-bold text-stone-700">
                         {activeOrder.paymentSenderNumber
                           ? `${activeOrder.paymentSenderNumber.substring(0, 3)}•••••${activeOrder.paymentSenderNumber.substring(8)}`
@@ -460,13 +460,13 @@ function TrackContent() {
                       </span>
                     </div>
                     <div className="flex justify-between text-[11px]">
-                      <span className="text-stone-400">Transaction ID</span>
+                      <span className="text-stone-500">Transaction ID</span>
                       <span className="font-mono font-bold text-stone-700">
                         {activeOrder.paymentTrxId || 'N/A'}
                       </span>
                     </div>
                     <div className="flex justify-between text-[11px] items-center">
-                      <span className="text-stone-400">Payment Status</span>
+                      <span className="text-stone-500">Payment Status</span>
                       <span
                         className={`font-bold uppercase tracking-wider text-[9px] px-2 py-0.5 rounded border ${
                           activeOrder.paymentStatus === 'Verified'
@@ -483,7 +483,7 @@ function TrackContent() {
                 )}
 
                 <div className="flex justify-between">
-                  <span className="text-stone-400">Subtotal</span>
+                  <span className="text-stone-500">Subtotal</span>
                   <span className="font-mono font-bold text-[#0C163A]">
                     {formatCurrency(activeOrder.subtotal || activeOrder.total)}
                   </span>
@@ -499,7 +499,7 @@ function TrackContent() {
                 )}
 
                 <div className="flex justify-between">
-                  <span className="text-stone-400">Delivery Charge</span>
+                  <span className="text-stone-500">Delivery Charge</span>
                   <span className="font-mono text-[#0C163A] font-bold">
                     {activeOrder.shippingFee === 0 ? (
                       <span className="text-emerald-600 font-bold uppercase text-[10px]">
@@ -524,7 +524,7 @@ function TrackContent() {
           <div className="space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#0C163A] font-serif flex items-center justify-between">
               <span>Ordered Products ({activeOrder.items?.length || 0} items)</span>
-              <span className="font-mono text-[10px] text-stone-400 font-normal normal-case">
+              <span className="font-mono text-[10px] text-stone-500 font-normal normal-case">
                 All items quality inspected
               </span>
             </h3>
@@ -545,7 +545,7 @@ function TrackContent() {
                         {item.product?.name || 'Falak Closet Item'}
                       </p>
 
-                      <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-stone-400">
+                      <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-stone-500">
                         {item.selectedColor && (
                           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-stone-50 border border-stone-200/60 rounded font-medium">
                             Color: <strong className="text-[#0C163A]">{item.selectedColor}</strong>
@@ -644,7 +644,7 @@ function TrackContent() {
                   className="px-4 py-2 bg-stone-50 hover:bg-pink-50 border border-stone-200 hover:border-pink-200 rounded-full text-[11px] font-mono font-bold text-stone-600 hover:text-[#D92670] transition-all cursor-pointer inline-flex items-center gap-1.5"
                 >
                   #{o.id}
-                  <span className="text-stone-400 font-sans">·</span>
+                  <span className="text-stone-500 font-sans">·</span>
                   <span className="font-sans">{formatCurrency(o.total)}</span>
                 </button>
               ))}

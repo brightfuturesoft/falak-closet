@@ -1,6 +1,12 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { ArrowLeft, Compass, ShoppingBag } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
+
+export const metadata: Metadata = {
+  title: 'Page Not Found',
+  robots: { index: false, follow: true }
+};
 
 export default function NotFound() {
   return (

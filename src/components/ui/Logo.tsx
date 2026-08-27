@@ -1,7 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
+
+/**
+ * Logo image — served as an optimized WebP (~11KB @ 512×512) through
+ * next/image so every route ships a tiny, cacheable, non-shifting brand mark.
+ * The raw 374KB PNG previously loaded unoptimized on every page.
+ */
+const LOGO_SRC = '/logo-transparent-512.webp';
+const LOGO_FALLBACK = '/logo-512.png';
 
 interface LogoProps {
   variant?: 'full' | 'icon' | 'badge' | 'transparent' | 'normal';
@@ -9,6 +18,8 @@ interface LogoProps {
   transparent?: boolean;
   href?: string;
   className?: string;
+  /** Eager-load + preload — use for above-the-fold placements (Header). */
+  priority?: boolean;
 }
 
 export function Logo({
@@ -16,13 +27,10 @@ export function Logo({
   size = 'md',
   transparent = true,
   href = '/',
-  className = ''
+  className = '',
+  priority = false
 }: LogoProps) {
   const [imgError, setImgError] = useState(false);
-
-  // Pick between transparent logo (/transparent_logo.png) or normal logo (/logo.png)
-  const isTransparent = variant === 'transparent' || (transparent && variant !== 'normal');
-  const logoSrc = isTransparent ? '/transparent_logo.png' : '/logo.png';
 
   const sizeMap = {
     sm: 'h-8 sm:h-9 max-w-[140px]',
@@ -35,9 +43,13 @@ export function Logo({
 
   const logoImage = (
     <div className="relative inline-flex items-center shrink-0">
-      <img
-        src={imgError ? '/logo.png' : logoSrc}
+      <Image
+        src={imgError ? LOGO_FALLBACK : LOGO_SRC}
         alt="Falak Closet Logo"
+        width={512}
+        height={512}
+        sizes="(max-width: 640px) 140px, 180px"
+        priority={priority}
         className={`${currentHeight} w-auto object-contain transition-transform duration-300 group-hover:scale-105`}
         onError={() => setImgError(true)}
       />

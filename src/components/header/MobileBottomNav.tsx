@@ -246,7 +246,7 @@ export function MobileBottomNav() {
                   type="button"
                   onClick={() => setSearchQuery('')}
                   aria-label="Clear search"
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full text-stone-400 hover:text-[#D92670] hover:bg-pink-50 transition-colors cursor-pointer"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full text-stone-500 hover:text-[#D92670] hover:bg-pink-50 transition-colors cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -350,7 +350,7 @@ export function MobileBottomNav() {
                       </p>
                       <button
                         onClick={handleClearRecents}
-                        className="flex items-center gap-1 text-[10px] font-bold text-stone-400 hover:text-[#D92670] transition-colors cursor-pointer min-h-[32px] px-1"
+                        className="flex items-center gap-1 text-[10px] font-bold text-stone-500 hover:text-[#D92670] transition-colors cursor-pointer min-h-[32px] px-1"
                         aria-label="Clear recent searches"
                       >
                         <Trash2 className="w-3 h-3" /> Clear
@@ -363,7 +363,7 @@ export function MobileBottomNav() {
                           onClick={() => setSearchQuery(q)}
                           className="min-h-[36px] px-3.5 bg-white border border-pink-200 hover:bg-pink-50 text-[#0C163A] font-semibold text-xs rounded-full inline-flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
                         >
-                          <Clock className="w-3 h-3 text-stone-400" />
+                          <Clock className="w-3 h-3 text-stone-500" />
                           <span className="max-w-[140px] truncate">{q}</span>
                         </button>
                       ))}
