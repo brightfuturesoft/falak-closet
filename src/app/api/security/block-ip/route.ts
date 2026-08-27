@@ -6,10 +6,58 @@ function errorMessage(err: unknown) {
 }
 
 // ─── GET /api/security/block-ip ──────────────────────────────────────────────
-export async function GET() {
+// No params → legacy full { blockedIps }. With page/pageSize → server-paginated
+// admin view: query (ip/reason), sort (ip|reason|blockedAt), dir + stats.
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
     const blockedIps = await prisma.blockedIp.findMany({ orderBy: { createdAt: 'desc' } });
-    return NextResponse.json({ success: true, blockedIps });
+
+    if (!searchParams.has('page') && !searchParams.has('pageSize')) {
+      return NextResponse.json({ success: true, blockedIps });
+    }
+
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
+    const pageSize = Math.min(500, Math.max(1, parseInt(searchParams.get('pageSize') || '8', 10) || 8));
+    const query = (searchParams.get('query') || '').trim().toLowerCase();
+    const sort = ['ip', 'reason', 'blockedAt'].includes(searchParams.get('sort') || '')
+      ? searchParams.get('sort')!
+      : 'blockedAt';
+    const dir = searchParams.get('dir') === 'asc' ? 'asc' : 'desc';
+
+    const searched = query
+      ? blockedIps.filter(
+          (b) => b.ip.toLowerCase().includes(query) || b.reason.toLowerCase().includes(query)
+        )
+      : blockedIps;
+
+    const dirMul = dir === 'asc' ? 1 : -1;
+    searched.sort((a, b) => {
+      if (sort === 'ip') return a.ip.localeCompare(b.ip) * dirMul;
+      if (sort === 'reason') return a.reason.localeCompare(b.reason) * dirMul;
+      return (new Date(a.blockedAt).getTime() - new Date(b.blockedAt).getTime()) * dirMul;
+    });
+
+    const totalItems = searched.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    const safePage = Math.min(page, totalPages);
+    const pageRows = searched.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+    const last24h = blockedIps.filter(
+      (b) => Date.now() - new Date(b.blockedAt).getTime() < 24 * 60 * 60 * 1000
+    ).length;
+
+    return NextResponse.json({
+      success: true,
+      blockedIps: pageRows.map((b) => ({
+        ip: b.ip,
+        reason: b.reason,
+        blockedBy: b.blockedBy,
+        blockedAt: b.blockedAt.toISOString(),
+      })),
+      pagination: { page: safePage, pageSize, totalItems, totalPages },
+      stats: { totalBlocked: blockedIps.length, blockedLast24h: last24h },
+    });
   } catch (err) {
     // A security screen that reports "no blocked IPs" during an outage is worse
     // than one that reports the outage, so this is a real 500.
