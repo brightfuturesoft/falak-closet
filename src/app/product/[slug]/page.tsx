@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { getProductBySlugOrId } from '@/lib/products';
 import { formatCurrency } from '@/lib/utils';
 import ProductDetailClient from './ProductDetailClient';
+import ProductSkeleton from '@/components/product/ProductSkeleton';
 
 /**
  * Resolve the product for both `generateMetadata` and the page body. Next
@@ -138,7 +139,7 @@ export default async function ProductDetailPage({
   // The client reads `?color=` with useSearchParams, which needs a boundary to
   // stay prerenderable.
   return (
-    <Suspense fallback={<div className="py-20 text-center text-xs font-mono text-stone-500">Loading product details...</div>}>
+    <Suspense fallback={<ProductSkeleton />}>
       <ProductDetailClient initialProduct={product} />
     </Suspense>
   );

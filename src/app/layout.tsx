@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { Playfair_Display, Inter, Hind_Siliguri } from 'next/font/google';
+import { Suspense } from 'react';
+import TopProgressBar from '@/components/ui/TopProgressBar';
 import './globals.css';
 import { CartProvider } from '@/context/CartContext';
 import { AnalyticsProvider } from '@/context/AnalyticsContext';
@@ -132,6 +134,9 @@ export default async function RootLayout({
         />
       </head>
       <body className="bg-[#FAFAFA] text-stone-900 antialiased selection:bg-[#D92670] selection:text-white">
+        <Suspense fallback={null}>
+          <TopProgressBar />
+        </Suspense>
         <FacebookPixel />
         <AnalyticsProvider>
           <ToastProvider>
