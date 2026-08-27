@@ -14,7 +14,8 @@ import {
   Play,
   Phone,
   Mail,
-  MapPin
+  MapPin,
+  Sparkles
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { Logo } from '@/components/ui/Logo';
@@ -54,66 +55,40 @@ export function Footer({ identity }: { identity: SiteIdentity }) {
   if (identity.whatsapp) socials.push({ href: socialHref(identity.whatsapp, 'https://wa.me'), label: 'WhatsApp', Icon: MessageCircle });
   if (identity.youtube) socials.push({ href: socialHref(identity.youtube, 'https://youtube.com'), label: 'YouTube', Icon: Play });
 
-  const contactLines: ContactLine[] = [];
-  if (identity.contactPhone) contactLines.push({ Icon: Phone, text: identity.contactPhone, href: `tel:${identity.contactPhone.replace(/[^+\d]/g, '')}` });
-  if (identity.contactEmail) contactLines.push({ Icon: Mail, text: identity.contactEmail, href: `mailto:${identity.contactEmail}` });
-  if (identity.address) contactLines.push({ Icon: MapPin, text: identity.address, href: null });
+  const rawAddress = identity.address || 'House 3, Banasree Main Road, Dhaka 1219 | Shop 248, 2nd Floor, Moti Super Market, Chattogram';
+  const addresses = rawAddress.split(/[|\n;]/).map(a => a.trim()).filter(Boolean);
+  const phone = identity.contactPhone || '01799-775487';
+  const phoneClean = phone.replace(/[^+\d]/g, '');
+  const email = identity.contactEmail || 'info@eziclick.com';
+
   return (
-    <footer className="bg-[#FFFBF0] text-[#0C163A] border-t border-[#F2C76E]/40 pt-12 pb-12 font-sans">
-      {/* 4 Value Pillars Banner */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 border-b border-[#F2C76E]/30 grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
-        <div className="p-4 rounded-2xl bg-white border border-[#F2C76E]/40 space-y-1.5 shadow-xs">
-          <Truck className="w-5 h-5 text-[#9B050B] mx-auto" />
-          <h4 className="font-bold text-xs text-[#0C163A]">Express Delivery</h4>
-          <p className="text-[11px] text-stone-500">Fast shipping across Bangladesh</p>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-white border border-[#F2C76E]/40 space-y-1.5 shadow-xs">
-          <RotateCcw className="w-5 h-5 text-[#9B050B] mx-auto" />
-          <h4 className="font-bold text-xs text-[#0C163A]">30-Day Returns</h4>
-          <p className="text-[11px] text-stone-500">Easy exchanges & returns</p>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-white border border-[#F2C76E]/40 space-y-1.5 shadow-xs">
-          <ShieldCheck className="w-5 h-5 text-[#9B050B] mx-auto" />
-          <h4 className="font-bold text-xs text-[#0C163A]">100% Quality Guarantee</h4>
-          <p className="text-[11px] text-stone-500">Premium fabric & stitching</p>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-white border border-[#F2C76E]/40 space-y-1.5 shadow-xs">
-          <Headphones className="w-5 h-5 text-[#9B050B] mx-auto" />
-          <h4 className="font-bold text-xs text-[#0C163A]">Customer Support</h4>
-          <p className="text-[11px] text-stone-500">24/7 dedicated assistance</p>
-        </div>
-      </div>
-
+    <footer className="bg-[#FFF5F7]/30 text-[#0C163A] border-t border-pink-100 pt-12 pb-12 font-sans">
       {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
         {/* Brand Col */}
-        <div className="lg:col-span-2 space-y-3">
+        <div className="lg:col-span-2 space-y-4">
           <Logo variant="full" size="md" />
           <p className="text-xs text-stone-600 leading-relaxed max-w-sm">
             Falak Closet is your destination for handcrafted luxury abayas, silk hijabs, kaftans, dresses, and modest couture collections.
           </p>
 
-          {contactLines.length > 0 && (
-            <div className="space-y-1.5 pt-1">
-              {contactLines.map(({ Icon, text, href }) =>
-                href ? (
-                  <a key={text} href={href} className="flex items-center gap-2 text-xs text-stone-600 hover:text-[#9B050B] transition-colors">
-                    <Icon className="w-3.5 h-3.5 text-[#9B050B] shrink-0" />
-                    <span>{text}</span>
-                  </a>
-                ) : (
-                  <p key={text} className="flex items-start gap-2 text-xs text-stone-600">
-                    <Icon className="w-3.5 h-3.5 text-[#9B050B] shrink-0 mt-0.5" />
-                    <span>{text}</span>
-                  </p>
-                )
-              )}
-            </div>
-          )}
+          {/* Value Badges */}
+          <div className="flex flex-wrap gap-2 pt-1">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-50 border border-pink-100 text-[#D92670] text-[10px] font-bold shadow-xs">
+              <Truck className="w-3.5 h-3.5 shrink-0" />
+              <span>Fast Delivery</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-50 border border-pink-100 text-[#D92670] text-[10px] font-bold shadow-xs">
+              <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+              <span>All Active</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-50 border border-pink-100 text-[#D92670] text-[10px] font-bold shadow-xs">
+              <Sparkles className="w-3.5 h-3.5 shrink-0" />
+              <span>Modest style</span>
+            </span>
+          </div>
 
+          {/* Social Links */}
           {socials.length > 0 && (
             <div className="pt-2 flex items-center gap-2">
               {socials.map(({ href, label, Icon }) => (
@@ -124,7 +99,7 @@ export function Footer({ identity }: { identity: SiteIdentity }) {
                   rel="noreferrer"
                   aria-label={label}
                   title={label}
-                  className="p-2 bg-[#F2C76E]/20 hover:bg-[#9B050B] text-[#0C163A] hover:text-white rounded-full transition-colors border border-[#F2C76E]/40"
+                  className="p-2 bg-pink-50 hover:bg-[#D92670] text-[#D92670] hover:text-white rounded-full transition-colors border border-pink-100/80"
                 >
                   <Icon className="w-4 h-4" />
                 </a>
@@ -133,40 +108,69 @@ export function Footer({ identity }: { identity: SiteIdentity }) {
           )}
         </div>
 
+        {/* Contact Info Col */}
+        <div className="space-y-3 text-xs">
+          <h4 className="font-extrabold text-[#D92670] uppercase tracking-wider text-xs">Contact</h4>
+          <div className="space-y-3 text-stone-600 font-sans">
+            {addresses.map((addr, index) => {
+              let label = '';
+              const addrLower = addr.toLowerCase();
+              if (addrLower.includes('dhaka')) label = 'Dhaka';
+              else if (addrLower.includes('chattogram') || addrLower.includes('ctg')) label = 'Chattogram';
+              else if (addresses.length > 1) label = `Address ${index + 1}`;
+
+              return (
+                <div key={index} className="flex items-start gap-2">
+                  <MapPin className="w-4 h-4 text-[#D92670] shrink-0 mt-0.5" />
+                  <div>
+                    {label && <strong className="text-stone-800 uppercase block text-[9px] tracking-wider">{label}</strong>}
+                    <span>{addr}</span>
+                  </div>
+                </div>
+              );
+            })}
+
+            {phone && (
+              <a href={`tel:${phoneClean}`} className="flex items-center gap-2 hover:text-[#D92670] transition-colors">
+                <Phone className="w-4 h-4 text-[#D92670] shrink-0" />
+                <span>{phone}</span>
+              </a>
+            )}
+
+            {email && (
+              <a href={`mailto:${email}`} className="flex items-center gap-2 hover:text-[#D92670] transition-colors">
+                <Mail className="w-4 h-4 text-[#D92670] shrink-0" />
+                <span>{email}</span>
+              </a>
+            )}
+          </div>
+        </div>
+
         {/* Quick Links */}
-        <div className="space-y-2 text-xs">
-          <h4 className="font-extrabold text-[#9B050B] uppercase tracking-wider text-xs">Shop Collections</h4>
-          <ul className="space-y-1.5 text-stone-600">
-            <li><Link href="/shop?category=Abayas" className="hover:text-[#9B050B]">Abayas</Link></li>
-            <li><Link href="/shop?category=Modest%20Dresses" className="hover:text-[#9B050B]">Modest Dresses</Link></li>
-            <li><Link href="/shop?category=Hijabs%20%26%20Dupattas" className="hover:text-[#9B050B]">Hijabs & Dupattas</Link></li>
-            <li><Link href="/live-promotions" className="hover:text-[#9B050B] text-[#9B050B] font-bold">Live Promotions</Link></li>
+        <div className="space-y-3 text-xs">
+          <h4 className="font-extrabold text-[#D92670] uppercase tracking-wider text-xs">Account</h4>
+          <ul className="space-y-2 text-stone-600">
+            <li><Link href="/account" className="hover:text-[#D92670]">My profile</Link></li>
+            <li><Link href="/account" className="hover:text-[#D92670]">Order history</Link></li>
+            <li><Link href="/track" className="hover:text-[#D92670]">Track order</Link></li>
+            <li><Link href="/cart" className="hover:text-[#D92670]">Cart</Link></li>
           </ul>
         </div>
 
         {/* Client Care */}
-        <div className="space-y-2 text-xs">
-          <h4 className="font-extrabold text-[#9B050B] uppercase tracking-wider text-xs">Customer Care</h4>
-          <ul className="space-y-1.5 text-stone-600">
-            <li><Link href="/track" className="hover:text-[#9B050B]">Track Order</Link></li>
-            <li><Link href="/how-to-order" className="hover:text-[#9B050B]">How to Order</Link></li>
-            <li><Link href="/shipping" className="hover:text-[#9B050B]">Shipping Info</Link></li>
-            <li><Link href="/admin" className="hover:text-[#9B050B]">Admin Portal</Link></li>
-          </ul>
-        </div>
-
-        {/* Legal Policies */}
-        <div className="space-y-2 text-xs">
-          <h4 className="font-extrabold text-[#9B050B] uppercase tracking-wider text-xs">Legal</h4>
-          <ul className="space-y-1.5 text-stone-600">
-            <li><Link href="/privacy" className="hover:text-[#9B050B]">Privacy Policy</Link></li>
-            <li><Link href="/terms" className="hover:text-[#9B050B]">Terms of Service</Link></li>
+        <div className="space-y-3 text-xs">
+          <h4 className="font-extrabold text-[#D92670] uppercase tracking-wider text-xs">Help</h4>
+          <ul className="space-y-2 text-stone-600">
+            <li><Link href="/shipping" className="hover:text-[#D92670]">Delivery charge</Link></li>
+            <li><Link href="/returns" className="hover:text-[#D92670]">Refunds & exchange</Link></li>
+            <li><Link href="/terms" className="hover:text-[#D92670]">Terms</Link></li>
+            <li><Link href="/privacy" className="hover:text-[#D92670]">Privacy</Link></li>
           </ul>
         </div>
       </div>
 
       {/* Bottom Copyright */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 pt-4 border-t border-[#F2C76E]/30 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-stone-500 font-mono">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 pt-4 border-t border-pink-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-stone-500 font-mono">
         <p>© {new Date().getFullYear()} FALAK CLOSET. All Rights Reserved.</p>
         <div className="flex items-center gap-1.5">
           <Lock className="w-3.5 h-3.5 text-emerald-600" />

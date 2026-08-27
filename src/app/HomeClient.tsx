@@ -6,13 +6,11 @@ import { useCart } from '@/context/CartContext';
 import { HeroCarousel } from '@/components/home/HeroCarousel';
 import { CategoryFilterSlider } from '@/components/home/CategoryFilterSlider';
 import { NewArrivalSection } from '@/components/home/NewArrivalSection';
+import { LatestProductsSection } from '@/components/home/LatestProductsSection';
 import { BestSellersSection } from '@/components/home/BestSellersSection';
-import { PromoBannerSection } from '@/components/home/PromoBannerSection';
-import { AllProductsSection } from '@/components/home/AllProductsSection';
-import { ValuePropsSection } from '@/components/home/ValuePropsSection';
 import type { HeroSlideView } from '@/lib/heroSlides';
-import type { PromotionBanner } from '@/lib/promotionBanners';
-import type { ValuePropItem } from '@/lib/siteSettings';
+import { PromotionBanner } from '@prisma/client';
+import { ValuePropItem } from '@/lib/siteSettings';
 
 /**
  * The interactive half of the home page — everything that needs `useCart` or
@@ -20,13 +18,9 @@ import type { ValuePropItem } from '@/lib/siteSettings';
  * they render in the initial HTML instead of after a client fetch.
  */
 export default function HomeClient({
-  heroSlides,
-  promoBanner,
-  valueProps
+  heroSlides
 }: {
   heroSlides: HeroSlideView[];
-  promoBanner: PromotionBanner | null;
-  valueProps: ValuePropItem[];
 }) {
   const { products, isLoadingProducts, productsError, refreshProductsFromApi } = useCart();
   const [selectedFilter, setSelectedFilter] = useState<{ type: string; val: string } | null>(null);
@@ -34,13 +28,13 @@ export default function HomeClient({
   // Filter products dynamically when user clicks a category tag
   const filteredProducts = selectedFilter
     ? products.filter((p) => {
-        if (selectedFilter.type === 'occasion') return p.occasion === selectedFilter.val;
-        if (selectedFilter.type === 'weather') return p.weather === selectedFilter.val;
-        if (selectedFilter.type === 'material') return p.material === selectedFilter.val;
-        if (selectedFilter.type === 'category') return p.category === selectedFilter.val;
-        if (selectedFilter.type === 'subCategory') return p.subCategory === selectedFilter.val;
-        return true;
-      })
+      if (selectedFilter.type === 'occasion') return p.occasion === selectedFilter.val;
+      if (selectedFilter.type === 'weather') return p.weather === selectedFilter.val;
+      if (selectedFilter.type === 'material') return p.material === selectedFilter.val;
+      if (selectedFilter.type === 'category') return p.category === selectedFilter.val;
+      if (selectedFilter.type === 'subCategory') return p.subCategory === selectedFilter.val;
+      return true;
+    })
     : products;
 
   const handleSelectFilter = (type: string, value: string) => {
@@ -136,19 +130,13 @@ export default function HomeClient({
           {/* 3. NEW ARRIVALS Section */}
           <NewArrivalSection products={filteredProducts} />
 
-          {/* 4. BEST SELLERS & TRENDING CHOICE Section */}
+          {/* 4. LATEST PRODUCTS Section */}
+          <LatestProductsSection products={filteredProducts} />
+
+          {/* 5. BEST SELLERS Section */}
           <BestSellersSection products={products} />
-
-          {/* 5. FLASH SALE & PROMOTIONAL VOUCHERS Banner */}
-          <PromoBannerSection banner={promoBanner} />
-
-          {/* 6. ALL PRODUCTS & FULL COLLECTION Section */}
-          <AllProductsSection products={filteredProducts} />
         </>
       )}
-
-      {/* 7. WHY CHOOSE FALAK CLOSET Value Showcase */}
-      <ValuePropsSection items={valueProps} />
     </div>
   );
 }

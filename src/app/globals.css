@@ -9,8 +9,11 @@
     --brand-navy: #0C163A;
     --brand-cream: #FFFBF0;
     --brand-sand-light: #FAF6EC;
+    
+    --brand-pink: #D92670;
+    --brand-pink-hover: #C2185B;
 
-    --background: #FAF6EC;
+    --background: #FFFFFF;
     --foreground: #0C163A;
   }
 
@@ -29,16 +32,16 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #FFFBF0;
+  background: #FFFFFF;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #F2C76E;
+  background: #F5D0D6;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9B050B;
+  background: #D92670;
 }
 
 /* Hide scrollbar utility */

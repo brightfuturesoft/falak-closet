@@ -52,7 +52,7 @@ function SafeImage({ src, alt, className }: { src: string; alt: string; classNam
   if (hasError || !imgSrc) {
     return (
       <div className="w-full h-full bg-[#0C163A]/10 flex flex-col items-center justify-center p-1 text-center text-[#0C163A]">
-        <Sparkles className="w-4 h-4 text-[#9B050B]" />
+        <Sparkles className="w-4 h-4 text-[#D92670]" />
         <span className="text-[8px] font-bold mt-0.5 font-mono line-clamp-1">{alt}</span>
       </div>
     );
@@ -140,6 +140,11 @@ export function MobileBottomNav() {
     };
   }, [isSearchOpen]);
 
+  // Close the search modal when the pathname changes (e.g. user clicks nav items)
+  useEffect(() => {
+    setIsSearchOpen(false);
+  }, [pathname]);
+
   if (pathname?.startsWith('/admin')) {
     return null;
   }
@@ -210,7 +215,7 @@ export function MobileBottomNav() {
     { id: 'home', label: 'Home', href: '/', icon: Home },
     { id: 'search', label: 'Search', href: '#search', icon: Search, isSearchAction: true },
     { id: 'shop', label: 'Shop', href: '/shop', icon: LayoutGrid },
-    { id: 'cart', label: 'Cart', href: '#cart', icon: ShoppingBag, isCartAction: true },
+    { id: 'cart', label: 'Cart', href: '/cart', icon: ShoppingBag },
     { id: 'account', label: 'Account', href: '/account', icon: User }
   ];
 
@@ -219,13 +224,13 @@ export function MobileBottomNav() {
       {/* Mobile Search Modal Sheet */}
       {isSearchOpen && (
         <div
-          className="lg:hidden fixed inset-0 z-50 flex flex-col bg-[#FFFBF0] animate-in fade-in slide-in-from-bottom duration-200"
+          className="lg:hidden fixed inset-0 z-50 flex flex-col bg-white animate-in fade-in slide-in-from-bottom duration-200"
           role="dialog"
           aria-modal="true"
           aria-label="Search products"
         >
           {/* Header */}
-          <div className="px-4 py-3 bg-[#FFFBF0] border-b border-[#F2C76E]/60 flex items-center justify-between gap-3 shadow-xs">
+          <div className="px-4 py-3 bg-white border-b border-pink-100/60 flex items-center justify-between gap-3 shadow-xs">
             <form onSubmit={handleSearchSubmit} className="flex-1 relative flex items-center">
               <input
                 type="text"
@@ -234,19 +239,19 @@ export function MobileBottomNav() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search abayas, hijabs, colors (emerald, black)..."
                 aria-label="Search products"
-                className="w-full min-h-[44px] pl-4 pr-10 py-2 bg-white border-2 border-[#9B050B] rounded-full text-xs text-[#0C163A] placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[#9B050B]/30"
+                className="w-full min-h-[44px] pl-4 pr-10 py-2 bg-white border border-pink-200 rounded-full text-xs text-[#0C163A] placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[#D92670]/30"
               />
               {searchQuery ? (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
                   aria-label="Clear search"
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full text-stone-400 hover:text-[#9B050B] hover:bg-[#F2C76E]/20 transition-colors cursor-pointer"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full text-stone-400 hover:text-[#D92670] hover:bg-pink-50 transition-colors cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               ) : (
-                <button type="submit" aria-label="Submit search" className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-[#9B050B] cursor-pointer">
+                <button type="submit" aria-label="Submit search" className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-[#D92670] cursor-pointer">
                   <Search className="w-4 h-4" />
                 </button>
               )}
@@ -254,14 +259,14 @@ export function MobileBottomNav() {
 
             <button
               onClick={() => setIsSearchOpen(false)}
-              className="min-h-[44px] px-2 text-stone-600 hover:text-[#9B050B] font-bold text-xs cursor-pointer"
+              className="min-h-[44px] px-2 text-stone-600 hover:text-[#D92670] font-bold text-xs cursor-pointer"
             >
               Cancel
             </button>
           </div>
 
           {/* Search Results List */}
-          <div className="flex-1 overflow-y-auto overscroll-contain p-4 divide-y divide-[#F2C76E]/25">
+          <div className="flex-1 overflow-y-auto overscroll-contain p-4 divide-y divide-pink-100/40">
             {searchResults.length > 0 ? (
               searchResults.map((prod) => {
                 const matchedVar = getMatchedVariation(prod, searchQuery);
@@ -276,9 +281,9 @@ export function MobileBottomNav() {
                       stripSheetHistoryMarker();
                       setIsSearchOpen(false);
                     }}
-                    className="flex items-center gap-3 py-3 -mx-2 px-2 rounded-xl hover:bg-[#F2C76E]/20 transition-colors group text-left active:scale-[0.98]"
+                    className="flex items-center gap-3 py-3 -mx-2 px-2 rounded-xl hover:bg-pink-50 transition-colors group text-left active:scale-[0.98]"
                   >
-                    <div className="relative w-12 h-14 rounded-xl overflow-hidden bg-stone-100 shrink-0 border border-[#F2C76E]/50 shadow-xs">
+                    <div className="relative w-12 h-14 rounded-xl overflow-hidden bg-stone-100 shrink-0 border border-pink-100 shadow-xs">
                       <SafeImage src={displayImage} alt={prod.name} className="object-cover" />
                     </div>
 
@@ -288,7 +293,7 @@ export function MobileBottomNav() {
                       </p>
 
                       {matchedVar ? (
-                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-[#9B050B]/10 border border-[#9B050B]/30 rounded-md text-[10px] font-bold text-[#9B050B]">
+                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-[#D92670]/10 border border-[#D92670]/30 rounded-md text-[10px] font-bold text-[#D92670]">
                           <span
                             className="w-2.5 h-2.5 rounded-full border border-stone-300 shrink-0 shadow-xs"
                             style={{ backgroundColor: matchedVar.hex }}
@@ -317,7 +322,7 @@ export function MobileBottomNav() {
                     </div>
 
                     <div className="text-right shrink-0">
-                      <span className="font-extrabold text-xs text-[#9B050B] font-mono block">
+                      <span className="font-extrabold text-xs text-[#D92670] font-mono block">
                         {formatCurrency(prod.price)}
                       </span>
                     </div>
@@ -341,11 +346,11 @@ export function MobileBottomNav() {
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between">
                       <p className="text-[11px] font-bold text-[#0C163A] uppercase tracking-wider flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-[#9B050B]" /> Recent Searches
+                        <Clock className="w-3.5 h-3.5 text-[#D92670]" /> Recent Searches
                       </p>
                       <button
                         onClick={handleClearRecents}
-                        className="flex items-center gap-1 text-[10px] font-bold text-stone-400 hover:text-[#9B050B] transition-colors cursor-pointer min-h-[32px] px-1"
+                        className="flex items-center gap-1 text-[10px] font-bold text-stone-400 hover:text-[#D92670] transition-colors cursor-pointer min-h-[32px] px-1"
                         aria-label="Clear recent searches"
                       >
                         <Trash2 className="w-3 h-3" /> Clear
@@ -356,7 +361,7 @@ export function MobileBottomNav() {
                         <button
                           key={q}
                           onClick={() => setSearchQuery(q)}
-                          className="min-h-[36px] px-3.5 bg-white border border-[#9B050B]/25 hover:bg-[#9B050B]/5 text-[#0C163A] font-semibold text-xs rounded-full inline-flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+                          className="min-h-[36px] px-3.5 bg-white border border-pink-200 hover:bg-pink-50 text-[#0C163A] font-semibold text-xs rounded-full inline-flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
                         >
                           <Clock className="w-3 h-3 text-stone-400" />
                           <span className="max-w-[140px] truncate">{q}</span>
@@ -373,7 +378,7 @@ export function MobileBottomNav() {
                       <button
                         key={tag}
                         onClick={() => setSearchQuery(tag)}
-                        className="min-h-[36px] px-3.5 bg-white border border-[#F2C76E]/60 hover:bg-[#F2C76E]/20 text-[#0C163A] font-medium rounded-full active:scale-95 transition-all cursor-pointer"
+                        className="min-h-[36px] px-3.5 bg-white border border-pink-100 hover:bg-pink-50 text-[#0C163A] font-medium rounded-full active:scale-95 transition-all cursor-pointer"
                       >
                         {tag}
                       </button>
@@ -388,7 +393,7 @@ export function MobileBottomNav() {
             <button
               type="button"
               onClick={handleSearchSubmit}
-              className="w-full min-h-[52px] pb-[env(safe-area-inset-bottom)] bg-[#9B050B] hover:bg-[#B8000A] text-[#FFFBF0] font-bold text-xs text-center flex items-center justify-center gap-1.5 shadow-md active:scale-[0.99] transition-all cursor-pointer"
+              className="w-full min-h-[52px] pb-[env(safe-area-inset-bottom)] bg-[#D92670] hover:bg-[#C2185B] text-white font-bold text-xs text-center flex items-center justify-center gap-1.5 shadow-md active:scale-[0.99] transition-all cursor-pointer"
             >
               <span>View all results for &quot;{searchQuery.trim()}&quot; ({searchResults.length} shown)</span>
               <span aria-hidden="true">→</span>
@@ -401,57 +406,38 @@ export function MobileBottomNav() {
           never overlaps the tabs. */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-auto select-none">
         <nav
-          className="bg-[#FFFBF0]/98 backdrop-blur-2xl border-t-2 border-x-0 border-b-0 border-[#F2C76E]/90 rounded-t-2xl sm:rounded-t-3xl rounded-b-none shadow-[0_-10px_35px_rgba(12,22,58,0.14)] pt-1.5 px-2 pb-[calc(0.375rem+env(safe-area-inset-bottom))] flex items-center justify-around"
+          className="bg-white/95 backdrop-blur-2xl border-t border-pink-100/80 rounded-t-3xl rounded-b-none shadow-[0_-10px_30px_rgba(217,38,112,0.06)] pt-2 px-2 pb-[calc(0.375rem+env(safe-area-inset-bottom))] flex items-center justify-around"
           aria-label="Main navigation"
         >
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive =
-              !item.isCartAction &&
-              !item.isSearchAction &&
-              (pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href)));
+            const isActive = isSearchOpen
+              ? item.isSearchAction
+              : (!item.isSearchAction && (pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))));
 
             if (item.isSearchAction) {
               return (
                 <button
                   key={item.id}
-                  onClick={() => setIsSearchOpen(true)}
+                  onClick={() => setIsSearchOpen(!isSearchOpen)}
                   style={{ WebkitTapHighlightColor: 'transparent' }}
                   aria-haspopup="dialog"
                   aria-expanded={isSearchOpen}
-                  className={`relative flex flex-col items-center justify-center min-w-[56px] min-h-[48px] px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-90 outline-none focus-visible:ring-2 focus-visible:ring-[#9B050B] cursor-pointer ${
-                    isSearchOpen
-                      ? 'text-[#9B050B] font-serif font-extrabold'
-                      : 'text-[#0C163A]/70 hover:text-[#9B050B] font-medium'
+                  className={`relative flex flex-col items-center justify-center min-w-[56px] min-h-[48px] px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-90 outline-none focus-visible:ring-2 focus-visible:ring-[#D92670] cursor-pointer ${
+                    isActive
+                      ? 'text-[#D92670] font-sans font-extrabold'
+                      : 'text-[#0C163A]/70 hover:text-[#D92670] font-medium'
                   }`}
                 >
-                  <Icon className={`w-[22px] h-[22px] transition-transform duration-300 ${isSearchOpen ? 'scale-110' : ''}`} strokeWidth={isSearchOpen ? 2.5 : 1.8} />
-                  <span className="text-[10px] leading-tight mt-1 tracking-tight">Search</span>
-                </button>
-              );
-            }
+                  {isActive && (
+                    <span className="absolute inset-0 bg-[#FFF5F7] border border-pink-100/65 rounded-2xl transition-all duration-300 -z-10 shadow-xs" aria-hidden="true" />
+                  )}
 
-            if (item.isCartAction) {
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setIsCartDrawerOpen(true)}
-                  style={{ WebkitTapHighlightColor: 'transparent' }}
-                  aria-label={`Open cart${cartCount > 0 ? `, ${cartCount} item${cartCount === 1 ? '' : 's'}` : ', empty'}`}
-                  className="relative flex flex-col items-center justify-center min-w-[56px] min-h-[48px] px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-90 outline-none focus-visible:ring-2 focus-visible:ring-[#9B050B] cursor-pointer text-[#0C163A]/70 hover:text-[#9B050B] font-medium"
-                >
-                  <div className="relative">
-                    <Icon className="w-[22px] h-[22px]" strokeWidth={1.8} />
-                    {cartCount > 0 && (
-                      <span
-                        key={cartCount}
-                        className="absolute -top-2 -right-3 min-w-[18px] h-[18px] px-1 bg-[#9B050B] text-[#FFFBF0] text-[9px] font-black font-mono rounded-full flex items-center justify-center shadow-md animate-fade-in"
-                      >
-                        {cartCount > 99 ? '99+' : cartCount}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[10px] leading-tight mt-1 tracking-tight">Cart</span>
+                  <Icon
+                    className={`w-[22px] h-[22px] transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}
+                    strokeWidth={isActive ? 2.5 : 1.8}
+                  />
+                  <span className="text-[10px] leading-tight mt-1 tracking-tight">Search</span>
                 </button>
               );
             }
@@ -462,20 +448,30 @@ export function MobileBottomNav() {
                 href={item.href}
                 style={{ WebkitTapHighlightColor: 'transparent' }}
                 aria-current={isActive ? 'page' : undefined}
-                className={`relative flex flex-col items-center justify-center min-w-[56px] min-h-[48px] px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-90 outline-none focus-visible:ring-2 focus-visible:ring-[#9B050B] cursor-pointer ${
+                className={`relative flex flex-col items-center justify-center min-w-[56px] min-h-[48px] px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-90 outline-none focus-visible:ring-2 focus-visible:ring-[#D92670] cursor-pointer ${
                   isActive
-                    ? 'text-[#9B050B] font-serif font-extrabold'
-                    : 'text-[#0C163A]/70 hover:text-[#9B050B] font-medium'
+                    ? 'text-[#D92670] font-sans font-extrabold'
+                    : 'text-[#0C163A]/70 hover:text-[#D92670] font-medium'
                 }`}
               >
                 {isActive && (
-                  <span className="absolute inset-0 bg-gradient-to-b from-[#F2C76E]/40 to-[#9B050B]/10 border border-[#F2C76E]/70 rounded-2xl transition-all duration-300 -z-10 shadow-[0_2px_8px_rgba(155,5,11,0.08)]" aria-hidden="true" />
+                  <span className="absolute inset-0 bg-[#FFF5F7] border border-pink-100/65 rounded-2xl transition-all duration-300 -z-10 shadow-xs" aria-hidden="true" />
                 )}
 
-                <Icon
-                  className={`w-[22px] h-[22px] transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}
-                  strokeWidth={isActive ? 2.5 : 1.8}
-                />
+                <div className="relative">
+                  <Icon
+                    className={`w-[22px] h-[22px] transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}
+                    strokeWidth={isActive ? 2.5 : 1.8}
+                  />
+                  {item.id === 'cart' && cartCount > 0 && (
+                    <span
+                      key={cartCount}
+                      className="absolute -top-2 -right-3 min-w-[18px] h-[18px] px-1 bg-[#D92670] text-white text-[9px] font-black font-mono rounded-full flex items-center justify-center shadow-md animate-fade-in"
+                    >
+                      {cartCount > 99 ? '99+' : cartCount}
+                    </span>
+                  )}
+                </div>
 
                 <span className="text-[10px] leading-tight mt-1 tracking-tight">
                   {item.label}

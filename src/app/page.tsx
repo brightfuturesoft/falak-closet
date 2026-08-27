@@ -15,5 +15,5 @@ export default async function HomePage() {
     getActiveBannersSafe(),
     getValuePropsSafe(),
   ]);
-  return <HomeClient heroSlides={slides} promoBanner={banners[0] ?? null} valueProps={valueProps} />;
+  return <HomeClient heroSlides={slides} />;
 }

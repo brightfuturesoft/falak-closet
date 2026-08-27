@@ -47,10 +47,10 @@ export function serializeSlide(row: HeroSlideRow): HeroSlideView {
 /** The two slides the storefront shipped with — seed payload + DB-down fallback. */
 export const DEFAULT_HERO_SLIDES: Omit<HeroSlideView, 'id' | 'createdAt' | 'updatedAt'>[] = [
   {
-    tag: 'FRESH OFFERS',
-    title: 'Style picks for every plan',
-    subtitle: 'Discover clothing deals, curated collections, and easy checkout in one place.',
-    ctaText: 'View Offers',
+    tag: 'LIVE NOW!',
+    title: 'Big deals, easy shopping',
+    subtitle: 'Shop modern, fashion-finds and easy dress-picked for quick checkout.',
+    ctaText: 'See Promotions',
     ctaLink: '/live-promotions',
     image:
       'https://images.unsplash.com/photo-1583391733956-6c78276477e2?auto=format&fit=crop&w=1600&q=85',

@@ -85,13 +85,13 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
               />
 
               {/* Navy to Crimson Rich Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-r from-[#0C163A] via-[#0C163A]/90 to-[#9B050B]/40 sm:to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0C163A] via-[#0C163A]/90 to-[#D92670]/40 sm:to-transparent" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0C163A]/80 via-transparent to-transparent" />
             </div>
 
             {/* Banner Text Overlay */}
             <div className="absolute inset-0 p-5 sm:p-12 flex flex-col justify-center max-w-xl text-white space-y-2.5 sm:space-y-4 z-20">
-              <span className="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-[0.2em] sm:tracking-widest text-[#F2C76E]">
+              <span className="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-[0.2em] sm:tracking-widest text-pink-300">
                 {slide.tag}
               </span>
 
@@ -103,13 +103,25 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
                 {slide.subtitle}
               </p>
 
-              <div className="pt-1.5 sm:pt-2">
+              <div className="pt-1.5 sm:pt-2 flex flex-wrap gap-3">
                 <Link
                   href={slide.ctaLink}
-                  className="inline-flex min-h-[44px] items-center gap-2 px-6 py-3 bg-[#F2C76E] hover:bg-[#E5B550] text-[#0C163A] font-extrabold text-xs sm:text-sm rounded-full transition-all shadow-md hover:scale-105 active:scale-95 cursor-pointer"
+                  className="inline-flex min-h-[44px] items-center gap-1.5 px-6 py-3 bg-white hover:bg-stone-50 text-[#0C163A] font-extrabold text-xs sm:text-sm rounded-full transition-all shadow-md hover:scale-105 active:scale-95 cursor-pointer"
                 >
-                  <Sparkles className="w-4 h-4 text-[#9B050B]" />
+                  <Sparkles className="w-4 h-4 text-[#D92670]" />
                   <span>{slide.ctaText}</span>
+                </Link>
+                
+                <Link
+                  href="/how-to-order"
+                  className="inline-flex min-h-[44px] items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/40 font-extrabold text-xs sm:text-sm rounded-full transition-all shadow-md hover:scale-105 active:scale-95 cursor-pointer"
+                >
+                  <span className="w-4.5 h-4.5 flex items-center justify-center bg-white text-[#0C163A] rounded-full shrink-0">
+                    <svg className="w-2.5 h-2.5 fill-current text-[#0C163A] translate-x-[0.5px]" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </span>
+                  <span>How to order</span>
                 </Link>
               </div>
             </div>
@@ -120,14 +132,14 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
         <div className="hidden sm:flex absolute top-4 right-4 z-30 items-center gap-2">
           <button
             onClick={handlePrev}
-            className="w-10 h-10 rounded-full bg-[#0C163A]/60 hover:bg-[#0C163A] text-[#F2C76E] backdrop-blur-xs transition-all cursor-pointer border border-[#F2C76E]/30 flex items-center justify-center active:scale-90"
+            className="w-10 h-10 rounded-full bg-[#0C163A]/60 hover:bg-[#D92670] text-white backdrop-blur-xs transition-all cursor-pointer border border-white/20 flex items-center justify-center active:scale-90"
             aria-label="Previous slide"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             onClick={handleNext}
-            className="w-10 h-10 rounded-full bg-[#0C163A]/60 hover:bg-[#0C163A] text-[#F2C76E] backdrop-blur-xs transition-all cursor-pointer border border-[#F2C76E]/30 flex items-center justify-center active:scale-90"
+            className="w-10 h-10 rounded-full bg-[#0C163A]/60 hover:bg-[#D92670] text-white backdrop-blur-xs transition-all cursor-pointer border border-white/20 flex items-center justify-center active:scale-90"
             aria-label="Next slide"
           >
             <ChevronRight className="w-5 h-5" />
@@ -141,7 +153,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
               key={idx}
               onClick={() => setCurrentSlide(idx)}
               className={`relative h-2 rounded-full transition-all duration-300 cursor-pointer after:content-[''] after:absolute after:-inset-2.5 ${
-                safeIndex === idx ? 'w-7 bg-[#F2C76E]' : 'w-2 bg-white/60 hover:bg-white'
+                safeIndex === idx ? 'w-7 bg-[#D92670]' : 'w-2 bg-white/60 hover:bg-white'
               }`}
               aria-label={`Go to slide ${idx + 1}`}
               aria-current={safeIndex === idx}
