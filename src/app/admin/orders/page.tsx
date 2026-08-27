@@ -8,12 +8,12 @@ export default function AdminOrdersPage() {
 
   return (
     <OrdersTab
-      orders={admin.ordersList}
       onSelectOrderReceipt={(order) => admin.setSelectedOrderReceipt(order)}
       onUpdateOrderStatus={admin.handleUpdateOrderStatus}
       onUpdatePaymentStatus={admin.handleUpdatePaymentStatus}
       onOpenCreateOrderModal={() => admin.setIsCreateOrderOpen(true)}
       searchQuery={admin.globalSearchQuery}
+      ordersFeedCount={admin.ordersList.length}
     />
   );
 }
