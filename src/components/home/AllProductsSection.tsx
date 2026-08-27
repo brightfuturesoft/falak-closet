@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { LayoutGrid, SlidersHorizontal, ArrowRight, Search, Sparkles } from 'lucide-react';
+import { LayoutGrid, SlidersHorizontal, ArrowRight, Search, X } from 'lucide-react';
 import { Product } from '@/data/products';
 import { ProductCard } from '@/components/product/ProductCard';
 
@@ -44,47 +44,66 @@ export function AllProductsSection({ products }: AllProductsSectionProps) {
     return (b.isNewArrival ? 1 : 0) - (a.isNewArrival ? 1 : 0);
   });
 
+  const hasActiveFilters = selectedCategory !== 'All' || searchTerm.trim() !== '';
+
+  const handleReset = () => {
+    setSelectedCategory('All');
+    setSearchTerm('');
+  };
+
   return (
-    <section id="all-products" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8 sm:my-14 space-y-6">
-      {/* Section Title Header */}
-      <div className="bg-white border border-[#F2C76E]/40 rounded-3xl p-5 sm:p-7 space-y-6 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#F2C76E]/30 pb-4">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#9B050B]/10 border border-[#9B050B]/20 rounded-full text-xs text-[#9B050B] font-bold uppercase tracking-wider mb-1">
+    <section id="all-products" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+      <div className="bg-white border border-[#F2C76E]/40 rounded-3xl p-4 sm:p-7 space-y-4 sm:space-y-6 shadow-xs">
+        {/* Section Title Header */}
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 sm:gap-4 border-b border-[#F2C76E]/30 pb-3 sm:pb-4">
+          <div className="min-w-0">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#9B050B]/10 border border-[#9B050B]/20 rounded-full text-[10px] sm:text-xs text-[#9B050B] font-bold uppercase tracking-wider">
               <LayoutGrid className="w-3.5 h-3.5" />
               <span>Full Store Catalog</span>
             </div>
-            <h2 className="font-serif text-2xl sm:text-3xl font-extrabold text-[#0C163A]">
-              ALL PRODUCTS & MODEST COLLECTION
+            <h2 className="font-serif text-xl sm:text-3xl font-extrabold text-[#0C163A] leading-tight mt-1.5">
+              ALL PRODUCTS &amp; MODEST COLLECTION
             </h2>
-            <p className="text-xs text-stone-500">
+            <p className="text-[11px] sm:text-xs text-stone-500 leading-relaxed">
               Browse our complete catalog of handcrafted abayas, premium hijabs, co-ord sets, and accessories.
             </p>
           </div>
 
-          {/* Search & Sort Controls */}
-          <div className="flex flex-wrap items-center gap-3">
+          {/* Search & Sort Controls — full width and stacked on mobile */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 md:w-auto">
             {/* Search Input */}
-            <div className="relative w-full sm:w-48">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+            <div className="relative flex-1 sm:w-52">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search collection..."
-                className="w-full pl-9 pr-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#9B050B]"
+                aria-label="Search the collection"
+                className="w-full min-h-[42px] pl-9 pr-9 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[#9B050B] focus:border-transparent"
               />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  aria-label="Clear search"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-full text-stone-400 hover:text-[#9B050B] hover:bg-stone-100 transition-colors cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
             {/* Sort Select */}
-            <div className="flex items-center gap-1.5 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-stone-500" />
+            <div className="flex items-center gap-1.5 min-h-[42px] bg-stone-50 border border-stone-200 rounded-xl px-3 text-xs">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-stone-500 shrink-0" />
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-transparent text-stone-800 font-bold focus:outline-none cursor-pointer"
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                aria-label="Sort products"
+                className="bg-transparent text-stone-800 font-bold focus:outline-none cursor-pointer py-2 w-full sm:w-auto"
               >
-                <option value="newest">Featured & Newest</option>
+                <option value="newest">Featured &amp; Newest</option>
                 <option value="price-low">Price: Low to High</option>
                 <option value="price-high">Price: High to Low</option>
                 <option value="rating">Highest Rated</option>
@@ -93,13 +112,19 @@ export function AllProductsSection({ products }: AllProductsSectionProps) {
           </div>
         </div>
 
-        {/* Category Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+        {/* Category Tabs — swipeable pill rail on mobile */}
+        <div
+          className="flex items-center gap-2 overflow-x-auto no-scrollbar snap-x pb-0.5 -mx-1 px-1"
+          role="tablist"
+          aria-label="Product categories"
+        >
           {categories.map((cat) => (
             <button
               key={cat}
+              role="tab"
+              aria-selected={selectedCategory === cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${selectedCategory === cat
+              className={`snap-start shrink-0 min-h-[38px] px-4 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer active:scale-95 inline-flex items-center ${selectedCategory === cat
                   ? 'bg-[#9B050B] text-white shadow-sm'
                   : 'bg-stone-100 text-stone-700 hover:bg-pink-100 hover:text-[#9B050B]'
                 }`}
@@ -109,21 +134,40 @@ export function AllProductsSection({ products }: AllProductsSectionProps) {
           ))}
         </div>
 
-        {/* Result Summary Bar */}
-        <div className="flex items-center justify-between text-xs text-stone-500 pt-1">
+        {/* Result Summary Bar with removable filter chips */}
+        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] sm:text-xs text-stone-500">
           <span>
-            Showing <strong>{filtered.length}</strong> of <strong>{products.length}</strong> Products
+            Showing <strong className="text-stone-800">{filtered.length}</strong> of{' '}
+            <strong className="text-stone-800">{products.length}</strong> Products
           </span>
-          {selectedCategory !== 'All' && (
-            <button
-              onClick={() => {
-                setSelectedCategory('All');
-                setSearchTerm('');
-              }}
-              className="text-[#9B050B] font-bold hover:underline cursor-pointer"
-            >
-              Clear Filters
-            </button>
+
+          {hasActiveFilters && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {selectedCategory !== 'All' && (
+                <button
+                  onClick={() => setSelectedCategory('All')}
+                  className="inline-flex items-center gap-1 min-h-[30px] px-2.5 bg-[#9B050B]/10 border border-[#9B050B]/25 text-[#9B050B] rounded-full font-bold hover:bg-[#9B050B]/20 transition-colors cursor-pointer"
+                >
+                  {selectedCategory}
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+              {searchTerm.trim() && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="inline-flex items-center gap-1 min-h-[30px] px-2.5 bg-[#9B050B]/10 border border-[#9B050B]/25 text-[#9B050B] rounded-full font-bold hover:bg-[#9B050B]/20 transition-colors cursor-pointer max-w-[160px]"
+                >
+                  <span className="truncate">&ldquo;{searchTerm.trim()}&rdquo;</span>
+                  <X className="w-3 h-3 shrink-0" />
+                </button>
+              )}
+              <button
+                onClick={handleReset}
+                className="text-[#9B050B] font-bold hover:underline cursor-pointer ml-1"
+              >
+                Reset All
+              </button>
+            </div>
           )}
         </div>
 
@@ -135,14 +179,14 @@ export function AllProductsSection({ products }: AllProductsSectionProps) {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 space-y-3 bg-stone-50 rounded-2xl border border-dashed border-stone-200">
-            <p className="text-stone-500 text-sm">No products found matching your active filter.</p>
+          <div className="text-center py-12 space-y-3 bg-stone-50 rounded-2xl border border-dashed border-stone-200 px-4">
+            <Search className="w-6 h-6 text-stone-300 mx-auto" />
+            <p className="text-stone-500 text-xs sm:text-sm">
+              No products found matching {hasActiveFilters ? 'your active filters' : 'this view'}.
+            </p>
             <button
-              onClick={() => {
-                setSelectedCategory('All');
-                setSearchTerm('');
-              }}
-              className="px-5 py-2 bg-[#9B050B] text-white font-bold text-xs rounded-xl hover:bg-[#B8000A]"
+              onClick={handleReset}
+              className="inline-flex min-h-[40px] items-center px-5 bg-[#9B050B] text-white font-bold text-xs rounded-xl hover:bg-[#B8000A] transition-colors cursor-pointer active:scale-95"
             >
               Reset Filters
             </button>
@@ -153,7 +197,7 @@ export function AllProductsSection({ products }: AllProductsSectionProps) {
         <div className="pt-4 text-center border-t border-[#F2C76E]/30">
           <Link
             href="/shop"
-            className="inline-flex items-center gap-2 px-8 py-3 bg-[#0C163A] hover:bg-[#122050] text-[#FFFBF0] font-extrabold text-xs uppercase tracking-wider rounded-full transition-all shadow-md hover:scale-105"
+            className="inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center gap-2 px-8 bg-[#0C163A] hover:bg-[#122050] text-[#FFFBF0] font-extrabold text-xs uppercase tracking-wider rounded-full transition-all shadow-md hover:scale-105 active:scale-95 cursor-pointer"
           >
             <span>Explore Entire Storefront Catalog</span>
             <ArrowRight className="w-4 h-4 text-[#F2C76E]" />
