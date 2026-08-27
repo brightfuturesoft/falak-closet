@@ -8,7 +8,8 @@
  *    itself) → 401 without a signed admin cookie.
  *  • `/api/user/me*` and `/api/orders/mine` → 401 without a customer session.
  *  • `/api/user/all` → admin only. The legacy open `/api/user` lookup is gone;
- *    any call to it gets a 404.
+ *    any call to it gets a 404. The aggregated `/api/customers` directory
+ *    (phones, IPs, addresses, spend) is admin-only for every method.
  *  • Mutations (non-GET/HEAD/OPTIONS) on the catalog/settings/security routes
  *    (`/api/products`, `/api/categories`, `/api/promotions` — except the public
  *    `/api/promotions/validate` — `/api/hero-slides`, `/api/delivery-zones`,
@@ -92,6 +93,12 @@ export function proxy(req: NextRequest) {
       return NextResponse.next();
     }
 
+    // Admin-only aggregated customer directory — exposes PII (phones, IPs,
+    // addresses, lifetime spend) on GET, so guard reads too, not just mutations.
+    if (pathname === '/api/customers' && !hasAdminSession(req)) {
+      return unauthorized('Admin session required');
+    }
+
     if (isMutation) {
       const isOrderMutation = pathname === '/api/orders'; // PATCH order status etc.
       const isPromotionValidate = pathname === '/api/promotions/validate';
@@ -122,6 +129,7 @@ export const config = {
     '/admin/:path*',
     '/api/admin/:path*',
     '/api/user/:path*',
+    '/api/customers/:path*',
     '/api/orders/:path*',
     '/api/products/:path*',
     '/api/categories/:path*',

@@ -53,6 +53,9 @@ function norm(value: string | undefined | null): string {
 
 const SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL', 'FREE SIZE', 'ONE SIZE'];
 
+/** Products rendered per page — caps DOM size / image count on large catalogs. */
+const SHOP_PAGE_SIZE = 12;
+
 function sizeRank(size: string): number {
   const idx = SIZE_ORDER.indexOf(size.trim().toUpperCase());
   return idx === -1 ? SIZE_ORDER.length : idx;
@@ -543,6 +546,56 @@ function FilterPanel({
   );
 }
 
+// ─── Storefront pagination footer ────────────────────────────────────────────
+
+function ShopLoadMore({
+  showing,
+  total,
+  hasMore,
+  onLoadMore,
+}: {
+  showing: number;
+  total: number;
+  hasMore: boolean;
+  onLoadMore: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3 pt-4" aria-label="Catalog pagination">
+      <span className="text-[11px] font-mono text-stone-500">
+        Showing 1–{showing} of {total} {total === 1 ? 'design' : 'designs'}
+      </span>
+
+      {hasMore ? (
+        <button
+          type="button"
+          onClick={onLoadMore}
+          className="px-8 py-3 bg-[#A80C14] hover:bg-[#8C0A10] text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center gap-2"
+        >
+          <span className="hidden sm:inline">Load More Designs</span>
+          <span className="sm:hidden">Load More</span>
+          <span className="px-2 py-0.5 bg-white/20 rounded-full font-mono text-[10px] normal-case tracking-normal">
+            {total - showing} left
+          </span>
+        </button>
+      ) : (
+        total > SHOP_PAGE_SIZE && (
+          <span className="text-[11px] text-stone-400 italic">
+            ✦ You&apos;ve reached the end of this collection
+          </span>
+        )
+      )}
+
+      {/* Thin progress bar — how much of the filtered set is on screen */}
+      <div className="w-40 h-1 bg-stone-200 rounded-full overflow-hidden" aria-hidden>
+        <div
+          className="h-full bg-[#A80C14] rounded-full transition-all duration-300"
+          style={{ width: `${total === 0 ? 0 : Math.min(100, (showing / total) * 100)}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 /** URL param → human label, for the active-filter chips. */
@@ -579,6 +632,7 @@ function ShopContent() {
   const priceParam = searchParams.get('price') || 'All';
   const sortParam = searchParams.get('sort') || 'recommended';
   const wishlistParam = searchParams.get('wishlist') === 'true';
+  const pageParam = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
 
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
@@ -604,7 +658,9 @@ function ShopContent() {
     [catalog]
   );
 
-  // Update one or many params in a single navigation.
+  // Update one or many params in a single navigation. Any filter/sort change
+  // implicitly resets paging — the URL never keeps a stale page alongside a
+  // new result set.
   const setParams = React.useCallback(
     (patch: Record<string, string>) => {
       const next = new URLSearchParams(searchParams.toString());
@@ -615,6 +671,7 @@ function ShopContent() {
           next.set(key, value);
         }
       });
+      if (!('page' in patch)) next.delete('page');
       const qs = next.toString();
       router.push(qs ? `/shop?${qs}` : '/shop', { scroll: false });
     },
@@ -732,6 +789,26 @@ function ShopContent() {
   ]);
 
   const hasActiveFilters = activeChips.length > 0;
+
+  // ── Load-more paging ──────────────────────────────────────────────────
+  // The catalog itself stays client-side (facets need it), but only the first
+  // 12 ProductCards mount initially — "Load More" appends the next batch so
+  // the DOM grows only as the shopper asks. The URL `page` param is the loaded
+  // depth (page=2 ⇒ 24 visible), so links stay shareable and back/forward
+  // still work; any filter change resets to one page.
+  const totalFiltered = filteredProducts.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / SHOP_PAGE_SIZE));
+  const loadedPages = Math.min(pageParam, totalPages);
+  const visibleCount = Math.min(loadedPages * SHOP_PAGE_SIZE, totalFiltered);
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
+  const hasMore = visibleCount < totalFiltered;
+
+  const handleLoadMore = () => {
+    // No scroll: the viewport stays put and the new batch appears right where
+    // the button was (which moves down with the appended cards).
+    setParam('page', String(loadedPages + 1));
+  };
+
   const panelParams = {
     category: catParam,
     subCategory: subCategoryParam,
@@ -763,8 +840,8 @@ function ShopContent() {
               <span>Loading the catalog…</span>
             ) : (
               <>
-                Showing <strong className="text-stone-900 font-bold">{filteredProducts.length}</strong> of{' '}
-                {catalog.length} luxurious modest designs
+                Showing <strong className="text-stone-900 font-bold">1–{visibleCount}</strong> of{' '}
+                {totalFiltered} luxurious modest designs
                 {qParam && (
                   <span>
                     {' '}matching &quot;<strong className="text-[#A80C14]">{qParam}</strong>&quot;
@@ -889,11 +966,20 @@ function ShopContent() {
               ))}
             </div>
           ) : filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
-              {filteredProducts.map((prod) => (
-                <ProductCard key={prod.id} product={prod} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+                {visibleProducts.map((prod) => (
+                  <ProductCard key={prod.id} product={prod} />
+                ))}
+              </div>
+
+              <ShopLoadMore
+                showing={visibleCount}
+                total={totalFiltered}
+                hasMore={hasMore}
+                onLoadMore={handleLoadMore}
+              />
+            </>
           ) : (
             <div className="py-20 text-center bg-white rounded-3xl border border-[#F8D2D5] p-8 space-y-4 shadow-xs">
               <div className="w-16 h-16 bg-[#FDF2F3] rounded-full flex items-center justify-center mx-auto text-[#A80C14]">
