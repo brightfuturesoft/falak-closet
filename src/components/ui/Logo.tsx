@@ -57,7 +57,7 @@ export function Logo({
 
   return (
     <Link href={href} className={`group inline-flex items-center cursor-pointer ${className}`}>
-      {logoImage}
+      {logoImage} <span className='mx-2'>Falak Closet</span>
     </Link>
   );
 }

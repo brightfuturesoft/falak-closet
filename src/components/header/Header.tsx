@@ -162,7 +162,7 @@ export function Header() {
 
           {/* Brand Logo */}
           <div className="shrink-0">
-            <Logo variant="full"
+            <Logo variant="normal"
               size='md'
             />
           </div>
