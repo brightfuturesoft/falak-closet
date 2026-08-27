@@ -53,6 +53,21 @@ function norm(value: string | undefined | null): string {
 
 const SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL', 'FREE SIZE', 'ONE SIZE'];
 
+/** Products rendered per page — caps DOM size / image count on large catalogs. */
+const SHOP_PAGE_SIZE = 12;
+
+/** Centered window of page numbers, e.g. 1 … 4 5 6 … 12 */
+function pageWindow(current: number, total: number, span = 5): (number | '…')[] {
+  if (total <= span + 2) return Array.from({ length: total }, (_, i) => i + 1);
+  const start = Math.max(2, current - Math.floor((span - 2) / 2));
+  const end = Math.min(total - 1, start + span - 3);
+  const middle: number[] = [];
+  for (let p = start; p <= end; p++) middle.push(p);
+  return [1, start > 2 ? '…' : null, ...middle, end < total - 1 ? '…' : null, total].filter(
+    (p): p is number | '…' => p !== null
+  );
+}
+
 function sizeRank(size: string): number {
   const idx = SIZE_ORDER.indexOf(size.trim().toUpperCase());
   return idx === -1 ? SIZE_ORDER.length : idx;
@@ -543,6 +558,72 @@ function FilterPanel({
   );
 }
 
+// ─── Storefront pagination footer ────────────────────────────────────────────
+
+function ShopPagination({
+  page,
+  totalPages,
+  onChange,
+}: {
+  page: number;
+  totalPages: number;
+  onChange: (page: number) => void;
+}) {
+  return (
+    <nav
+      className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2"
+      aria-label="Catalog pagination"
+    >
+      <span className="text-[11px] font-mono text-stone-500">
+        Page {page} of {totalPages}
+      </span>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => onChange(page - 1)}
+          disabled={page === 1}
+          className="px-3.5 py-2 bg-white border border-[#F8D2D5] rounded-full text-xs font-bold text-stone-700 hover:bg-[#FDF2F3] hover:border-[#A80C14] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+        >
+          ← Prev
+        </button>
+
+        <div className="flex items-center gap-1">
+          {pageWindow(page, totalPages).map((p, idx) =>
+            p === '…' ? (
+              <span key={`ellipsis-${idx}`} className="px-1 text-stone-400 text-xs font-mono">
+                …
+              </span>
+            ) : (
+              <button
+                key={p}
+                type="button"
+                onClick={() => onChange(p)}
+                aria-current={p === page ? 'page' : undefined}
+                className={`min-w-9 h-9 px-2 rounded-full text-xs font-bold font-mono transition-colors cursor-pointer ${
+                  p === page
+                    ? 'bg-[#A80C14] text-white shadow-sm'
+                    : 'bg-white border border-[#F8D2D5] text-stone-700 hover:bg-[#FDF2F3] hover:border-[#A80C14]'
+                }`}
+              >
+                {p}
+              </button>
+            )
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onChange(page + 1)}
+          disabled={page === totalPages}
+          className="px-3.5 py-2 bg-white border border-[#F8D2D5] rounded-full text-xs font-bold text-stone-700 hover:bg-[#FDF2F3] hover:border-[#A80C14] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+        >
+          Next →
+        </button>
+      </div>
+    </nav>
+  );
+}
+
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 /** URL param → human label, for the active-filter chips. */
@@ -579,6 +660,7 @@ function ShopContent() {
   const priceParam = searchParams.get('price') || 'All';
   const sortParam = searchParams.get('sort') || 'recommended';
   const wishlistParam = searchParams.get('wishlist') === 'true';
+  const pageParam = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
 
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
@@ -604,7 +686,9 @@ function ShopContent() {
     [catalog]
   );
 
-  // Update one or many params in a single navigation.
+  // Update one or many params in a single navigation. Any filter/sort change
+  // implicitly resets paging — the URL never keeps a stale page alongside a
+  // new result set.
   const setParams = React.useCallback(
     (patch: Record<string, string>) => {
       const next = new URLSearchParams(searchParams.toString());
@@ -615,6 +699,7 @@ function ShopContent() {
           next.set(key, value);
         }
       });
+      if (!('page' in patch)) next.delete('page');
       const qs = next.toString();
       router.push(qs ? `/shop?${qs}` : '/shop', { scroll: false });
     },
@@ -732,6 +817,30 @@ function ShopContent() {
   ]);
 
   const hasActiveFilters = activeChips.length > 0;
+
+  // ── Pagination ─────────────────────────────────────────────────────────
+  // The catalog itself stays client-side (facets need it), but only one page
+  // of ProductCards is ever mounted — the DOM/image count stays flat no
+  // matter how large the store grows. URL-driven, so pages are shareable and
+  // back/forward keep working.
+  const totalFiltered = filteredProducts.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / SHOP_PAGE_SIZE));
+  const currentPage = Math.min(pageParam, totalPages);
+  const pagedProducts = filteredProducts.slice(
+    (currentPage - 1) * SHOP_PAGE_SIZE,
+    currentPage * SHOP_PAGE_SIZE
+  );
+  const showingFrom = totalFiltered === 0 ? 0 : (currentPage - 1) * SHOP_PAGE_SIZE + 1;
+  const showingTo = Math.min(currentPage * SHOP_PAGE_SIZE, totalFiltered);
+
+  const gridTopRef = React.useRef<HTMLDivElement>(null);
+  const handlePageChange = (nextPage: number) => {
+    setParam('page', String(nextPage));
+    // `scroll: false` on the navigation means the viewport stays put — bring
+    // the shopper back to the top of the results manually.
+    gridTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const panelParams = {
     category: catParam,
     subCategory: subCategoryParam,
@@ -763,8 +872,8 @@ function ShopContent() {
               <span>Loading the catalog…</span>
             ) : (
               <>
-                Showing <strong className="text-stone-900 font-bold">{filteredProducts.length}</strong> of{' '}
-                {catalog.length} luxurious modest designs
+                Showing <strong className="text-stone-900 font-bold">{showingFrom}–{showingTo}</strong> of{' '}
+                {totalFiltered} luxurious modest designs
                 {qParam && (
                   <span>
                     {' '}matching &quot;<strong className="text-[#A80C14]">{qParam}</strong>&quot;
@@ -878,6 +987,9 @@ function ShopContent() {
 
         {/* Products Grid Section */}
         <main className="lg:col-span-9 space-y-6">
+          {/* Scroll anchor — page changes bring the shopper back here */}
+          <div ref={gridTopRef} className="scroll-mt-28" aria-hidden />
+
           {isBusy ? (
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -889,11 +1001,17 @@ function ShopContent() {
               ))}
             </div>
           ) : filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
-              {filteredProducts.map((prod) => (
-                <ProductCard key={prod.id} product={prod} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+                {pagedProducts.map((prod) => (
+                  <ProductCard key={prod.id} product={prod} />
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <ShopPagination page={currentPage} totalPages={totalPages} onChange={handlePageChange} />
+              )}
+            </>
           ) : (
             <div className="py-20 text-center bg-white rounded-3xl border border-[#F8D2D5] p-8 space-y-4 shadow-xs">
               <div className="w-16 h-16 bg-[#FDF2F3] rounded-full flex items-center justify-center mx-auto text-[#A80C14]">

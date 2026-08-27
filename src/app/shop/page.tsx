@@ -13,19 +13,23 @@ export async function generateMetadata({
   const category = typeof resolvedSearchParams.category === 'string' ? resolvedSearchParams.category : undefined;
   const color = typeof resolvedSearchParams.color === 'string' ? resolvedSearchParams.color : undefined;
   const q = typeof resolvedSearchParams.q === 'string' ? resolvedSearchParams.q : undefined;
+  const page = Math.max(1, parseInt(String(resolvedSearchParams.page ?? '1'), 10) || 1);
+  const pageSuffix = page > 1 ? ` | Page ${page}` : '';
 
   let title = 'Haute Couture Modest Fashion Catalog | Falak Closet';
   let description = 'Explore handcrafted luxury abayas, designer hijabs, kaftans, borkha, and modest fashion creations in Bangladesh. Fast nationwide shipping.';
 
   if (q) {
-    title = `Search results for "${q}" | Falak Closet`;
+    title = `Search results for "${q}" | Falak Closet${pageSuffix}`;
     description = `Browse Modest Fashion designs matching "${q}" at Falak Closet. Quality craftsmanship and fast delivery in Bangladesh.`;
   } else if (category && category !== 'All') {
-    title = `${category} Collection | Falak Closet Modest Fashion`;
+    title = `${category} Collection | Falak Closet Modest Fashion${pageSuffix}`;
     description = `Explore our hand-stitched ${category} collection. Handcrafted luxury modest fashion from Falak Closet with express delivery.`;
   } else if (color && color !== 'All') {
-    title = `${color} Modest Fashion Collection | Falak Closet`;
+    title = `${color} Modest Fashion Collection | Falak Closet${pageSuffix}`;
     description = `Discover premium ${color} abayas, hijabs, and kaftans at Falak Closet. Elegant design and premium fabrics.`;
+  } else if (pageSuffix) {
+    title = `Haute Couture Modest Fashion Catalog${pageSuffix} | Falak Closet`;
   }
 
   const canonicalUrl = `https://falakcloset.com/shop${category ? `?category=${encodeURIComponent(category)}` : ''}`;
