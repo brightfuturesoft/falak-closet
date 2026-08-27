@@ -130,7 +130,7 @@ export default function LivePromotionsClient({
                       {promo.discountBadge}
                     </span>
                     {promo.minSpend !== null && (
-                      <span className="text-[10px] text-stone-400 font-mono">
+                      <span className="text-[10px] text-stone-500 font-mono">
                         Min. ৳{promo.minSpend.toLocaleString()}
                       </span>
                     )}

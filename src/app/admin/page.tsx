@@ -258,19 +258,9 @@ function AdminDashboardContent() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAllData();
 
-    // 2. Connect to Socket.io Server
-    const socket = getSocket();
-    socket.emit('join_admin');
-
+    // 2. Connect to Socket.io Server (dynamically imported — see socketClient.ts)
     const onConnect = () => setIsSocketConnected(true);
     const onDisconnect = () => setIsSocketConnected(false);
-
-    if (socket.connected) {
-      setIsSocketConnected(true);
-    }
-
-    socket.on('connect', onConnect);
-    socket.on('disconnect', onDisconnect);
 
     // 3. Real-Time Socket Event Listener for New Product Purchase
     const handleSocketOrderAlert = (incomingOrder: OrderRecord) => {
@@ -297,7 +287,24 @@ function AdminDashboardContent() {
       });
     };
 
-    socket.on('new_order_alert', handleSocketOrderAlert);
+    let cancelled = false;
+    let socket: Awaited<ReturnType<typeof getSocket>> | null = null;
+    getSocket()
+      .then((s) => {
+        if (cancelled) return;
+        socket = s;
+        socket.emit('join_admin');
+        if (socket.connected) {
+          setIsSocketConnected(true);
+        }
+        socket.on('connect', onConnect);
+        socket.on('disconnect', onDisconnect);
+        socket.on('new_order_alert', handleSocketOrderAlert);
+      })
+      .catch(() => {
+        // Socket server unreachable — the panel still works, just without
+        // live alerts.
+      });
 
     // 4. Background safety sync every 30s
     const interval = setInterval(() => {
@@ -305,9 +312,12 @@ function AdminDashboardContent() {
     }, 30000);
 
     return () => {
-      socket.off('connect', onConnect);
-      socket.off('disconnect', onDisconnect);
-      socket.off('new_order_alert', handleSocketOrderAlert);
+      cancelled = true;
+      if (socket) {
+        socket.off('connect', onConnect);
+        socket.off('disconnect', onDisconnect);
+        socket.off('new_order_alert', handleSocketOrderAlert);
+      }
       clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

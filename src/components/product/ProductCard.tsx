@@ -266,7 +266,7 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
 
           {/* Interactive Color Swatches Row (fixed height keeps grids aligned) */}
           {product?.colors && product.colors.length > 1 ? (
-            <div className="px-2 flex items-center flex-nowrap gap-2.5 h-7 py-1 overflow-x-auto no-scrollbar w-full px-0.5" role="group" aria-label="Available colors">
+            <div className="px-2 flex items-center flex-nowrap gap-1 h-9 py-1 overflow-x-auto no-scrollbar w-full px-0.5" role="group" aria-label="Available colors">
               {product.colors.map((color) => {
                 const isSelected = activeColor?.name === color.name;
                 return (
@@ -284,20 +284,26 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
                     }}
                     aria-label={`Color: ${color.name}`}
                     aria-pressed={isSelected}
-                    className={`relative w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full transition-all duration-200 cursor-pointer flex-shrink-0 after:content-[''] after:absolute after:-inset-1.5 after:rounded-full border border-stone-200/50 hover:scale-110 active:scale-95
-                      ${isSelected
-                        ? 'ring-2 ring-[#0C163A] ring-offset-2 scale-110 shadow-xs z-10 bg-white'
-                        : 'hover:border-stone-400'
-                      }`}
-                    style={{ backgroundColor: color.hex }}
                     title={color.name}
-                  />
+                    className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full transition-transform duration-200 hover:scale-110 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D92670]"
+                  >
+                    {/* 28×28 hit area with a 14px visual dot inside — keeps
+                        tap targets Lighthouse-friendly. */}
+                    <span
+                      className={`block w-3.5 h-3.5 rounded-full border border-stone-200/50 transition-all duration-200 ${
+                        isSelected
+                          ? 'ring-2 ring-[#0C163A] ring-offset-2 shadow-xs'
+                          : 'hover:border-stone-400'
+                      }`}
+                      style={{ backgroundColor: color.hex }}
+                    />
+                  </button>
                 );
               })}
             </div>
           ) : (
             /* Placeholder spacer to align card heights perfectly when there are no swatches */
-            <div className="h-7" aria-hidden="true" />
+            <div className="h-9" aria-hidden="true" />
           )}
 
           {/* Price Row */}
@@ -324,7 +330,7 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
                 disabled={isSoldOut}
                 className={`p-2 rounded-full transition-all duration-300 shadow-xs cursor-pointer active:scale-95 flex-shrink-0
                   ${isSoldOut
-                    ? 'bg-stone-100 text-stone-400 border border-stone-200 cursor-not-allowed'
+                    ? 'bg-stone-100 text-stone-500 border border-stone-200 cursor-not-allowed'
                     : 'bg-[#FFF5F7] border border-pink-100 hover:bg-[#D92670] text-[#D92670] hover:text-white'
                   }`}
                 aria-label="Add to cart"
@@ -400,7 +406,7 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
                 setShowAuthModal(false);
                 setAuthError('');
               }}
-              className="absolute top-4 right-4 p-1.5 text-stone-400 hover:text-stone-600 rounded-full hover:bg-stone-100 transition-colors"
+              className="absolute top-4 right-4 p-1.5 text-stone-500 hover:text-stone-600 rounded-full hover:bg-stone-100 transition-colors"
               aria-label="Close modal"
             >
               <X className="w-4 h-4" />
@@ -419,12 +425,14 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
 
             <form onSubmit={handleAuthSubmit} className="space-y-3.5 text-left">
               <div>
-                <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1">
+                <label htmlFor={`auth-email-${product.id}`} className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1">
                   Email Address
                 </label>
                 <input
+                  id={`auth-email-${product.id}`}
                   type="email"
                   required
+                  autoComplete="email"
                   value={authEmail}
                   onChange={(e) => setAuthEmail(e.target.value)}
                   placeholder="name@email.com"
@@ -433,12 +441,14 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1">
+                <label htmlFor={`auth-password-${product.id}`} className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1">
                   Password
                 </label>
                 <input
+                  id={`auth-password-${product.id}`}
                   type="password"
                   required
+                  autoComplete="current-password"
                   value={authPassword}
                   onChange={(e) => setAuthPassword(e.target.value)}
                   placeholder="Enter password"

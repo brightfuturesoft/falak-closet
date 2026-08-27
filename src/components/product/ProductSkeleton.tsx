@@ -4,7 +4,7 @@ export default function ProductSkeleton() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 md:py-12">
       {/* Breadcrumb Skeleton */}
-      <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-xs text-stone-400 mb-6 sm:mb-8 md:mb-10">
+      <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-xs text-stone-500 mb-6 sm:mb-8 md:mb-10">
         <div className="w-10 h-3 bg-stone-200 animate-pulse rounded-md" />
         <span className="text-stone-300">/</span>
         <div className="w-12 h-3 bg-stone-200 animate-pulse rounded-md" />

@@ -1,0 +1,38 @@
+# Falak Closet
+
+> Falak Closet is a Bangladesh-based premium modest fashion e-commerce store offering handcrafted abayas, luxury hijabs, designer kaftans, borkha, and haute couture modest clothing with fast nationwide delivery (cash on delivery and bKash).
+
+## About
+
+- Store name: Falak Closet
+- Website: https://falakcloset.com
+- Country: Bangladesh
+- Currency: BDT (৳)
+- Categories: Abayas, Hijabs & Dupattas, Modest Dresses, Co-ord Sets, Luxury Tunics, Accessories
+- Payments: Cash on Delivery (COD), bKash
+- Delivery: Nationwide across Bangladesh with zone-based delivery charges (Inside Dhaka ~60৳, Outside Dhaka ~120৳, 2–5 business days)
+
+## Key pages
+
+- [Shop](https://falakcloset.com/shop): Full product catalog with search, category filters, and sorting
+- [Product pages](https://falakcloset.com/product/): Individual products with photos, color/size variations, prices in BDT, and stock status
+- [Cart](https://falakcloset.com/cart): Shopping cart
+- [Checkout](https://falakcloset.com/checkout): Order placement with delivery zone selection and payment method
+- [Track Order](https://falakcloset.com/track): Order tracking by order ID (FLK-XXXX) or phone number
+- [Live Promotions](https://falakcloset.com/live-promotions): Active discounts, flash sales, and promo codes
+- [Account](https://falakcloset.com/account): Sign in / registration, order history, wishlist, and saved addresses
+- [How to Order](https://falakcloset.com/how-to-order): Step-by-step ordering guide
+
+## Policies
+
+- [Shipping Policy](https://falakcloset.com/shipping): Delivery zones, charges, and timelines
+- [Returns & Refunds](https://falakcloset.com/returns): Return conditions and refund process
+- [Privacy Policy](https://falakcloset.com/privacy): Data handling
+- [Terms of Service](https://falakcloset.com/terms): Purchase terms
+
+## Ordering
+
+1. Browse the shop or a product page
+2. Select color/size and add to cart (or use Buy Now)
+3. Complete checkout with name, phone, address, delivery zone, and payment method
+4. Track the order on the Track Order page using the order ID or phone number

@@ -23,14 +23,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('[sitemap] could not list product slugs:', err);
   }
 
+  // /checkout and /account are disallowed in robots.ts — listing them here
+  // would tell crawlers to fetch URLs they are told to ignore.
   const staticPages = [
     '',
     '/shop',
     '/live-promotions',
     '/cart',
-    '/checkout',
     '/track',
-    '/account',
     '/how-to-order',
     '/shipping',
     '/returns',

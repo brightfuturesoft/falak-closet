@@ -155,9 +155,7 @@ export function Header() {
 
           {/* Brand Logo */}
           <div className="shrink-0">
-            <Logo variant="normal"
-              size='md'
-            />
+            <Logo variant="normal" size='md' priority />
           </div>
 
           {/* Centered Search Pill Input - Only visible on Desktop (lg:) screens */}
@@ -177,8 +175,9 @@ export function Header() {
               {searchQuery ? (
                 <button
                   type="button"
+                  aria-label="Clear search"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-stone-400 hover:text-[#D92670] transition-colors"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 text-stone-500 hover:text-[#D92670] transition-colors cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -268,7 +267,7 @@ export function Header() {
                             {formatCurrency(prod.price)}
                           </span>
                           {prod.originalPrice > prod.price && (
-                            <span className="text-[10px] text-stone-400 line-through font-mono block">
+                            <span className="text-[10px] text-stone-500 line-through font-mono block">
                               {formatCurrency(prod.originalPrice)}
                             </span>
                           )}

@@ -36,7 +36,7 @@ export default function ReturnsPolicyPage() {
 
         <section className="space-y-2">
           <h3 className="font-bold text-stone-900 dark:text-stone-100">Return Eligibility Requirements:</h3>
-          <ul className="list-disc list-inside space-y-1 text-stone-600 dark:text-stone-400">
+          <ul className="list-disc list-inside space-y-1 text-stone-600 dark:text-stone-500">
             <li>Garments must be unworn, unwashed, and undamaged.</li>
             <li>Original security seals and brand tags must remain attached.</li>
             <li>Hijab accessories and pins must be returned in original packaging box.</li>

@@ -65,7 +65,7 @@ export default async function ShippingPolicyPage() {
                   </div>
 
                   {zone.subAreas && zone.subAreas.length > 0 && (
-                    <p className="text-[11px] text-stone-500 dark:text-stone-400 leading-relaxed">
+                    <p className="text-[11px] text-stone-500 dark:text-stone-500 leading-relaxed">
                       Areas: {' '}
                       {zone.subAreas.map((s, i) => (
                         <span key={s.id}>
@@ -75,7 +75,7 @@ export default async function ShippingPolicyPage() {
                         </span>
                       ))}
                       {zone.subAreas.some((s) => s.charge !== null && s.charge !== undefined) && (
-                        <span className="block mt-1 text-[10px] text-stone-400">
+                        <span className="block mt-1 text-[10px] text-stone-500">
                           Areas with their own rate are shown in brackets; the rest follow the zone rate.
                         </span>
                       )}

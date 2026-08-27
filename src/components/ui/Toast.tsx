@@ -92,7 +92,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
               <button
                 onClick={() => removeToast(toast.id)}
-                className="p-1 text-stone-400 hover:text-stone-700 transition-colors cursor-pointer"
+                className="p-1 text-stone-500 hover:text-stone-700 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>

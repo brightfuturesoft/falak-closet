@@ -94,7 +94,7 @@ export function OrdersTab({ orders, isLoading, error, onRetry }: OrdersTabProps)
 
               <div className="flex-1 min-w-0">
                 <p className="font-mono font-extrabold text-[#D92670] text-sm truncate">#{ord.id}</p>
-                <p className="text-[11px] text-stone-400 mt-0.5">
+                <p className="text-[11px] text-stone-500 mt-0.5">
                   Placed{' '}
                   {new Date(ord.date).toLocaleDateString('en-US', {
                     month: 'short',
@@ -109,7 +109,7 @@ export function OrdersTab({ orders, isLoading, error, onRetry }: OrdersTabProps)
                 <p className="font-extrabold text-[#0C163A] font-mono text-sm">
                   {formatCurrency(ord.total)}
                 </p>
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-stone-400 group-hover:text-[#D92670] transition-colors uppercase tracking-wide">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-stone-500 group-hover:text-[#D92670] transition-colors uppercase tracking-wide">
                   View <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                 </span>
               </div>

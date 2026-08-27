@@ -30,7 +30,7 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
         <div className="p-4 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between bg-stone-900 text-stone-100">
           <div>
             <span className="font-serif font-bold text-lg text-amber-400 tracking-wider">FALAK CLOSET</span>
-            <p className="text-[10px] text-stone-400">Modest & Contemporary Haute Couture</p>
+            <p className="text-[10px] text-stone-500">Modest & Contemporary Haute Couture</p>
           </div>
           <button
             onClick={onClose}
@@ -69,7 +69,7 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
                 className="flex items-center justify-between px-3 py-2 text-sm font-medium text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors"
               >
                 <span>All Products</span>
-                <span className="text-xs text-stone-400">Shop All</span>
+                <span className="text-xs text-stone-500">Shop All</span>
               </Link>
               {categoriesList.map((cat) => (
                 <div key={cat.id} className="space-y-1">
@@ -92,7 +92,7 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
                           key={sub.id}
                           href={`/shop?category=${encodeURIComponent(cat.name)}&subCategory=${encodeURIComponent(sub.name)}`}
                           onClick={onClose}
-                          className="block px-3 py-1 text-xs text-stone-600 dark:text-stone-400 hover:text-[#D92670] dark:hover:text-pink-400 hover:bg-stone-50 rounded-md transition-colors font-medium"
+                          className="block px-3 py-1 text-xs text-stone-600 dark:text-stone-500 hover:text-[#D92670] dark:hover:text-pink-400 hover:bg-stone-50 rounded-md transition-colors font-medium"
                         >
                           • {sub.name}
                         </Link>
@@ -164,7 +164,7 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
             <p>24/7 VIP Concierge: +1 (800) 555-FLK</p>
             <p>Email: support@falakcloset.com</p>
 
-            <div className="flex flex-wrap gap-2 pt-2 text-[11px] text-stone-400">
+            <div className="flex flex-wrap gap-2 pt-2 text-[11px] text-stone-500">
               <Link href="/shipping" onClick={onClose} className="hover:underline">Shipping Policy</Link>
               <span>•</span>
               <Link href="/returns" onClick={onClose} className="hover:underline">Returns</Link>

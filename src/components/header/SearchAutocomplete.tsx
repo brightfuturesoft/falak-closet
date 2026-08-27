@@ -124,12 +124,12 @@ export function SearchAutocomplete() {
           aria-label="Search products"
           className="w-full pl-9 pr-8 py-2 bg-stone-100 dark:bg-stone-800/80 border border-stone-300/60 dark:border-stone-700 rounded-full text-xs sm:text-sm text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all"
         />
-        <Search className="absolute left-3 w-4 h-4 text-stone-400 pointer-events-none" />
+        <Search className="absolute left-3 w-4 h-4 text-stone-500 pointer-events-none" />
         {query && (
           <button
             type="button"
             onClick={() => setQuery('')}
-            className="absolute right-3 p-0.5 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200"
+            className="absolute right-3 p-0.5 text-stone-500 hover:text-stone-600 dark:hover:text-stone-200"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -139,7 +139,7 @@ export function SearchAutocomplete() {
       {/* Autocomplete Dropdown */}
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="p-2 text-[10px] font-semibold tracking-wider text-stone-400 uppercase border-b border-stone-100 dark:border-stone-800 flex justify-between">
+          <div className="p-2 text-[10px] font-semibold tracking-wider text-stone-500 uppercase border-b border-stone-100 dark:border-stone-800 flex justify-between">
             <span>Product Suggestions</span>
             <span>{results.length} matches</span>
           </div>
@@ -189,7 +189,7 @@ export function SearchAutocomplete() {
                         /* Available Color Swatches Preview */
                         product.colors && product.colors.length > 0 && (
                           <div className="flex items-center gap-1">
-                            <span className="text-[9px] text-stone-400">Colors:</span>
+                            <span className="text-[9px] text-stone-500">Colors:</span>
                             {product.colors.slice(0, 5).map((c) => (
                               <span
                                 key={c.name}
@@ -202,7 +202,7 @@ export function SearchAutocomplete() {
                         )
                       )}
 
-                      <p className="text-[11px] text-stone-500 dark:text-stone-400 flex items-center gap-2">
+                      <p className="text-[11px] text-stone-500 dark:text-stone-500 flex items-center gap-2">
                         <span>{product?.category}</span>
                         <span>•</span>
                         <span className="text-amber-700 dark:text-amber-400 font-bold">

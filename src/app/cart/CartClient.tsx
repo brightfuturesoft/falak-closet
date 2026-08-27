@@ -145,7 +145,7 @@ export default function CartClient() {
 
         <button
           onClick={clearCart}
-          className="text-xs text-stone-400 hover:text-rose-600 font-bold flex items-center gap-1 transition-colors cursor-pointer"
+          className="text-xs text-stone-500 hover:text-rose-600 font-bold flex items-center gap-1 transition-colors cursor-pointer"
         >
           <Trash2 className="w-3.5 h-3.5" /> Clear Cart
         </button>
@@ -215,7 +215,7 @@ export default function CartClient() {
               />
               <span>Select All Items ({cart.length})</span>
             </label>
-            <span className="text-stone-400">{selectedKeys.size} selected</span>
+            <span className="text-stone-500">{selectedKeys.size} selected</span>
           </div>
 
           {/* Item Row Loop */}
@@ -230,6 +230,7 @@ export default function CartClient() {
                   <div className="flex items-center gap-3 min-w-0">
                     <input
                       type="checkbox"
+                      aria-label={`Select ${item.product?.name ?? 'item'}`}
                       checked={isSelected}
                       onChange={() => toggleSelectKey(key)}
                       className="w-4 h-4 accent-[#D92670] rounded cursor-pointer shrink-0"
@@ -243,7 +244,7 @@ export default function CartClient() {
                       <Link href={`/product/${item.product?.slug || ''}`} className="font-bold text-stone-900 hover:text-[#D92670] text-sm sm:text-base line-clamp-1">
                         {item.product?.name}
                       </Link>
-                      <p className="text-[11px] text-stone-400 font-mono">Code: {item.product?.code || 'FLK'}</p>
+                      <p className="text-[11px] text-stone-500 font-mono">Code: {item.product?.code || 'FLK'}</p>
 
                       <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-stone-600">
                         {item.selectedColor && (
@@ -285,7 +286,7 @@ export default function CartClient() {
 
                       <button
                         onClick={() => removeFromCart(item.product?.id || '', item.selectedColor, item.selectedSize)}
-                        className="p-1.5 text-stone-400 hover:text-rose-600 transition-colors cursor-pointer"
+                        className="p-1.5 text-stone-500 hover:text-rose-600 transition-colors cursor-pointer"
                         title="Remove item"
                       >
                         <Trash2 className="w-4 h-4" />

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Playfair_Display, Inter, Hind_Siliguri } from 'next/font/google';
+import { Playfair_Display, Inter } from 'next/font/google';
 import { Suspense } from 'react';
 import TopProgressBar from '@/components/ui/TopProgressBar';
 import './globals.css';
@@ -25,13 +25,6 @@ const playfair = Playfair_Display({
 const inter = Inter({
   variable: '--font-sans',
   subsets: ['latin'],
-  display: 'swap'
-});
-
-const hindSiliguri = Hind_Siliguri({
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-bengali',
-  subsets: ['bengali', 'latin'],
   display: 'swap'
 });
 
@@ -90,15 +83,10 @@ export const metadata: Metadata = {
     title: 'Falak Closet | Premium Modest Fashion',
     description: 'Handcrafted abayas, luxury hijabs, and modest fashion creations in Bangladesh.',
     images: ['https://images.unsplash.com/photo-1583391733956-6c78276477e2?auto=format&fit=crop&w=1200&h=630&q=80']
-  },
-  icons: {
-    icon: [
-      { url: '/logo.png', sizes: '32x32', type: 'image/png' },
-      { url: '/logo.png', sizes: '192x192', type: 'image/png' }
-    ],
-    shortcut: '/logo.png',
-    apple: '/logo.png'
   }
+  // Favicon/app icons come from the file conventions (src/app/icon.png,
+  // apple-icon.png, favicon.ico) — all freshly optimized. The previous
+  // `icons` metadata pointed every variant at the 199KB /logo.png.
 };
 
 export default async function RootLayout({
@@ -120,11 +108,11 @@ export default async function RootLayout({
   const { products, error: productsError } = await getProductsSafe();
 
   return (
-    <html lang="en" className={`${playfair.variable} ${inter.variable} ${hindSiliguri.variable}`}>
+    <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Kalpurush&display=swap" rel="stylesheet" />
+        {/* Product imagery is served straight from Cloudinary's CDN —
+            warming that connection shaves time off the LCP hero image. */}
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}

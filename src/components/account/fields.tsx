@@ -5,7 +5,7 @@
  * Unified brand palette: #D92670 (primary) · #C2185B (hover) · #0C163A (ink).
  */
 
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import {
   Eye,
   EyeOff,
@@ -71,17 +71,19 @@ export function InputField({
   className?: string;
   rightElement?: React.ReactNode;
 }) {
+  const fieldId = useId();
   return (
     <div className="space-y-1.5">
-      <label className="block text-[11px] font-bold uppercase tracking-wide text-stone-500">
+      <label htmlFor={fieldId} className="block text-[11px] font-bold uppercase tracking-wide text-stone-500">
         {label}
-        {required && <span className="text-[#D92670] ml-0.5">*</span>}
+        {required && <span className="text-[#D92670] ml-0.5" aria-hidden="true">*</span>}
       </label>
       <div className="relative">
         {Icon && (
-          <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
+          <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-500 pointer-events-none" />
         )}
         <input
+          id={fieldId}
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -92,7 +94,7 @@ export function InputField({
           inputMode={inputMode}
           autoComplete={autoComplete}
           className={`w-full min-h-[44px] px-4 py-2.5 bg-white border border-stone-200 rounded-xl text-[#0C163A] text-sm
-                     placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#D92670]/20
+                     placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-[#D92670]/20
                      focus:border-[#D92670] hover:border-stone-300 disabled:opacity-50 disabled:cursor-not-allowed
                      transition-all ${Icon ? 'pl-10' : ''} ${rightElement ? 'pr-10' : ''} ${className}`}
         />
@@ -100,7 +102,7 @@ export function InputField({
           <div className="absolute inset-y-0 right-3 flex items-center">{rightElement}</div>
         )}
       </div>
-      {hint && <p className="text-[10px] text-stone-400 pl-1">{hint}</p>}
+      {hint && <p className="text-[10px] text-stone-500 pl-1">{hint}</p>}
     </div>
   );
 }
@@ -116,13 +118,16 @@ export function OtpInput({
   onChange: (v: string) => void;
   disabled?: boolean;
 }) {
+  const otpId = useId();
   return (
     <div className="space-y-1.5">
-      <label className="block text-[11px] font-bold uppercase tracking-wide text-stone-500">
-        OTP Code <span className="text-[#D92670] ml-0.5">*</span>
+      <label htmlFor={otpId} className="block text-[11px] font-bold uppercase tracking-wide text-stone-500">
+        OTP Code <span className="text-[#D92670] ml-0.5" aria-hidden="true">*</span>
       </label>
       <input
+        id={otpId}
         type="text"
+        aria-label="6-digit OTP code"
         value={value}
         onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
         placeholder="••••••"
@@ -135,7 +140,7 @@ export function OtpInput({
                    placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-[#D92670]/20
                    focus:border-[#D92670] hover:border-stone-300 disabled:opacity-50 transition-all"
       />
-      <p className="text-[10px] text-stone-400 pl-1">Enter the 6-digit code we sent you</p>
+      <p className="text-[10px] text-stone-500 pl-1">Enter the 6-digit code we sent you</p>
     </div>
   );
 }
@@ -154,7 +159,7 @@ function scorePassword(pw: string): number {
 
 const STRENGTH_LABELS = ['Too short', 'Weak', 'Okay', 'Good', 'Strong'];
 const STRENGTH_COLORS = ['bg-stone-200', 'bg-rose-400', 'bg-amber-400', 'bg-sky-400', 'bg-emerald-500'];
-const STRENGTH_TEXT = ['text-stone-400', 'text-rose-600', 'text-amber-600', 'text-sky-600', 'text-emerald-600'];
+const STRENGTH_TEXT = ['text-stone-500', 'text-rose-600', 'text-amber-600', 'text-sky-600', 'text-emerald-600'];
 
 export function PasswordInput({
   label,
@@ -196,7 +201,7 @@ export function PasswordInput({
           <button
             type="button"
             onClick={() => setShow((s) => !s)}
-            className="text-stone-400 hover:text-[#D92670] transition-colors cursor-pointer"
+            className="text-stone-500 hover:text-[#D92670] transition-colors cursor-pointer"
             tabIndex={-1}
             aria-label={show ? 'Hide password' : 'Show password'}
           >
@@ -259,7 +264,7 @@ export function SelectField({
             <option key={d}>{d}</option>
           ))}
         </select>
-        <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
+        <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-500 pointer-events-none" />
       </div>
     </div>
   );
