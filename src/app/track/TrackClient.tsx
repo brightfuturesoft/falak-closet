@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useCart, OrderRecord } from '@/context/CartContext';
 import { formatCurrency } from '@/lib/utils';
+import { ReceiptModal } from '@/components/receipt/ReceiptModal';
 
 // Safe Image Component for products in order preview
 function SafeImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
@@ -89,6 +90,7 @@ function TrackContent() {
   const [inputQuery, setInputQuery] = useState(idParam || phoneParam || '');
   const [activeOrder, setActiveOrder] = useState<OrderRecord | undefined>(undefined);
   const [searched, setSearched] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
 
   useEffect(() => {
     if (idParam || phoneParam) {
@@ -126,7 +128,7 @@ function TrackContent() {
   };
 
   const handlePrintInvoice = () => {
-    window.print();
+    setShowReceipt(true);
   };
 
   const statusSteps = [
@@ -168,11 +170,11 @@ function TrackContent() {
         {activeOrder && (
           <button
             onClick={handlePrintInvoice}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-stone-200 hover:border-[#D92670] hover:text-[#D92670] text-[#0C163A] text-xs font-bold rounded-full transition-all cursor-pointer shadow-xs"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#D92670] hover:bg-[#C2185B] border border-[#D92670] text-white text-xs font-bold rounded-full transition-all cursor-pointer shadow-md shadow-[#D92670]/25"
           >
             <Printer className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Print / Save Invoice</span>
-            <span className="sm:hidden">Invoice</span>
+            <span className="hidden sm:inline">Print / Save Receipt</span>
+            <span className="sm:hidden">Receipt</span>
           </button>
         )}
       </div>
@@ -589,12 +591,21 @@ function TrackContent() {
               Continue Shopping <ChevronRight className="w-3.5 h-3.5" />
             </Link>
 
-            <Link
-              href="/account"
-              className="w-full sm:w-auto px-6 py-3 bg-white border border-stone-200 hover:border-pink-300 hover:text-[#D92670] text-[#0C163A] text-xs font-bold rounded-full text-center transition-all"
-            >
-              My Orders Dashboard
-            </Link>
+            <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={handlePrintInvoice}
+                className="w-full sm:w-auto px-6 py-3 bg-white border border-[#D92670]/40 text-[#D92670] hover:bg-pink-50 text-xs font-bold rounded-full text-center transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" /> Print Receipt
+              </button>
+              <Link
+                href="/account"
+                className="w-full sm:w-auto px-6 py-3 bg-white border border-stone-200 hover:border-pink-300 hover:text-[#D92670] text-[#0C163A] text-xs font-bold rounded-full text-center transition-all"
+              >
+                My Orders Dashboard
+              </Link>
+            </div>
           </div>
         </div>
       ) : searched ? (
@@ -665,6 +676,10 @@ function TrackContent() {
           Contact Customer Care
         </Link>
       </div>
+      {/* Printable receipt (portal modal) */}
+      {showReceipt && activeOrder && (
+        <ReceiptModal order={activeOrder} onClose={() => setShowReceipt(false)} />
+      )}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import {
   Search,
   Download,
   Eye,
+  Printer,
   Phone,
   MapPin,
   PlusCircle
@@ -296,9 +297,9 @@ export function OrdersTab({
                       <button
                         onClick={() => onSelectOrderReceipt(order)}
                         className="p-1.5 bg-stone-100 hover:bg-stone-200 text-stone-900 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1 text-[11px] font-bold border border-stone-200"
-                        title="Invoice"
+                        title="View & print receipt"
                       >
-                        <Eye className="w-3.5 h-3.5" />
+                        <Printer className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </td>

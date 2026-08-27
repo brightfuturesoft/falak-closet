@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useCart } from '@/context/CartContext';
+import { useCart, type OrderRecord } from '@/context/CartContext';
 import { useSearchParams } from 'next/navigation';
 
 export interface UserProfile {
@@ -13,11 +13,11 @@ export interface UserProfile {
   fullAddress: string;
 }
 
-export interface MineOrder {
-  id: string;
-  date: string;
-  total: number;
-}
+/**
+ * /api/orders/mine returns the full serialized order (same shape the admin
+ * table consumes), so the account Orders tab can render receipts too.
+ */
+export type MineOrder = OrderRecord;
 
 export type AuthMode = 'signin' | 'signup' | 'forgot';
 export type FeedbackMessage = { type: 'success' | 'error'; message: string };
@@ -86,15 +86,23 @@ export function useAccount(initialUser: UserProfile | null) {
     }
   }, [userProfile, fetchOrders]);
 
+  const switchMode = useCallback((mode: AuthMode) => {
+    setAuthMode(mode);
+    setFeedback(null);
+  }, []);
+
   useEffect(() => {
     if (type === 'register') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       switchMode('signup')
     } else if (type === 'login') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       switchMode('signin')
     } else if (type === 'forgot') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       switchMode('forgot')
     }
-  }, [type])
+  }, [type, switchMode])
 
   // Sync client state if the server session disappears while the tab is open
   useEffect(() => {
@@ -123,11 +131,6 @@ export function useAccount(initialUser: UserProfile | null) {
   const showFeedback = useCallback((type: 'success' | 'error', message: string) => {
     setFeedback({ type, message });
     setTimeout(() => setFeedback(null), 6000);
-  }, []);
-
-  const switchMode = useCallback((mode: AuthMode) => {
-    setAuthMode(mode);
-    setFeedback(null);
   }, []);
 
   const applySession = useCallback((data: { user: Record<string, string | undefined>; wishlist?: string[]; cart?: { productId: string; selectedColor: string; selectedSize: string; quantity: number }[] }) => {
