@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import {
   CheckCircle2,
   ShieldCheck,
@@ -72,11 +73,12 @@ function Field({
 }
 
 export default function CheckoutClient() {
+  const searchParams = useSearchParams();
   const {
     cart,
-    subtotal,
+    subtotal: cartSubtotal,
     discountAmount,
-    shippingFee,
+    shippingFee: cartShippingFee,
     placeOrder,
     deliveryZones,
     selectedZoneId,
@@ -88,9 +90,58 @@ export default function CheckoutClient() {
     applyPromoCode,
     removePromoCode,
     promoNotice,
-    totalAmount
+    totalAmount: cartTotalAmount,
+    user,
+    getProductBySlug,
+    products,
+    freeShippingThreshold,
   } = useCart();
   const { trackEvent } = useAnalytics();
+
+  // ── Buy Now Mode ─────────────────────────────────────────────────────────────
+  // When the user clicks "Buy Now" on a product card, we encode the item into
+  // the URL. The checkout then shows ONLY that item — the cart is untouched.
+  const buyNowProductId = searchParams.get('buyNow');
+  const buyNowColor = searchParams.get('color') ?? '';
+  const buyNowSize = searchParams.get('size') ?? '';
+  const buyNowQty = Math.max(1, parseInt(searchParams.get('qty') ?? '1', 10));
+
+  const buyNowProduct = useMemo(() => {
+    if (!buyNowProductId) return null;
+    return products.find((p) => p.id === buyNowProductId) ??
+      getProductBySlug(buyNowProductId) ??
+      null;
+  }, [buyNowProductId, products, getProductBySlug]);
+
+  const buyNowItems = useMemo(() => {
+    if (!buyNowProduct) return null;
+    return [{
+      product: buyNowProduct,
+      selectedColor: buyNowColor || buyNowProduct.colors?.[0]?.name || '',
+      selectedSize: buyNowSize || buyNowProduct.sizes?.[0] || 'Free Size',
+      quantity: buyNowQty,
+    }];
+  }, [buyNowProduct, buyNowColor, buyNowSize, buyNowQty]);
+
+  // Use buyNow items when in that mode, otherwise fall back to cart
+  const activeItems = buyNowItems ?? cart;
+
+  // Recompute totals when in buyNow mode (ignore promo/shipping for simplicity;
+  // shipping logic mirrors CartContext)
+  const subtotal = useMemo(() => {
+    if (!buyNowItems) return cartSubtotal;
+    return buyNowItems.reduce((s, i) => s + i.product.price * i.quantity, 0);
+  }, [buyNowItems, cartSubtotal]);
+
+  const shippingFee = useMemo(() => {
+    if (!buyNowItems) return cartShippingFee;
+    return subtotal >= freeShippingThreshold ? 0 : cartShippingFee;
+  }, [buyNowItems, cartShippingFee, subtotal, freeShippingThreshold]);
+
+  const totalAmount = useMemo(() => {
+    if (!buyNowItems) return cartTotalAmount;
+    return Math.max(0, subtotal + shippingFee);
+  }, [buyNowItems, cartTotalAmount, subtotal, shippingFee]);
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -161,45 +212,40 @@ export default function CheckoutClient() {
     fetchSettings();
   }, []);
 
-  // Auto fill shipping address and check IP blocking status
+  // Auto fill shipping address
   React.useEffect(() => {
-    try {
-      const savedUser = localStorage.getItem('falak_user_account');
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser) as {
-          email?: string;
-          name?: string;
-          phone?: string;
-          district?: string;
-          fullAddress?: string;
-        };
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        if (parsed.email) setUserEmail(parsed.email);
+    if (user) {
+      Promise.resolve().then(() => {
+        if (user.email) setUserEmail(user.email);
         setFormData((prev) => ({
           ...prev,
-          fullName: parsed.name || prev.fullName,
-          phone: parsed.phone || prev.phone,
-          city: parsed.district || prev.city,
-          street: parsed.fullAddress || prev.street
+          fullName: user.name || prev.fullName,
+          phone: user.phone || prev.phone,
+          city: user.district || prev.city,
+          street: user.fullAddress || prev.street,
         }));
-      }
+      });
+    }
+  }, [user]);
 
-      // Check IP Blocklist
-      const checkBlockedIp = async () => {
-        try {
-          const res = await fetch('/api/security/block-ip');
-          const data = await res.json();
-          const localBlocked = JSON.parse(localStorage.getItem('falak_blocked_ips') || '[]');
-          const allBlocked = [...(data.blockedIps || []), ...localBlocked];
-          const isBlocked = allBlocked.some((b: { ip: string }) => b.ip === userIp);
-          if (isBlocked) setIsIpBlocked(true);
-        } catch {
-          const localBlocked = JSON.parse(localStorage.getItem('falak_blocked_ips') || '[]');
-          if (localBlocked.some((b: { ip: string }) => b.ip === userIp)) setIsIpBlocked(true);
-        }
-      };
+  // Check IP blocking status
+  React.useEffect(() => {
+    const checkBlockedIp = async () => {
+      try {
+        const res = await fetch('/api/security/block-ip');
+        const data = await res.json();
+        const localBlocked = JSON.parse(localStorage.getItem('falak_blocked_ips') || '[]');
+        const allBlocked = [...(data.blockedIps || []), ...localBlocked];
+        const isBlocked = allBlocked.some((b: { ip: string }) => b.ip === userIp);
+        if (isBlocked) setIsIpBlocked(true);
+      } catch {
+        const localBlocked = JSON.parse(localStorage.getItem('falak_blocked_ips') || '[]');
+        if (localBlocked.some((b: { ip: string }) => b.ip === userIp)) setIsIpBlocked(true);
+      }
+    };
+    if (userIp) {
       checkBlockedIp();
-    } catch { }
+    }
   }, [userIp]);
 
   // While the bKash sheet is open: lock background scroll, close on Escape
@@ -248,7 +294,7 @@ export default function CheckoutClient() {
 
   const handleCompleteOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (cart.length === 0 || isIpBlocked) return;
+    if (activeItems.length === 0 || isIpBlocked) return;
 
     if (paymentMethod === 'bKash Send Money (Manual)' && !isBkashModalOpen) {
       // Intercept to display the gateway-style bKash payment portal first
@@ -261,7 +307,7 @@ export default function CheckoutClient() {
 
     try {
       const orderPayload: {
-        items: typeof cart;
+        items: typeof activeItems;
         subtotal: number;
         discount: number;
         shippingFee: number;
@@ -278,9 +324,9 @@ export default function CheckoutClient() {
         paymentStatus?: string;
         promoCode?: string;
       } = {
-        items: cart,
+        items: activeItems,
         subtotal,
-        discount: discountAmount,
+        discount: buyNowItems ? 0 : discountAmount,
         shippingFee,
         total: totalAmount,
         shippingAddress: formData,
@@ -432,7 +478,7 @@ export default function CheckoutClient() {
   }
 
   // Friendly empty-cart state — nothing to check out.
-  if (cart.length === 0) {
+  if (activeItems.length === 0) {
     return (
       <div className="max-w-xl mx-auto px-4 py-16 sm:py-24 text-center space-y-5 pb-28 lg:pb-12">
         <div className="w-20 h-20 bg-pink-50 text-[#D92670] rounded-full flex items-center justify-center mx-auto shadow-sm">
@@ -493,20 +539,25 @@ export default function CheckoutClient() {
             >
               <div className="min-w-0">
                 <h2 className="font-bold text-base sm:text-lg text-stone-900 flex items-center gap-2">
-                  Order Summary
-                  <span className="px-2 py-0.5 bg-pink-50 border border-pink-100 rounded-full text-[10px] font-bold text-[#D92670]">
-                    {cart.length} {cart.length === 1 ? 'item' : 'items'}
+                  {buyNowItems ? 'Quick Order' : 'Order Summary'}
+                  <span className="px-2 text-xs py-0.5 bg-pink-50 border border-pink-100 rounded-full text-[10px] font-bold text-[#D92670]">
+                    {activeItems.length} {activeItems.length === 1 ? 'item' : 'items'}
                   </span>
+                  {buyNowItems && (
+                    <span className="px-2 text-xs py-0.5 bg-amber-50 border border-amber-200 rounded-full text-[10px] font-bold text-amber-700 flex items-center tex-xs gap-1">
+                      ⚡ Buy Now
+                    </span>
+                  )}
                 </h2>
                 {/* Stacked thumbnails preview (mobile teaser) */}
                 <div className="lg:hidden flex items-center gap-1 mt-1.5">
-                  {cart.slice(0, 4).map((item, idx) => (
+                  {activeItems.slice(0, 4).map((item, idx) => (
                     <div key={idx} className="relative w-7 h-8 rounded-md overflow-hidden border border-white shadow-sm bg-stone-100 -ml-1.5 first:ml-0">
                       <Image src={item.product?.images[0]} alt="" fill sizes="28px" className="object-cover" />
                     </div>
                   ))}
-                  {cart.length > 4 && (
-                    <span className="text-[10px] font-bold text-stone-400 ml-0.5">+{cart.length - 4}</span>
+                  {activeItems.length > 4 && (
+                    <span className="text-[10px] font-bold text-stone-400 ml-0.5">+{activeItems.length - 4}</span>
                   )}
                 </div>
               </div>
@@ -525,7 +576,7 @@ export default function CheckoutClient() {
             {/* Collapsible body: always open on lg, toggled on mobile */}
             <div className={`${isSummaryOpen ? 'block' : 'hidden'} lg:block border-t border-pink-100 p-4 sm:p-6 space-y-4`}>
               <div className="divide-y divide-pink-50 max-h-64 overflow-y-auto overscroll-contain pr-1 -mr-1">
-                {cart.map((item, idx) => (
+                {activeItems.map((item, idx) => (
                   <div key={idx} className="py-2.5 flex items-center justify-between text-xs gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="relative w-10 h-12 rounded-lg overflow-hidden bg-stone-100 flex-shrink-0">
@@ -711,8 +762,8 @@ export default function CheckoutClient() {
                   <label
                     key={z.id}
                     className={`flex items-center justify-between gap-3 min-h-[56px] p-3.5 rounded-2xl border cursor-pointer transition-all active:scale-[0.99] ${isSelected
-                        ? 'border-[#D92670] bg-pink-50 text-[#D92670] font-bold shadow-xs'
-                        : 'border-stone-200 text-stone-700 hover:border-pink-200'
+                      ? 'border-[#D92670] bg-pink-50 text-[#D92670] font-bold shadow-xs'
+                      : 'border-stone-200 text-stone-700 hover:border-pink-200'
                       }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -795,8 +846,8 @@ export default function CheckoutClient() {
                   <label
                     key={pm.id}
                     className={`flex items-start gap-3 min-h-[56px] p-3.5 rounded-2xl border cursor-pointer transition-all active:scale-[0.99] ${isSelected
-                        ? 'border-[#D92670] bg-pink-50 font-bold shadow-xs'
-                        : 'border-stone-200 text-stone-700 hover:border-pink-200'
+                      ? 'border-[#D92670] bg-pink-50 font-bold shadow-xs'
+                      : 'border-stone-200 text-stone-700 hover:border-pink-200'
                       }`}
                   >
                     <input
@@ -825,7 +876,7 @@ export default function CheckoutClient() {
           its env(safe-area-inset-bottom) padding once the nav overhaul lands. */}
       <div className="lg:hidden fixed bottom-[calc(62px+env(safe-area-inset-bottom))] left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-pink-100 px-3 py-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] flex items-center justify-between gap-3">
         <div className="flex flex-col min-w-0 shrink-0">
-          <span className="text-[9px] text-stone-400 uppercase tracking-wider leading-none">Total ({cart.length} {cart.length === 1 ? 'item' : 'items'})</span>
+          <span className="text-[9px] text-stone-400 uppercase tracking-wider leading-none">Total ({activeItems.length} {activeItems.length === 1 ? 'item' : 'items'})</span>
           <span className="font-extrabold text-[#D92670] font-mono text-base leading-tight">
             ৳ {totalAmount}
           </span>
@@ -912,14 +963,14 @@ export default function CheckoutClient() {
                   {bkashSettings?.instructions?.map((inst: string, idx: number) => (
                     <li key={idx} className="leading-relaxed">{inst}</li>
                   )) || (
-                    <>
-                      <li>Dial *247# or open the bKash App.</li>
-                      <li>Choose &quot;Send Money&quot; and enter our number.</li>
-                      <li>Enter amount: ৳{totalAmount}.</li>
-                      <li>Use your phone number as reference.</li>
-                      <li>Confirm transaction and copy the Transaction ID.</li>
-                    </>
-                  )}
+                      <>
+                        <li>Dial *247# or open the bKash App.</li>
+                        <li>Choose &quot;Send Money&quot; and enter our number.</li>
+                        <li>Enter amount: ৳{totalAmount}.</li>
+                        <li>Use your phone number as reference.</li>
+                        <li>Confirm transaction and copy the Transaction ID.</li>
+                      </>
+                    )}
                 </ol>
               </div>
 

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { Product } from '@/data/products';
 import { AppliedCoupon } from '@/data/promotions';
+import { useWishlist } from '@/hooks/useWishlist';
 import { sendNewOrderNotification } from '@/lib/socketClient';
 
 export interface CartItem {
@@ -62,6 +63,15 @@ export interface OrderRecord {
   promoCode?: string;
 }
 
+export interface UserProfile {
+  id?: string;
+  name: string;
+  email: string;
+  phone: string;
+  district: string;
+  fullAddress: string;
+}
+
 interface CartContextType {
   cart: CartItem[];
   addToCart: (product: Product, color: string, size: string, quantity?: number) => void;
@@ -93,10 +103,18 @@ interface CartContextType {
   wishlist: Product[];
   toggleWishlist: (product: Product) => void;
   isInWishlist: (productId: string) => boolean;
+  mergeServerWishlist: (serverIds: string[]) => void;
+
+  // Server Cart Merge (called after login/signup)
+  mergeServerCart: (serverCartItems: { productId: string; selectedColor: string; selectedSize: string; quantity: number }[]) => void;
 
   // Drawer states
   isCartDrawerOpen: boolean;
   setIsCartDrawerOpen: (open: boolean) => void;
+
+  // Auth Session State
+  user: UserProfile | null;
+  isAuthenticated: boolean;
 
   // Dynamic Database Products State
   products: Product[];
@@ -131,11 +149,45 @@ export function CartProvider({
   initialProductsError?: string | null;
 }) {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [wishlist, setWishlist] = useState<Product[]>([]);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [promoNotice, setPromoNotice] = useState<string | null>(null);
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
+
+  // Auth Session State
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const isAuthenticated = !!user;
+
+  // Pending server cart items waiting for products to load (so we can resolve productId -> Product)
+  const pendingServerCartRef = useRef<{ productId: string; selectedColor: string; selectedSize: string; quantity: number }[] | null>(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/auth/me', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) {
+            Promise.resolve().then(() => {
+              setUser(data.user);
+            });
+            // Store pending server cart for merge once products are available
+            if (Array.isArray(data.cart) && data.cart.length > 0) {
+              pendingServerCartRef.current = data.cart;
+            }
+            return;
+          }
+        }
+      } catch {}
+      Promise.resolve().then(() => {
+        setUser(null);
+      });
+    };
+
+    checkAuth();
+    window.addEventListener('falak:auth-changed', checkAuth);
+    return () => window.removeEventListener('falak:auth-changed', checkAuth);
+  }, []);
 
   // Delivery Zones State
   const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
@@ -187,6 +239,13 @@ export function CartProvider({
   const [isLoadingProducts, setIsLoadingProducts] = useState(initialProducts.length === 0 && !initialProductsError);
   const [productsError, setProductsError] = useState<string | null>(initialProductsError);
 
+  const {
+    wishlist,
+    toggleWishlist,
+    isInWishlist,
+    mergeServerWishlist,
+  } = useWishlist(products);
+
   // Load products from Database API
   const refreshProductsFromApi = async () => {
     setIsLoadingProducts(true);
@@ -219,6 +278,44 @@ export function CartProvider({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Once products are available, flush any pending server cart merge
+  useEffect(() => {
+    if (products.length === 0) return;
+    if (!pendingServerCartRef.current || pendingServerCartRef.current.length === 0) return;
+    const pending = pendingServerCartRef.current;
+    pendingServerCartRef.current = null;
+
+    setCart((prev) => {
+      const merged = [...prev];
+      for (const serverItem of pending) {
+        const product = products.find((p) => p.id === serverItem.productId);
+        if (!product) continue;
+        const existingIndex = merged.findIndex(
+          (i) =>
+            i.product?.id === serverItem.productId &&
+            i.selectedColor === serverItem.selectedColor &&
+            i.selectedSize === serverItem.selectedSize
+        );
+        if (existingIndex > -1) {
+          // Keep whichever quantity is higher
+          merged[existingIndex] = {
+            ...merged[existingIndex],
+            quantity: Math.max(merged[existingIndex].quantity, serverItem.quantity),
+          };
+        } else {
+          merged.push({
+            product,
+            selectedColor: serverItem.selectedColor,
+            selectedSize: serverItem.selectedSize,
+            quantity: serverItem.quantity,
+          });
+        }
+      }
+      return merged;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products]);
 
   const getProductBySlug = (slug: string) => {
     const clean = slug.toLowerCase();
@@ -255,9 +352,6 @@ export function CartProvider({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       if (savedCart) setCart(JSON.parse(savedCart));
 
-      const savedWishlist = localStorage.getItem('falak_wishlist');
-      if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
-
       const savedCoupon = localStorage.getItem('falak_coupon');
       if (savedCoupon) setAppliedCoupon(JSON.parse(savedCoupon));
     } catch { }
@@ -273,11 +367,33 @@ export function CartProvider({
     } catch { }
   }, [cart]);
 
+  // Debounced DB cart sync — fires 1.5 s after the last cart mutation, only for signed-in users.
+  const dbSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    try {
-      localStorage.setItem('falak_wishlist', JSON.stringify(wishlist));
-    } catch { }
-  }, [wishlist]);
+    if (!user) return; // guests: skip DB write
+    if (dbSyncTimerRef.current) clearTimeout(dbSyncTimerRef.current);
+    dbSyncTimerRef.current = setTimeout(() => {
+      const payload = cart.map((item) => ({
+        productId: item.product?.id ?? '',
+        selectedColor: item.selectedColor,
+        selectedSize: item.selectedSize,
+        quantity: item.quantity,
+      })).filter((i) => !!i.productId);
+
+      fetch('/api/user/me/cart', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cart: payload }),
+      }).catch(() => {}); // fire-and-forget; localStorage is the fallback
+    }, 1500);
+
+    return () => {
+      if (dbSyncTimerRef.current) clearTimeout(dbSyncTimerRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart, user]);
+
+
 
   useEffect(() => {
     try {
@@ -346,7 +462,62 @@ export function CartProvider({
     setCart([]);
     setAppliedCoupon(null);
     setPromoNotice(null);
+    // Also clear the DB cart for authenticated users
+    if (user) {
+      fetch('/api/user/me/cart', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cart: [] }),
+      }).catch(() => {});
+    }
   };
+
+  /**
+   * mergeServerCart — called by useAccount after login/signup with the raw
+   * CartItem rows from the DB. Products may not be loaded yet; if so we stash
+   * items in a ref and resolve them once the catalog arrives (see the
+   * `products` useEffect above).
+   */
+  const mergeServerCart = useCallback(
+    (serverCartItems: { productId: string; selectedColor: string; selectedSize: string; quantity: number }[]) => {
+      if (!serverCartItems || serverCartItems.length === 0) return;
+
+      if (products.length === 0) {
+        // Products not loaded yet — defer until catalog is ready
+        pendingServerCartRef.current = serverCartItems;
+        return;
+      }
+
+      setCart((prev) => {
+        const merged = [...prev];
+        for (const serverItem of serverCartItems) {
+          const product = products.find((p) => p.id === serverItem.productId);
+          if (!product) continue;
+          const existingIndex = merged.findIndex(
+            (i) =>
+              i.product?.id === serverItem.productId &&
+              i.selectedColor === serverItem.selectedColor &&
+              i.selectedSize === serverItem.selectedSize
+          );
+          if (existingIndex > -1) {
+            merged[existingIndex] = {
+              ...merged[existingIndex],
+              quantity: Math.max(merged[existingIndex].quantity, serverItem.quantity),
+            };
+          } else {
+            merged.push({
+              product,
+              selectedColor: serverItem.selectedColor,
+              selectedSize: serverItem.selectedSize,
+              quantity: serverItem.quantity,
+            });
+          }
+        }
+        return merged;
+      });
+    },
+    [products]
+  );
 
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
   const subtotal = cart.reduce(
@@ -501,19 +672,7 @@ export function CartProvider({
   const shippingFee = subtotal === 0 || isFreeDelivery ? 0 : baseFee;
   const totalAmount = Math.max(0, subtotal - discountAmount + shippingFee);
 
-  const toggleWishlist = (product: Product) => {
-    setWishlist((prev) => {
-      const exists = prev.some((p) => p.id === product?.id);
-      if (exists) {
-        return prev.filter((p) => p.id !== product?.id);
-      }
-      return [...prev, product];
-    });
-  };
 
-  const isInWishlist = (productId: string) => {
-    return wishlist.some((p) => p.id === productId);
-  };
 
   // Place order with API post to /api/orders
   const placeOrder = async (
@@ -602,7 +761,11 @@ export function CartProvider({
         wishlist,
         toggleWishlist,
         isInWishlist,
+        mergeServerWishlist,
+        mergeServerCart,
         isCartDrawerOpen,
+        user,
+        isAuthenticated,
         setIsCartDrawerOpen,
         products,
         isLoadingProducts,

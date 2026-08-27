@@ -51,14 +51,14 @@ export default async function ShippingPolicyPage() {
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-[#9B050B] shrink-0" />
+                      <MapPin className="w-4 h-4 text-[#D92670] shrink-0" />
                       <span className="font-bold text-stone-900 dark:text-stone-100 text-sm">{zone.name}</span>
                     </div>
                     <div className="flex items-center gap-3 text-xs font-mono">
                       <span className="flex items-center gap-1 text-stone-500">
                         <Clock className="w-3.5 h-3.5" /> {zone.etaDays}
                       </span>
-                      <span className="px-2.5 py-1 bg-[#9B050B]/10 text-[#9B050B] font-bold rounded-lg">
+                      <span className="px-2.5 py-1 bg-pink-50 text-[#D92670] font-bold rounded-lg border border-pink-100">
                         {formatCurrency(zone.charge)}
                       </span>
                     </div>

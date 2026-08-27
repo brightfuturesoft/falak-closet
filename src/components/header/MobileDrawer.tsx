@@ -80,7 +80,7 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
                   >
                     <span>{cat.name}</span>
                     {cat.subCategories.length > 0 && (
-                      <span className="text-[10px] font-mono font-bold text-[#9B050B] px-2 py-0.5 bg-pink-50 rounded-full">
+                      <span className="text-[10px] font-mono font-bold text-[#D92670] px-2 py-0.5 bg-pink-50 rounded-full">
                         {cat.subCategories.length} sub
                       </span>
                     )}
@@ -92,7 +92,7 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
                           key={sub.id}
                           href={`/shop?category=${encodeURIComponent(cat.name)}&subCategory=${encodeURIComponent(sub.name)}`}
                           onClick={onClose}
-                          className="block px-3 py-1 text-xs text-stone-600 dark:text-stone-400 hover:text-[#9B050B] dark:hover:text-pink-400 hover:bg-stone-50 rounded-md transition-colors font-medium"
+                          className="block px-3 py-1 text-xs text-stone-600 dark:text-stone-400 hover:text-[#D92670] dark:hover:text-pink-400 hover:bg-stone-50 rounded-md transition-colors font-medium"
                         >
                           • {sub.name}
                         </Link>

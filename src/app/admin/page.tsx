@@ -628,7 +628,7 @@ function AdminDashboardContent() {
             />
           )}
 
-          {activeTab === 'customers' && <CustomersTab orders={ordersList} />}
+          {activeTab === 'customers' && <CustomersTab orders={ordersList} products={productsList} />}
 
           {activeTab === 'security' && <SecurityTab />}
 

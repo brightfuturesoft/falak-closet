@@ -111,13 +111,17 @@ export default function TopProgressBar() {
 
     window.history.pushState = function (...args) {
       isNavigating.current = true;
-      handleStart(true);
+      setTimeout(() => {
+        handleStart(true);
+      }, 0);
       return originalPushState.apply(this, args);
     };
 
     window.history.replaceState = function (...args) {
       isNavigating.current = true;
-      handleStart(true);
+      setTimeout(() => {
+        handleStart(true);
+      }, 0);
       return originalReplaceState.apply(this, args);
     };
 

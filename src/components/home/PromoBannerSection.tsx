@@ -35,7 +35,7 @@ export function PromoBannerSection({ banner }: PromoBannerSectionProps) {
       <div className={`grid grid-cols-1 gap-4 sm:gap-6 ${banner ? 'lg:grid-cols-3' : ''}`}>
         {/* Main Banner Card — admin-managed (Live Promotion Banners, top row) */}
         {banner && (
-          <div className="lg:col-span-2 bg-gradient-to-r from-[#9B050B] via-[#C71B20] to-[#9B050B] rounded-3xl p-5 sm:p-8 text-white relative overflow-hidden shadow-xl flex flex-col justify-between gap-5 sm:gap-6">
+          <div className="lg:col-span-2 bg-gradient-to-r from-[#D92670] via-[#C2185B] to-[#D92670] rounded-3xl p-5 sm:p-8 text-white relative overflow-hidden shadow-xl flex flex-col justify-between gap-5 sm:gap-6">
             {/* Admin-uploaded art (optional) sits behind the brand gradient */}
             {banner.bannerImage && (
               // eslint-disable-next-line @next/next/no-img-element
@@ -111,9 +111,9 @@ export function PromoBannerSection({ banner }: PromoBannerSectionProps) {
         )}
 
         {/* Perks / Free Shipping Highlight Box — evergreen, always renders */}
-        <div className="bg-[#FFFBF0] border border-[#F2C76E]/60 rounded-3xl p-5 sm:p-6 flex flex-col justify-between gap-5 sm:gap-6 shadow-xs">
+        <div className="bg-white border border-stone-200/80 rounded-3xl p-5 sm:p-6 flex flex-col justify-between gap-5 sm:gap-6 shadow-xs">
           <div className="space-y-3.5 sm:space-y-4">
-            <div className="w-11 h-11 rounded-2xl bg-[#9B050B]/10 text-[#9B050B] flex items-center justify-center">
+            <div className="w-11 h-11 rounded-2xl bg-pink-50 text-[#D92670] flex items-center justify-center">
               <Truck className="w-5 h-5" />
             </div>
 
@@ -127,7 +127,7 @@ export function PromoBannerSection({ banner }: PromoBannerSectionProps) {
               </p>
             </div>
 
-            <div className="pt-2 border-t border-[#F2C76E]/30 space-y-2 text-[11px] sm:text-xs">
+            <div className="pt-2 border-t border-stone-100 space-y-2 text-[11px] sm:text-xs">
               <div className="flex items-center gap-2 text-stone-700">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>100% Authentic Fabric Guarantee</span>

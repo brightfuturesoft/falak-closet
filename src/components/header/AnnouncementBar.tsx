@@ -45,7 +45,7 @@ export function AnnouncementBar({ announcement }: { announcement: Announcement }
   const safeLink = link.startsWith('/') || /^https?:\/\//i.test(link) ? link : null;
 
   return (
-    <div className="bg-gradient-to-r from-[#0C163A] via-[#9B050B] to-[#0C163A] text-white text-xs">
+    <div className="bg-gradient-to-r from-[#0C163A] via-[#D92670] to-[#0C163A] text-white text-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-center gap-2 relative">
         <Megaphone className="w-3.5 h-3.5 text-[#F2C76E] shrink-0" />
         <p className="font-bold tracking-wide text-center truncate">

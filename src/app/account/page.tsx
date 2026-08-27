@@ -1,6 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import AccountClient from './AccountClient';
+import { getSessionUser } from '@/lib/session';
 
 export const metadata: Metadata = {
   title: 'My Account & Order History | Falak Closet',
@@ -22,6 +23,7 @@ export const metadata: Metadata = {
   }
 };
 
-export default function AccountPage() {
-  return <AccountClient />;
+export default async function AccountPage() {
+  const user = await getSessionUser();
+  return <AccountClient initialUser={user} />;
 }

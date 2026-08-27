@@ -32,7 +32,7 @@ function SafeImage({ src, alt, className }: { src: string; alt: string; classNam
   if (hasError || !imgSrc) {
     return (
       <div className="w-full h-full bg-[#0C163A]/10 flex flex-col items-center justify-center p-1 text-center text-[#0C163A]">
-        <Sparkles className="w-4 h-4 text-[#9B050B]" />
+        <Sparkles className="w-4 h-4 text-[#D92670]" />
         <span className="text-[8px] font-bold mt-0.5 font-mono line-clamp-1">{alt}</span>
       </div>
     );
@@ -53,32 +53,23 @@ function SafeImage({ src, alt, className }: { src: string; alt: string; classNam
 export function Header() {
   const router = useRouter();
   const pathname = usePathname();
-  const { cartCount, products: cartProducts } = useCart();
+  const { cartCount, products: cartProducts, user } = useCart();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchResults, setSearchResults] = useState<Product[]>([]);
-  const [userName, setUserName] = useState<string | null>(null);
+
+  const userName = user ? user.name.split(' ')[0] : null;
 
   // Search the live catalog only. Falling back to the seed array meant an empty
   // store still returned demo products, whose /product links 404.
   const allStoreProducts = cartProducts || [];
 
   useEffect(() => {
-    try {
-      const savedUser = localStorage.getItem('falak_user_account');
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        if (parsed.name) {
-          setUserName(parsed.name.split(' ')[0]);
-        }
-      }
-    } catch { }
-  }, [pathname]);
-
-  useEffect(() => {
     if (!searchQuery.trim()) {
-      setSearchResults([]);
+      Promise.resolve().then(() => {
+        setSearchResults([]);
+      });
       return;
     }
     const q = searchQuery.toLowerCase().trim();
@@ -94,7 +85,9 @@ export function Header() {
       return matchName || matchCategory || matchMaterial || matchWork || matchCode || matchColor || matchVar;
     }).slice(0, 6);
 
-    setSearchResults(matches);
+    Promise.resolve().then(() => {
+      setSearchResults(matches);
+    });
   }, [searchQuery, allStoreProducts]);
 
   if (pathname?.startsWith('/admin')) {
