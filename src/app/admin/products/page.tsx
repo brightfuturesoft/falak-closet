@@ -8,7 +8,6 @@ export default function AdminProductsPage() {
 
   return (
     <ProductsTab
-      products={admin.productsList}
       onOpenAddModal={() => {
         admin.setEditingProduct(null);
         admin.setIsAddProductOpen(true);
@@ -20,6 +19,8 @@ export default function AdminProductsPage() {
       onDeleteProduct={admin.handleDeleteProduct}
       onUpdateStock={admin.handleUpdateStock}
       searchQuery={admin.globalSearchQuery}
+      productsFeedCount={admin.productsList.length}
+      catalogVersion={admin.catalogVersion}
     />
   );
 }

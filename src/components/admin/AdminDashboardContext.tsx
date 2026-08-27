@@ -51,6 +51,9 @@ export interface AdminDashboardContextValue {
   // Live data
   dbSource: string;
   productsList: Product[];
+  /** Increments after any catalog write (save/delete/seed) so paginated views
+   *  refetch even when the product count didn't change (in-place edits). */
+  catalogVersion: number;
   promosList: PromoVoucherData[];
   ordersList: OrderRecord[];
   /** Bumped on every realtime order arrival (socket alert or POS) so tabs can
@@ -138,6 +141,7 @@ export function AdminDashboardProvider({ children }: { children: React.ReactNode
   // DB Source & Data State
   const [dbSource, setDbSource] = useState<string>('Connecting...');
   const [productsList, setProductsList] = useState<Product[]>([]);
+  const [catalogVersion, setCatalogVersion] = useState(0);
   const [promosList, setPromosList] = useState<PromoVoucherData[]>([]);
   const [ordersList, setOrdersList] = useState<OrderRecord[]>([]);
 
@@ -351,6 +355,7 @@ export function AdminDashboardProvider({ children }: { children: React.ReactNode
       setSeedResult(result.data.message);
       addToast('success', result.data.message);
       await fetchAllData();
+      setCatalogVersion((v) => v + 1);
     } else {
       setSeedResult(`Seed failed: ${result.error}`);
       addToast('error', `Seed failed: ${result.error}`);
@@ -377,6 +382,7 @@ export function AdminDashboardProvider({ children }: { children: React.ReactNode
     // discount, and the variation-summed stock, so its copy is the real one.
     setEditingProduct(null);
     await fetchAllData();
+    setCatalogVersion((v) => v + 1);
     addToast(
       'success',
       isEdit
@@ -430,6 +436,7 @@ export function AdminDashboardProvider({ children }: { children: React.ReactNode
 
     setProductsList((prev) => prev.filter((p) => p.id !== id));
     refreshProductsFromApi();
+    setCatalogVersion((v) => v + 1);
     addToast('warning', 'Product deleted from inventory catalog.');
   };
 
@@ -534,6 +541,7 @@ export function AdminDashboardProvider({ children }: { children: React.ReactNode
 
     dbSource,
     productsList,
+    catalogVersion,
     promosList,
     ordersList,
     incomingOrderSignal,
