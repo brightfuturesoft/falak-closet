@@ -139,26 +139,7 @@ export function AdminHeader({
       </div>
 
       {/* Global Actions: Search Bar, Refresh, Notifications, Live Store Link */}
-      <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-        {/* Global Search Input */}
-        <div className="relative flex-1 md:w-64">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search orders, products, customers..."
-            className="w-full pl-10 pr-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900 transition-all"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-900"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
+      <div className="flex  items-center gap-3 w-full md:w-auto justify-end">
 
         {/* Quick Add Product Button */}
         {onOpenAddProductModal && (
@@ -175,7 +156,7 @@ export function AdminHeader({
 
 
         {/* Live Data Refresh Button */}
-        <button
+        {/* <button
           onClick={onRefresh}
           disabled={isRefreshing}
           className="p-2.5 sm:px-4 sm:py-2.5 bg-stone-100 border border-stone-200 text-stone-700 hover:bg-stone-200 text-xs font-bold rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
@@ -183,7 +164,7 @@ export function AdminHeader({
         >
           <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-emerald-600' : ''}`} />
           <span className="hidden sm:inline">Refresh Data</span>
-        </button>
+        </button> */}
 
         {/* Notification Bell Dropdown */}
         <div className="relative">

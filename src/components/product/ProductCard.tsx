@@ -314,9 +314,8 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
 
           {/* Bottom: Bag + Buy Now (inline sm+) + Color dot | Buy Now full-width on mobile */}
           <div className="flex flex-col pt-2.5 mt-2 border-t border-stone-100 gap-2">
-
             {/* Row 1: Bag icon — Buy Now pill (sm+ only) — color dot */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-[1.2px]">
               {/* Add to Cart bag */}
               <button
                 type="button"
@@ -337,32 +336,17 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
                 <button
                   type="button"
                   onClick={handleBuyNow}
-                  className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#A80C14] hover:bg-[#8C0A10] text-white text-[10px] font-bold shadow-xs transition-all duration-200 active:scale-95 cursor-pointer flex-shrink-0"
+                  className="flex justify-center w-[80%] sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#A80C14] hover:bg-[#8C0A10] text-white text-[10px] font-bold shadow-xs transition-all duration-200 active:scale-95 cursor-pointer flex-shrink-0"
                   aria-label="Buy Now"
                 >
-                  <Zap className="w-3 h-3" />
+                  <Zap className="w-3.5 h-3.5 fill-white" />
                   Buy Now
                 </button>
-              )}
-
-              {/* Push color dot to right */}
-              <div className="flex-1" />
-
-              {activeColor && (
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-[9px] text-stone-500 font-extrabold uppercase tracking-wider font-sans truncate max-w-[80px]">
-                    {activeColor.name}
-                  </span>
-                  <span
-                    className="w-2.5 h-2.5 rounded-full border border-stone-200/50 shadow-xs flex-shrink-0"
-                    style={{ backgroundColor: activeColor.hex }}
-                  />
-                </div>
               )}
             </div>
 
             {/* Row 2: Buy Now full-width — mobile only */}
-            {!isSoldOut && (
+            {/* {!isSoldOut && (
               <button
                 type="button"
                 onClick={handleBuyNow}
@@ -372,7 +356,7 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
                 <Zap className="w-3.5 h-3.5 fill-white" />
                 Buy Now
               </button>
-            )}
+            )} */}
           </div>
         </div>
       </div>

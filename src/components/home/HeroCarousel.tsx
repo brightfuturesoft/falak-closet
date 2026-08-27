@@ -65,9 +65,8 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
         {slides.map((slide, idx) => (
           <div
             key={slide.id}
-            className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-              safeIndex === idx ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
-            }`}
+            className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${safeIndex === idx ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
+              }`}
           >
             <Image
               src={slide.image}
@@ -78,7 +77,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
               className="object-cover object-center"
             />
             {/* Gradient Overlay for Text Visibility */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0D153A]/90 via-[#0D153A]/60 to-transparent flex flex-col justify-center px-6 sm:px-12 lg:px-16 space-y-3 sm:space-y-4">
+            <div className="absolute py-1 inset-0 bg-gradient-to-r from-[#0D153A]/90 via-[#0D153A]/60 to-transparent flex flex-col justify-center px-6 sm:px-12 lg:px-16 space-y-3 sm:space-y-4">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#F5C77E]/20 text-[#F5C77E] border border-[#F5C77E]/30 font-bold text-[10px] sm:text-xs uppercase tracking-wider rounded-full w-fit">
                 <Sparkles className="w-3.5 h-3.5" />
                 {slide.tag || 'Special Offer'}
@@ -97,7 +96,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
                   <Sparkles className="w-4 h-4 text-[#F5C77E]" />
                   <span>{slide.ctaText}</span>
                 </Link>
-                
+
                 <Link
                   href="/how-to-order"
                   className="inline-flex min-h-[44px] items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/40 font-extrabold text-xs sm:text-sm rounded-full transition-all shadow-md hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-xs"
@@ -133,14 +132,13 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
         </div>
 
         {/* Pagination Dots */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:translate-x-0 sm:right-6 z-30 flex items-center gap-1.5 sm:gap-2">
+        <div className="absolute bottom-16 left-1/2 -translate-x-1/2 sm:left-auto sm:translate-x-0 sm:right-6 z-30 flex items-center gap-1.5 sm:gap-2">
           {slides.map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrentSlide(idx)}
-              className={`relative h-2 rounded-full transition-all duration-300 cursor-pointer after:content-[''] after:absolute after:-inset-2.5 ${
-                safeIndex === idx ? 'w-7 bg-[#A80C14]' : 'w-2 bg-white/60 hover:bg-white'
-              }`}
+              className={`relative h-2 rounded-full transition-all duration-300 cursor-pointer after:content-[''] after:absolute after:-inset-2.5 ${safeIndex === idx ? 'w-7 bg-[#A80C14]' : 'w-2 bg-white/60 hover:bg-white'
+                }`}
               aria-label={`Go to slide ${idx + 1}`}
               aria-current={safeIndex === idx}
             />

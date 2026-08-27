@@ -62,7 +62,7 @@ export function NewArrivalSection({
       <div className={cn("bg-white border border-[#F8D2D5] rounded-3xl p-4 sm:p-7 space-y-4 sm:space-y-6 shadow-xs relative overflow-hidden", place === 'product_details' && 'p-0')}>
         {/* Section Header Row */}
         <div className="flex items-center justify-between border-b border-[#F8D2D5]/60 pb-3 sm:pb-4 relative z-10">
-          <div className="space-y-0.5">
+          <div className="space-y-0.5 w-[70%]">
             <h2 className={cn("font-sans font-black text-[#0D153A] text-base sm:text-lg tracking-wider uppercase leading-tight", place === 'product_details' ? "text-lg" : 'text-base sm:text-lg')}>
               {title}
             </h2>

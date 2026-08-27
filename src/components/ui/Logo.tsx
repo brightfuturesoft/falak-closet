@@ -21,8 +21,8 @@ export function Logo({
   const [imgError, setImgError] = useState(false);
 
   // Pick between transparent logo (/transparent_logo.png) or normal logo (/logo.png)
-  const isTransparent = variant === 'transparent' || (transparent && variant !== 'normal');
-  const logoSrc = isTransparent ? '/transparent_logo.png' : '/logo.png';
+  // const isTransparent = variant === 'transparent' || (transparent && variant !== 'normal');
+  const logoSrc = '/apple-touch-icon.png';
 
   const sizeMap = {
     sm: 'h-8 sm:h-9 max-w-[140px]',
@@ -36,9 +36,9 @@ export function Logo({
   const logoImage = (
     <div className="relative inline-flex items-center shrink-0">
       <img
-        src={imgError ? '/logo.png' : logoSrc}
+        src={imgError ? '/apple-touch-icon.png' : logoSrc}
         alt="Falak Closet Logo"
-        className={`${currentHeight} w-auto object-contain transition-transform duration-300 group-hover:scale-105`}
+        className={`${currentHeight}  rounded-md w-auto object-contain transition-transform duration-300 group-hover:scale-105`}
         onError={() => setImgError(true)}
       />
     </div>
@@ -57,7 +57,7 @@ export function Logo({
 
   return (
     <Link href={href} className={`group inline-flex items-center cursor-pointer ${className}`}>
-      {logoImage} <span className='mx-2'>Falak Closet</span>
+      {logoImage} <span className='mx-2 font-bold text-[#a80d15]'>Falak Closet</span>
     </Link>
   );
 }

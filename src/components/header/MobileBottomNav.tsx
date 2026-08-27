@@ -423,14 +423,13 @@ export function MobileBottomNav() {
                   style={{ WebkitTapHighlightColor: 'transparent' }}
                   aria-haspopup="dialog"
                   aria-expanded={isSearchOpen}
-                  className={`relative flex flex-col items-center justify-center min-w-[56px] min-h-[48px] px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-90 outline-none focus-visible:ring-2 focus-visible:ring-[#A80C14] cursor-pointer ${
-                    isActive
-                      ? 'text-[#A80C14] font-sans font-extrabold'
-                      : 'text-[#0D153A]/70 hover:text-[#A80C14] font-medium'
-                  }`}
+                  className={`relative flex flex-col items-center justify-center min-w-[56px] min-h-[48px] px-2 py-1.5 rounded-xs transition-all duration-300 active:scale-90 outline-none focus-visible:ring-2 focus-visible:ring-[#A80C14] cursor-pointer ${isActive
+                    ? 'text-[#A80C14] font-sans font-extrabold'
+                    : 'text-[#0D153A]/70 hover:text-[#A80C14] font-medium'
+                    }`}
                 >
                   {isActive && (
-                    <span className="absolute inset-0 bg-[#FDF2F3] border border-[#F8D2D5]/65 rounded-2xl transition-all duration-300 -z-10 shadow-xs" aria-hidden="true" />
+                    <span className="absolute inset-0 bg-[#FDF2F3] border border-[#F8D2D5]/65 rounded transition-all duration-300 -z-10 shadow-xs" aria-hidden="true" />
                   )}
 
                   <Icon
@@ -448,14 +447,13 @@ export function MobileBottomNav() {
                 href={item.href}
                 style={{ WebkitTapHighlightColor: 'transparent' }}
                 aria-current={isActive ? 'page' : undefined}
-                className={`relative flex flex-col items-center justify-center min-w-[56px] min-h-[48px] px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-90 outline-none focus-visible:ring-2 focus-visible:ring-[#A80C14] cursor-pointer ${
-                  isActive
-                    ? 'text-[#A80C14] font-sans font-extrabold'
-                    : 'text-[#0D153A]/70 hover:text-[#A80C14] font-medium'
-                }`}
+                className={`relative flex flex-col items-center justify-center min-w-[56px] min-h-[48px] px-2 py-1.5 transition-all duration-300 active:scale-90 outline-none focus-visible:ring-2 focus-visible:ring-[#A80C14] cursor-pointer ${isActive
+                  ? 'text-[#A80C14] font-sans font-extrabold'
+                  : 'text-[#0D153A]/70 hover:text-[#A80C14] font-medium'
+                  }`}
               >
                 {isActive && (
-                  <span className="absolute inset-0 bg-[#FDF2F3] border border-[#F8D2D5]/65 rounded-2xl transition-all duration-300 -z-10 shadow-xs" aria-hidden="true" />
+                  <span className="absolute inset-0 bg-[#FDF2F3] border border-[#F8D2D5]/65 rounded transition-all duration-300 -z-10 shadow-xs" aria-hidden="true" />
                 )}
 
                 <div className="relative">

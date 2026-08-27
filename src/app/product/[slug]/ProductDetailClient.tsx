@@ -698,13 +698,13 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           </div>
 
           {/* Size Selector */}
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <div className="flex items-center justify-between gap-2 text-xs">
               <label className="font-bold uppercase tracking-wider text-stone-700">
                 Size: <span className="text-[#A80C14] normal-case tracking-normal">{selectedSize}</span>
               </label>
               <button
-                onClick={() => setIsSizeGuideOpen(true)}
+                // onClick={() => setIsSizeGuideOpen(true)}
                 className="text-[#A80C14] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
               >
                 <Ruler className="w-3.5 h-3.5" /> Size Guide
@@ -734,7 +734,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 );
               })}
             </div>
-          </div>
+          </div> */}
 
           {/* Quantity Selector */}
           <div className="space-y-2">
@@ -1111,7 +1111,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               </button>
             </div>
 
-            <div className="overflow-y-auto p-5 space-y-4">
+            <div className="hidden overflow-y-auto p-5 space-y-4">
               {isOneSize ? (
                 <div className="text-center py-6 space-y-2">
                   <Shirt className="w-8 h-8 text-[#A80C14] mx-auto" />
@@ -1122,7 +1122,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 </div>
               ) : (
                 <>
-                  <div className="overflow-x-auto rounded-2xl border border-stone-100">
+                  <div className="hidden overflow-x-auto rounded-2xl border border-stone-100">
                     <table className="w-full text-left text-xs border-collapse min-w-[320px]">
                       <thead>
                         <tr className="bg-[#FFF0F6] text-[10px] uppercase tracking-wider text-stone-600">
@@ -1153,7 +1153,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                     </table>
                   </div>
 
-                  <div className="bg-stone-50 border border-stone-100 rounded-2xl p-3.5 space-y-1.5">
+                  <div className="hidden bg-stone-50 border border-stone-100 rounded-2xl p-3.5 space-y-1.5">
                     <p className="text-[11px] text-stone-500 leading-relaxed">
                       • Measurements are in inches and may vary ±1&quot; due to manual tailoring.
                     </p>

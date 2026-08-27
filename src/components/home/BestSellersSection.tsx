@@ -107,7 +107,7 @@ export function BestSellersSection({ products }: BestSellersSectionProps) {
       <div className="bg-white border border-[#F8D2D5] rounded-3xl p-4 sm:p-7 space-y-4 sm:space-y-6 shadow-xs relative overflow-hidden">
         {/* Header Row */}
         <div className="flex items-center justify-between border-b border-[#F8D2D5]/60 pb-3 sm:pb-4 relative z-10">
-          <div className="space-y-0.5">
+          <div className="space-y-0. w-[75%]">
             <h2 className="font-sans font-black text-[#0D153A] text-base sm:text-lg tracking-wider uppercase leading-tight">
               BEST SELLING
             </h2>

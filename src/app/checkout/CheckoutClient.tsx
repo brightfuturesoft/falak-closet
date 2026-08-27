@@ -538,7 +538,7 @@ export default function CheckoutClient() {
               className="lg:cursor-default lg:pointer-events-none w-full flex items-center justify-between gap-3 p-4 sm:p-6 text-left"
             >
               <div className="min-w-0">
-                <h2 className="font-bold text-base sm:text-lg text-stone-900 flex items-center gap-2">
+                <h2 className="font-bold text-xs sm:text-lg text-stone-900 flex items-center gap-2">
                   {buyNowItems ? 'Quick Order' : 'Order Summary'}
                   <span className="px-2 text-xs py-0.5 bg-[#FDF2F3] border border-[#F8D2D5] rounded-full text-[10px] font-bold text-[#A80C14]">
                     {activeItems.length} {activeItems.length === 1 ? 'item' : 'items'}
