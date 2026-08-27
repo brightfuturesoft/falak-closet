@@ -19,7 +19,7 @@ import { SecurityTab } from '@/components/admin/SecurityTab';
 import { SettingsTab } from '@/components/admin/SettingsTab';
 import { DeliveryZonesTab } from '@/components/admin/DeliveryZonesTab';
 import { ProductFormModal } from '@/components/admin/ProductFormModal';
-import { OrderReceiptModal } from '@/components/admin/OrderReceiptModal';
+import { ReceiptModal } from '@/components/receipt/ReceiptModal';
 import { PromoFormModal, PromoVoucherData } from '@/components/admin/PromoFormModal';
 import { AdminCreateOrderModal } from '@/components/admin/AdminCreateOrderModal';
 import { ToastNotification, ToastMessage } from '@/components/admin/ToastNotification';
@@ -661,11 +661,13 @@ function AdminDashboardContent() {
         </main>
       </div>
 
-      {/* Printable Order Invoice Modal */}
-      <OrderReceiptModal
-        order={selectedOrderReceipt}
-        onClose={() => setSelectedOrderReceipt(null)}
-      />
+      {/* Printable Order Receipt Modal */}
+      {selectedOrderReceipt && (
+        <ReceiptModal
+          order={selectedOrderReceipt}
+          onClose={() => setSelectedOrderReceipt(null)}
+        />
+      )}
 
       {/* Direct Admin POS Order Creation Modal */}
       <AdminCreateOrderModal

@@ -293,12 +293,16 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {order.items.map((item, i) => (
+                  {order.items.map((item, i) => {
+                    /* Admin POS orders can store name/price flat instead of a
+                     * nested product — accept both shapes. */
+                    const raw = item as { name?: string; price?: number };
+                    const itemName = item.product?.name || raw.name || 'Falak Closet Item';
+                    const unitPrice = item.product?.price ?? raw.price ?? 0;
+                    return (
                     <tr key={i} className="border-b border-stone-100">
                       <td className="py-2.5 pl-3 pr-2">
-                        <p className="font-bold text-[#0C163A] leading-snug">
-                          {item.product?.name || 'Falak Closet Item'}
-                        </p>
+                        <p className="font-bold text-[#0C163A] leading-snug">{itemName}</p>
                         {(item.selectedColor || item.selectedSize) && (
                           <p className="text-[9px] text-stone-400 mt-0.5">
                             {[item.selectedColor, item.selectedSize].filter(Boolean).join(' · ')}
@@ -307,13 +311,14 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
                       </td>
                       <td className="text-center py-2.5 px-2 font-mono">{item.quantity}</td>
                       <td className="text-right py-2.5 px-2 font-mono text-stone-600">
-                        {formatCurrency(item.product?.price || 0)}
+                        {formatCurrency(unitPrice)}
                       </td>
                       <td className="text-right py-2.5 pl-2 pr-3 font-mono font-bold text-[#0C163A]">
-                        {formatCurrency((item.product?.price || 0) * item.quantity)}
+                        {formatCurrency(unitPrice * item.quantity)}
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
 

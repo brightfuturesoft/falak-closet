@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { Package, ArrowRight, AlertCircle, ShoppingBag } from 'lucide-react';
+import { Package, ArrowRight, AlertCircle, ShoppingBag, Printer } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { ReceiptModal } from '@/components/receipt/ReceiptModal';
 import type { MineOrder } from '@/app/account/useAccount';
 
 interface OrdersTabProps {
@@ -14,6 +15,8 @@ interface OrdersTabProps {
 }
 
 export function OrdersTab({ orders, isLoading, error, onRetry }: OrdersTabProps) {
+  const [receiptOrder, setReceiptOrder] = useState<MineOrder | null>(null);
+
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -74,36 +77,67 @@ export function OrdersTab({ orders, isLoading, error, onRetry }: OrdersTabProps)
   }
 
   return (
-    <div className="space-y-3">
-      {orders.map((ord) => (
-        <Link
-          key={ord.id}
-          href={`/track?id=${encodeURIComponent(ord.id)}`}
-          className="group p-4 sm:p-5 bg-white rounded-2xl border border-stone-200/70 hover:border-[#D92670]/40 hover:shadow-md transition-all flex items-center gap-4"
-        >
-          <div className="w-11 h-11 rounded-xl bg-pink-50 border border-pink-100 flex items-center justify-center shrink-0 group-hover:bg-[#D92670] group-hover:border-[#D92670] transition-colors">
-            <Package className="w-5 h-5 text-[#D92670] group-hover:text-white transition-colors" />
-          </div>
+    <>
+      <div className="space-y-3">
+        {orders.map((ord) => (
+          <div
+            key={ord.id}
+            className="group p-4 sm:p-5 bg-white rounded-2xl border border-stone-200/70 hover:border-[#D92670]/40 hover:shadow-md transition-all flex items-center gap-4"
+          >
+            <Link
+              href={`/track?id=${encodeURIComponent(ord.id)}`}
+              className="flex items-center gap-4 flex-1 min-w-0"
+            >
+              <div className="w-11 h-11 rounded-xl bg-pink-50 border border-pink-100 flex items-center justify-center shrink-0 group-hover:bg-[#D92670] group-hover:border-[#D92670] transition-colors">
+                <Package className="w-5 h-5 text-[#D92670] group-hover:text-white transition-colors" />
+              </div>
 
-          <div className="flex-1 min-w-0">
-            <p className="font-mono font-extrabold text-[#D92670] text-sm truncate">
-              #{ord.id}
-            </p>
-            <p className="text-[11px] text-stone-400 mt-0.5">
-              Placed {new Date(ord.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-            </p>
-          </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-mono font-extrabold text-[#D92670] text-sm truncate">#{ord.id}</p>
+                <p className="text-[11px] text-stone-400 mt-0.5">
+                  Placed{' '}
+                  {new Date(ord.date).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                  {ord.items?.length > 0 && ` · ${ord.items.length} item${ord.items.length === 1 ? '' : 's'}`}
+                </p>
+              </div>
 
-          <div className="text-right shrink-0 space-y-1.5">
-            <p className="font-extrabold text-[#0C163A] font-mono text-sm">
-              {formatCurrency(ord.total)}
-            </p>
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-stone-400 group-hover:text-[#D92670] transition-colors uppercase tracking-wide">
-              View <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-            </span>
+              <div className="text-right shrink-0 space-y-0.5 hidden sm:block">
+                <p className="font-extrabold text-[#0C163A] font-mono text-sm">
+                  {formatCurrency(ord.total)}
+                </p>
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-stone-400 group-hover:text-[#D92670] transition-colors uppercase tracking-wide">
+                  View <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                </span>
+              </div>
+            </Link>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 shrink-0">
+              <p className="font-extrabold text-[#0C163A] font-mono text-sm sm:hidden text-right">
+                {formatCurrency(ord.total)}
+              </p>
+              <button
+                type="button"
+                onClick={() => setReceiptOrder(ord)}
+                title="Print / save receipt"
+                aria-label={`Print receipt for order ${ord.id}`}
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-white border border-stone-200 hover:border-[#D92670]/50 hover:text-[#D92670] hover:bg-pink-50 text-stone-600 text-[11px] font-bold rounded-full transition-all cursor-pointer shadow-xs"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Receipt</span>
+              </button>
+            </div>
           </div>
-        </Link>
-      ))}
-    </div>
+        ))}
+      </div>
+
+      {/* Printable receipt (portal modal) */}
+      {receiptOrder && (
+        <ReceiptModal order={receiptOrder} onClose={() => setReceiptOrder(null)} />
+      )}
+    </>
   );
 }
