@@ -82,13 +82,12 @@ export function MobileBottomNav() {
   // Live catalog only — see the note in Header.tsx.
   const allStoreProducts = useMemo(() => cartProducts ?? [], [cartProducts]);
 
-  // Read localStorage after mount — during render it would crash SSR.
-  // Derived-state adjustment pattern keeps this effect-free.
-  const [recentsLoaded, setRecentsLoaded] = useState(false);
-  if (!recentsLoaded) {
-    setRecentsLoaded(true);
+  // Read localStorage after mount — during the hydration render it would make
+  // the client output diverge from the server HTML (React error #418).
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore of persisted recents; the sheet is closed at mount so this can't cascade visibly
     setRecentSearches(loadRecentSearches());
-  }
+  }, []);
 
   // Results are pure derived state — no effect needed.
   const searchResults = useMemo<Product[]>(() => {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Megaphone, ArrowRight, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
@@ -17,20 +17,27 @@ export function AnnouncementBar({ announcement }: { announcement: Announcement }
   const pathname = usePathname();
   const [dismissed, setDismissed] = useState(false);
 
+  // Read localStorage only after mount. Reading it during render makes the
+  // hydration pass diverge from the server HTML (server can't see localStorage)
+  // and throws React error #418 for every visitor who dismissed the message.
+  useEffect(() => {
+    if (!announcement.isActive || !announcement.message) return;
+    try {
+      if (localStorage.getItem(DISMISS_KEY) === announcement.message) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore of persisted dismissal; safe to run post-mount
+        setDismissed(true);
+      }
+    } catch {
+      /* localStorage unavailable — keep showing the bar */
+    }
+  }, [announcement.isActive, announcement.message]);
+
   // Admin has its own chrome; the storefront bar never shows there.
   if (!announcement.isActive || !announcement.message || pathname?.startsWith('/admin')) {
     return null;
   }
 
-  // Checked lazily so SSR and the first client render agree (no hydration
-  // mismatch) — the dismissal only hides after mount.
-  let alreadyDismissed = false;
-  try {
-    alreadyDismissed = dismissed || localStorage.getItem(DISMISS_KEY) === announcement.message;
-  } catch {
-    /* localStorage unavailable — just show the bar */
-  }
-  if (alreadyDismissed) return null;
+  if (dismissed) return null;
 
   const handleDismiss = () => {
     setDismissed(true);

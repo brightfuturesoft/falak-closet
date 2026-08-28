@@ -171,21 +171,23 @@ export function Header() {
                 onBlur={() => setTimeout(() => setIsSearchFocused(false), 250)}
                 placeholder="Search abayas, hijabs, colors (emerald, black)..."
                 aria-label="Search store products"
-                className="w-full pl-5 pr-10 py-2.5 bg-white border border-[#A80C14] focus:border-[#A80C14] rounded-full text-sm text-[#0D153A] placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[#A80C14]/10 transition-all shadow-xs"
+                className="w-full pl-5 pr-12 py-2.5 min-h-[44px] bg-white border border-[#A80C14] focus:border-[#A80C14] rounded-full text-sm text-[#0D153A] placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[#A80C14]/10 transition-all shadow-xs"
               />
 
               {searchQuery ? (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-stone-400 hover:text-[#A80C14] transition-colors"
+                  aria-label="Clear search"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-stone-400 hover:text-[#A80C14] transition-colors cursor-pointer"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-4 h-4" />
                 </button>
               ) : (
                 <button
                   type="submit"
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#A80C14] hover:scale-110 transition-transform cursor-pointer"
+                  aria-label="Search products"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-[#A80C14] hover:scale-110 transition-transform cursor-pointer"
                 >
                   <Search className="w-4.5 h-4.5" />
                 </button>

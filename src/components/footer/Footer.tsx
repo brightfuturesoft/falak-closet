@@ -209,7 +209,7 @@ export function Footer({ identity }: { identity: SiteIdentity }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10 pt-4 border-t border-[#F8D2D5] flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-stone-500 font-mono">
         <p>© {new Date().getFullYear()} FALAK CLOSET. All Rights Reserved.</p>
         <div className="flex items-center gap-1.5 mb-10">
-          <span>Design and Developed by <a href="https://brightfuturesoft.com?ref=falakcloset" target="_blank" rel="noopener noreferrer" className="text-[#A80C14]">Bright Future Soft</a></span>
+          <span>Design and Developed by <a href="https://brightfuturesoft.com?ref=falakcloset" target="_blank" rel="noopener noreferrer" className="text-[#A80C14] font-bold underline underline-offset-2 decoration-[#A80C14]/50 hover:decoration-[#A80C14] transition-colors">Bright Future Soft</a></span>
         </div>
       </div>
     </footer>
