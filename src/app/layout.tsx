@@ -122,9 +122,10 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable} ${hindSiliguri.variable}`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Kalpurush&display=swap" rel="stylesheet" />
+        {/* Fonts are self-hosted via next/font (Playfair, Inter, Hind Siliguri) —
+            no Google Fonts <link> is needed. A previous link to the (non-Google-Fonts)
+            Kalpurush family 404'd with a text/html body and logged MIME-type
+            console errors on every page load. */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
