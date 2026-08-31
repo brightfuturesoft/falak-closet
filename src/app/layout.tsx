@@ -9,6 +9,7 @@ import { ToastProvider } from '@/components/ui/Toast';
 import { Header } from '@/components/header/Header';
 import { Footer } from '@/components/footer/Footer';
 import { MobileBottomNav } from '@/components/header/MobileBottomNav';
+import { WhatsAppWidget } from '@/components/ui/WhatsAppWidget';
 import { getOrganizationSchema, getWebSiteSchema } from '@/lib/schema';
 import { getSiteIdentitySafe, getAnnouncementSafe } from '@/lib/siteSettings';
 import { AnnouncementBar } from '@/components/header/AnnouncementBar';
@@ -149,6 +150,7 @@ export default async function RootLayout({
                 <main className="flex-1">{children}</main>
                 <Footer identity={siteIdentity} />
                 <MobileBottomNav />
+                <WhatsAppWidget whatsappNumber={siteIdentity.whatsapp} contactPhone={siteIdentity.contactPhone} />
               </div>
             </CartProvider>
           </ToastProvider>

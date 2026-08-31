@@ -435,7 +435,7 @@ export function SettingsTab({
 
       setMigrationSummary(
         `Done — ${imagesMoved} image(s) moved across ${productsTouched} product(s).` +
-          (failures.length ? ` Failed: ${failures.join(', ')}.` : '')
+        (failures.length ? ` Failed: ${failures.join(', ')}.` : '')
       );
     } catch {
       setMigrationSummary('Migration failed — could not load the product list.');
@@ -447,8 +447,8 @@ export function SettingsTab({
   return (
     <div className="space-y-8 max-w-4xl text-stone-900">
       {/* DB Connection & Seeder Card */}
-      <div className="p-6 bg-white rounded-3xl border border-stone-200 shadow-sm space-y-6">
-        <div className="flex items-center justify-between pb-4 border-b border-stone-200">
+      {/* <div className="p-6 bg-white rounded-3xl border border-stone-200 shadow-sm space-y-6"> */}
+      {/* <div className="flex items-center justify-between pb-4 border-b border-stone-200">
           <div className="space-y-1">
             <h3 className="font-serif font-bold text-lg text-stone-900 flex items-center gap-2">
               <Database className="w-5 h-5 text-emerald-600" />
@@ -457,15 +457,15 @@ export function SettingsTab({
             <p className="text-xs text-stone-500">
               Live connection status and database re-seeder controls
             </p>
-          </div>
-
+          </div> */}
+      {/* 
           <span className="px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-xs font-mono text-emerald-800 font-bold flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
             {dbSource === 'mongodb' ? 'Connected to Mongo Daemon' : 'Local Static Mode'}
-          </span>
-        </div>
+          </span> */}
+      {/* </div> */}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
+      {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
           <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 space-y-1">
             <span className="text-stone-500 text-[10px] uppercase font-bold">Connection String</span>
             <p className="text-stone-900 font-bold truncate">mongodb://localhost:27017</p>
@@ -474,10 +474,10 @@ export function SettingsTab({
             <span className="text-stone-500 text-[10px] uppercase font-bold">Database Name</span>
             <p className="text-stone-900 font-bold">falak-closet</p>
           </div>
-        </div>
+        </div> */}
 
-        {/* Database Seeder Button */}
-        <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Database Seeder Button */}
+      {/* <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <p className="font-bold text-stone-900 text-xs">Reset / Seed Sample Modest Fashion Dataset</p>
             <p className="text-[11px] text-stone-500">
@@ -499,8 +499,8 @@ export function SettingsTab({
           <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 font-bold">
             {seedResult}
           </div>
-        )}
-      </div>
+        )} */}
+      {/* </div> */}
 
       {/* General Store Settings Form */}
       <div className="p-6 bg-white rounded-3xl border border-stone-200 shadow-sm space-y-6">
@@ -693,11 +693,10 @@ export function SettingsTab({
             <button
               type="button"
               onClick={() => setAnnouncementForm({ ...announcementForm, isActive: !announcementForm.isActive })}
-              className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer border ${
-                announcementForm.isActive
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  : 'bg-stone-50 text-stone-500 border-stone-200'
-              }`}
+              className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer border ${announcementForm.isActive
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : 'bg-stone-50 text-stone-500 border-stone-200'
+                }`}
             >
               {announcementForm.isActive ? '✓ Visible on storefront' : 'Hidden from storefront'}
             </button>
@@ -805,7 +804,7 @@ export function SettingsTab({
                     value={prop.description}
                     onChange={(e) =>
                       setValueProps((prev) => prev.map((p, i) => (i === idx ? { ...p, description: e.target.value } : p)))
-                      }
+                    }
                     placeholder="One-line supporting copy"
                     className="w-full px-3 py-2.5 bg-white border border-stone-200 rounded-xl text-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900"
                   />
@@ -955,7 +954,7 @@ export function SettingsTab({
       </div>
 
       {/* Cloudinary Image Migration */}
-      <div className="p-6 bg-white rounded-3xl border border-stone-200 shadow-sm space-y-6">
+      {/* <div className="p-6 bg-white rounded-3xl border border-stone-200 shadow-sm space-y-6">
         <div className="pb-4 border-b border-stone-200">
           <h3 className="font-serif font-bold text-lg text-stone-900 flex items-center gap-2">
             <CloudUpload className="w-5 h-5 text-[#9B050B]" />
@@ -990,10 +989,10 @@ export function SettingsTab({
             {migrationSummary}
           </div>
         )}
-      </div>
+      </div> */}
 
       {/* Admin Security Credentials Card */}
-      <div className="p-6 bg-white rounded-3xl border border-stone-200 shadow-sm space-y-4">
+      {/* <div className="p-6 bg-white rounded-3xl border border-stone-200 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-bold text-stone-900">
             <KeyRound className="w-4 h-4 text-stone-900" />
@@ -1004,7 +1003,7 @@ export function SettingsTab({
         <p className="text-xs text-stone-500">
           Admin Portal authentication is protected with local session token validation. Demo username: <strong className="text-stone-900">admin</strong> / Password: <strong className="text-stone-900">falak123</strong>.
         </p>
-      </div>
+      </div> */}
     </div>
   );
 }
