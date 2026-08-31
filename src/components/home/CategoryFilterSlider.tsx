@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Heart, LayoutGrid, Scissors, Sparkles, Layers3, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { INITIAL_CATEGORIES } from '@/data/categories';
 import { useCategories } from '@/lib/useCategories';
 import { useCart } from '@/context/CartContext';
@@ -80,7 +80,6 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
     }));
 
     const occasionTags = valuesOf(products, 'occasion');
-    const workTypeTags = valuesOf(products, 'workType');
 
     const cards = [];
 
@@ -97,21 +96,7 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
       ])
     });
 
-    // 2. Shop by work type
-    cards.push({
-      id: 'worktype',
-      icon: Layers3,
-      title: 'Shop by work type',
-      subtitle: 'Embroidery, print, hand-work and more',
-      tags: capTags(workTypeTags.length > 0 ? workTypeTags : [
-        { label: 'Foil', filterType: 'workType', filterVal: 'Foil' },
-        { label: 'Crepe', filterType: 'workType', filterVal: 'Crepe' },
-        { label: 'Crush', filterType: 'workType', filterVal: 'Crush' },
-        { label: 'Glitter', filterType: 'workType', filterVal: 'Glitter' }
-      ])
-    });
-
-    // 3. Shop by occasion
+    // 2. Shop by occasion
     cards.push({
       id: 'occasion',
       icon: Heart,
@@ -208,10 +193,10 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
       onMouseLeave={() => setIsPaused(false)}
       onTouchStart={() => setIsPaused(true)}
       onTouchEnd={() => setIsPaused(false)}
-      aria-label="Shop by category, work type, and occasion"
+      aria-label="Shop by category and occasion"
     >
-      {/* 1. Desktop View: Side-by-Side 3 Column Grid */}
-      <div className="hidden lg:grid grid-cols-3 gap-6">
+      {/* 1. Desktop View: Side-by-Side 2 Column Grid */}
+      <div className="hidden lg:grid grid-cols-2 gap-6">
         {filterCards.map((card) => {
           const Icon = card.icon;
           return (
