@@ -384,9 +384,9 @@ export function HeroSlidesTab() {
 
       {/* Add / Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl max-h-[92vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-stone-100 px-6 py-4 flex items-center justify-between z-10">
+        <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="shrink-0 bg-white border-b border-stone-100 px-6 py-4 flex items-center justify-between z-10">
               <h3 className="font-serif font-bold text-lg text-stone-900">
                 {editingSlide ? 'Edit Hero Slide' : 'Add Hero Slide'}
               </h3>
@@ -398,7 +398,7 @@ export function HeroSlidesTab() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveSlide} className="p-6 space-y-4">
+            <form onSubmit={handleSaveSlide} className="p-6 space-y-4 flex-1 overflow-y-auto">
               {/* Live mini preview — same palette as the storefront hero */}
               <div className="relative h-28 rounded-2xl overflow-hidden bg-[#0D153A] border border-stone-200">
                 {formData.image && (

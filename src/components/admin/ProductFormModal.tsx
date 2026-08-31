@@ -525,11 +525,11 @@ export function ProductFormModal({
   const livePreviewImage = currentPreviewColor?.images[currentPreviewColor?.mainImageIndex || 0] || currentPreviewColor?.images[0] || 'https://images.unsplash.com/photo-1609357605129-26f69add5d6e?auto=format&fit=crop&w=1000&q=80';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto animate-in fade-in">
-      <div className="bg-white border border-stone-200 rounded-3xl max-w-6xl w-full p-4 sm:p-6 lg:p-8 space-y-6 max-h-[95vh] overflow-y-auto shadow-2xl relative text-stone-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+      <div className="bg-white border border-stone-200 rounded-3xl max-w-6xl w-full max-h-[90vh] flex flex-col shadow-2xl relative text-stone-900 overflow-hidden">
 
         {/* Header Bar */}
-        <div className="flex items-center justify-between pb-4 border-b border-stone-200">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-stone-200 shrink-0 bg-white z-10">
           <div className="flex items-center gap-2.5">
             <div className="p-2.5 bg-[#9B050B]/10 text-[#9B050B] rounded-xl border border-[#9B050B]/20">
               <Palette className="w-5 h-5" />
@@ -551,6 +551,9 @@ export function ProductFormModal({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Scrollable Modal Body */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
 
         {/* Wizard Navigation Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-stone-200 text-xs font-bold scrollbar-none">
@@ -1263,7 +1266,7 @@ export function ProductFormModal({
               </div>
             </div>
           </div>
-
+        </div>
         </div>
       </div>
 

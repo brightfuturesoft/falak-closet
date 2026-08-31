@@ -147,10 +147,10 @@ export function OrderDetailsModal({
         role="dialog"
         aria-modal="true"
         aria-label={`Order details ${order.id}`}
-        className="relative w-full max-w-4xl max-h-[92vh] sm:max-h-[88vh] overflow-y-auto bg-stone-50 rounded-3xl shadow-2xl border border-stone-200"
+        className="relative w-full max-w-4xl max-h-[90vh] sm:max-h-[88vh] flex flex-col bg-stone-50 rounded-3xl shadow-2xl border border-stone-200 overflow-hidden"
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-stone-200 px-5 sm:px-7 py-4 flex items-start justify-between gap-4">
+        <div className="shrink-0 bg-white border-b border-stone-200 px-5 sm:px-7 py-4 flex items-start justify-between gap-4 z-10">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2.5">
               <h2 className="font-mono font-black text-base sm:text-lg text-stone-900 truncate">#{order.id}</h2>
@@ -181,7 +181,7 @@ export function OrderDetailsModal({
           </button>
         </div>
 
-        <div className="p-5 sm:p-7 space-y-5">
+        <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-5">
           {/* Customer / Shipping / Payment grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Customer */}

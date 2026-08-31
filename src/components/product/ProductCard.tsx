@@ -377,20 +377,21 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
       {/* Auth Modal Sign In (Apple Glass Style) */}
       {showAuthModal && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-[#0D153A]/25 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white/80 backdrop-blur-xl border border-white/30 rounded-3xl p-6 shadow-2xl max-w-sm w-full relative animate-in zoom-in-95 duration-200 text-center">
+          <div className="bg-white/80 backdrop-blur-xl border border-white/30 rounded-3xl p-6 shadow-2xl max-w-sm w-full max-h-[90vh] flex flex-col relative animate-in zoom-in-95 duration-200 text-center overflow-hidden">
             <button
               type="button"
               onClick={() => {
                 setShowAuthModal(false);
                 setAuthError('');
               }}
-              className="absolute top-4 right-4 p-1.5 text-stone-400 hover:text-stone-600 rounded-full hover:bg-stone-100 transition-colors"
+              className="absolute top-4 right-4 p-1.5 text-stone-400 hover:text-stone-600 rounded-full hover:bg-stone-100 transition-colors cursor-pointer z-10"
               aria-label="Close modal"
             >
               <X className="w-4 h-4" />
             </button>
 
-            <div className="w-12 h-12 rounded-full bg-[#FDF2F3] text-[#A80C14] flex items-center justify-center mx-auto mb-4 border border-[#F8D2D5]">
+            <div className="flex-1 overflow-y-auto">
+              <div className="w-12 h-12 rounded-full bg-[#FDF2F3] text-[#A80C14] flex items-center justify-center mx-auto mb-4 border border-[#F8D2D5]">
               <Heart className="w-6 h-6 fill-current" />
             </div>
 
@@ -453,6 +454,7 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
               >
                 Don&apos;t have an account? Sign Up
               </Link>
+            </div>
             </div>
           </div>
         </div>

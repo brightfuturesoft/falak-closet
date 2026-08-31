@@ -134,10 +134,10 @@ export function ImageColorPickerModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl max-w-2xl w-full p-6 space-y-5 shadow-2xl relative text-stone-900 dark:text-stone-100">
+      <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl relative text-stone-900 dark:text-stone-100 overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-stone-800">
+        <div className="flex items-center justify-between p-6 pb-4 border-b border-stone-200 dark:border-stone-800 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="p-2 bg-[#9B050B]/10 text-[#9B050B] rounded-xl">
               <Pipette className="w-5 h-5" />
@@ -153,11 +153,14 @@ export function ImageColorPickerModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 bg-stone-100 dark:bg-stone-800 rounded-xl text-stone-500 hover:text-stone-900 dark:hover:text-white"
+            className="p-2 bg-stone-100 dark:bg-stone-800 rounded-xl text-stone-500 hover:text-stone-900 dark:hover:text-white cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Scrollable Modal Body */}
+        <div className="p-6 space-y-5 flex-1 overflow-y-auto">
 
         {/* Canvas & Eyedropper Interactive Area */}
         <div className="relative bg-stone-950 rounded-2xl p-2 flex items-center justify-center min-h-[320px] overflow-hidden border border-stone-800">
@@ -279,6 +282,7 @@ export function ImageColorPickerModal({
           </div>
         </div>
 
+        </div>
       </div>
     </div>
   );

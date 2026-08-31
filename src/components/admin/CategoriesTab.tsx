@@ -533,20 +533,20 @@ export function CategoriesTab({ products = [], onRefreshProducts }: CategoriesTa
       {/* 1. Category Modal (Create / Edit) */}
       {isCategoryModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white border border-stone-200 rounded-3xl max-w-md w-full p-6 space-y-6 shadow-2xl relative text-stone-900">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-200">
+          <div className="bg-white border border-stone-200 rounded-3xl max-w-md w-full max-h-[90vh] flex flex-col shadow-2xl relative text-stone-900 overflow-hidden">
+            <div className="flex items-center justify-between p-6 pb-3 border-b border-stone-200 shrink-0">
               <h3 className="font-serif font-bold text-lg text-stone-900">
                 {editingCategory ? 'Edit Main Category' : 'Create New Main Category'}
               </h3>
               <button
                 onClick={() => setIsCategoryModalOpen(false)}
-                className="p-1.5 bg-stone-100 rounded-xl text-stone-500 hover:text-stone-900"
+                className="p-1.5 bg-stone-100 rounded-xl text-stone-500 hover:text-stone-900 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveCategory} className="space-y-4 text-xs font-sans">
+            <form onSubmit={handleSaveCategory} className="p-6 space-y-4 text-xs font-sans flex-1 overflow-y-auto">
               <div className="space-y-1.5">
                 <label className="font-bold text-stone-700">Category Name *</label>
                 <input
@@ -623,20 +623,20 @@ export function CategoriesTab({ products = [], onRefreshProducts }: CategoriesTa
       {/* 2. Subcategory Modal (Create / Edit) */}
       {isSubcategoryModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white border border-stone-200 rounded-3xl max-w-md w-full p-6 space-y-6 shadow-2xl relative text-stone-900">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-200">
+          <div className="bg-white border border-stone-200 rounded-3xl max-w-md w-full max-h-[90vh] flex flex-col shadow-2xl relative text-stone-900 overflow-hidden">
+            <div className="flex items-center justify-between p-6 pb-3 border-b border-stone-200 shrink-0">
               <h3 className="font-serif font-bold text-lg text-stone-900">
                 {editingSubcategory ? 'Edit Subcategory' : 'Create New Subcategory'}
               </h3>
               <button
                 onClick={() => setIsSubcategoryModalOpen(false)}
-                className="p-1.5 bg-stone-100 rounded-xl text-stone-500 hover:text-stone-900"
+                className="p-1.5 bg-stone-100 rounded-xl text-stone-500 hover:text-stone-900 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveSubcategory} className="space-y-4 text-xs font-sans">
+            <form onSubmit={handleSaveSubcategory} className="p-6 space-y-4 text-xs font-sans flex-1 overflow-y-auto">
               <div className="space-y-1.5">
                 <label className="font-bold text-stone-700">Parent Main Category *</label>
                 <select
@@ -695,7 +695,7 @@ export function CategoriesTab({ products = [], onRefreshProducts }: CategoriesTa
                 <button
                   type="button"
                   onClick={() => setIsSubcategoryModalOpen(false)}
-                  className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-xl"
+                  className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-xl cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -715,7 +715,7 @@ export function CategoriesTab({ products = [], onRefreshProducts }: CategoriesTa
       {/* 3. Delete Confirmation Modal */}
       {deletingTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white border border-stone-200 rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl relative text-stone-900 text-center">
+          <div className="bg-white border border-stone-200 rounded-3xl max-w-sm w-full max-h-[90vh] flex flex-col p-6 space-y-4 shadow-2xl relative text-stone-900 text-center overflow-hidden">
             <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
               <AlertTriangle className="w-6 h-6" />
             </div>

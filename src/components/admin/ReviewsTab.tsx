@@ -310,7 +310,7 @@ export function ReviewsTab() {
       {/* Delete Confirmation */}
       {deleting && (
         <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 space-y-4">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 space-y-4 max-h-[90vh] flex flex-col overflow-hidden">
             <div className="p-3 bg-rose-50 border border-rose-100 rounded-2xl w-fit">
               <Trash2 className="w-6 h-6 text-rose-600" />
             </div>

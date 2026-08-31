@@ -263,7 +263,7 @@ function CartDetailModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-700 shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-stone-100 dark:border-stone-800">
+        <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-stone-100 dark:border-stone-800 shrink-0">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarGradient(customer.name)} flex items-center justify-center text-white font-bold text-sm shadow`}>
               {customer.name.substring(0, 2).toUpperCase()}

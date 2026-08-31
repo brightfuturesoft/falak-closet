@@ -402,22 +402,22 @@ export function PromotionBannersTab() {
 
       {/* Modal Dialog Form */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-3xl border border-stone-200 max-w-lg w-full shadow-xl animate-scale-up my-8">
-            <div className="p-6 border-b border-stone-100 flex items-center justify-between">
+        <div className="fixed inset-0 bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-3xl border border-stone-200 max-w-lg w-full max-h-[90vh] flex flex-col shadow-xl animate-scale-up overflow-hidden">
+            <div className="p-6 border-b border-stone-100 flex items-center justify-between shrink-0">
               <h4 className="font-serif font-bold text-lg text-stone-900 flex items-center gap-2">
                 <Megaphone className="w-5 h-5 text-[#A80C14]" />
                 <span>{editingBanner ? 'Edit Promo Banner' : 'Create Promo Banner'}</span>
               </h4>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 text-stone-400 hover:text-stone-600 rounded-lg hover:bg-stone-50 transition-colors"
+                className="p-1 text-stone-400 hover:text-stone-600 rounded-lg hover:bg-stone-50 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveBanner} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto scrollbar-thin">
+            <form onSubmit={handleSaveBanner} className="p-6 space-y-4 flex-1 overflow-y-auto scrollbar-thin">
               {actionError && (
                 <div className="p-3 bg-red-50 border border-red-200 text-red-800 text-xs font-bold rounded-xl flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />

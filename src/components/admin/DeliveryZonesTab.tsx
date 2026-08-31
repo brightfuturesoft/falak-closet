@@ -528,21 +528,22 @@ export function DeliveryZonesTab() {
 
       {/* Zone CRUD Modal */}
       {isZoneModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto animate-in fade-in">
-          <div className="bg-white border border-stone-200 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl relative text-stone-900">
-            <button
-              onClick={() => setIsZoneModalOpen(false)}
-              className="absolute top-4 right-4 p-1.5 text-stone-400 hover:text-stone-700 rounded-full hover:bg-stone-100"
-            >
-              <X className="w-5 h-5" />
-            </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white border border-stone-200 rounded-3xl max-w-md w-full max-h-[90vh] flex flex-col shadow-2xl relative text-stone-900 overflow-hidden">
+            <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between shrink-0">
+              <h3 className="font-serif font-bold text-lg flex items-center gap-2">
+                <Truck className="w-5 h-5 text-stone-850" />
+                <span>{editingZone ? 'Edit Delivery Zone' : 'Create Delivery Zone'}</span>
+              </h3>
+              <button
+                onClick={() => setIsZoneModalOpen(false)}
+                className="p-1.5 text-stone-400 hover:text-stone-700 rounded-full hover:bg-stone-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-            <h3 className="font-serif font-bold text-lg border-b border-stone-100 pb-3 flex items-center gap-2">
-              <Truck className="w-5 h-5 text-stone-850" />
-              <span>{editingZone ? 'Edit Delivery Zone' : 'Create Delivery Zone'}</span>
-            </h3>
-
-            <form onSubmit={handleSaveZone} className="space-y-4 text-xs">
+            <form onSubmit={handleSaveZone} className="p-6 space-y-4 text-xs flex-1 overflow-y-auto">
               <div className="space-y-1.5">
                 <label className="font-bold text-stone-700">Zone Name *</label>
                 <input
@@ -590,13 +591,13 @@ export function DeliveryZonesTab() {
                 />
               </div>
 
-              <div className="flex items-center gap-2 pt-2">
+              <div className="flex items-center gap-2 pt-1">
                 <input
                   type="checkbox"
                   id="isActive"
                   checked={zoneFormData.isActive}
                   onChange={(e) => setZoneFormData({ ...zoneFormData, isActive: e.target.checked })}
-                  className="w-4 h-4 rounded border-stone-300 accent-[#9B050B]"
+                  className="w-4 h-4 rounded text-stone-900 focus:ring-stone-900"
                 />
                 <label htmlFor="isActive" className="font-bold text-stone-700 cursor-pointer">
                   Activate zone on creation
@@ -607,14 +608,14 @@ export function DeliveryZonesTab() {
                 <button
                   type="button"
                   onClick={() => setIsZoneModalOpen(false)}
-                  className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-850 rounded-xl font-bold"
+                  className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-850 rounded-xl font-bold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-4 py-2 bg-stone-900 hover:bg-stone-850 text-white rounded-xl font-bold disabled:opacity-50"
+                  className="px-4 py-2 bg-stone-900 hover:bg-stone-850 text-white rounded-xl font-bold disabled:opacity-50 cursor-pointer"
                 >
                   {isSaving ? 'Saving...' : 'Save Zone'}
                 </button>
@@ -626,30 +627,30 @@ export function DeliveryZonesTab() {
 
       {/* Delete Confirmation Modal */}
       {deletingTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto animate-in fade-in">
-          <div className="bg-white border border-stone-200 rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl text-stone-900">
-            <h3 className="font-serif font-bold text-base flex items-center gap-2 text-rose-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white border border-stone-200 rounded-3xl max-w-sm w-full max-h-[90vh] flex flex-col p-6 space-y-4 shadow-2xl text-stone-900 overflow-hidden">
+            <h3 className="font-serif font-bold text-base flex items-center gap-2 text-rose-800 shrink-0">
               <AlertTriangle className="w-5 h-5 shrink-0" />
               <span>Confirm Deletion</span>
             </h3>
 
-            <p className="text-xs text-stone-600 leading-relaxed">
+            <p className="text-xs text-stone-600 leading-relaxed flex-1 overflow-y-auto">
               Are you sure you want to delete the {deletingTarget.isSubarea ? 'sub-area' : 'delivery zone'}{' '}
               <strong className="text-stone-900">&quot;{deletingTarget.name}&quot;</strong>?
               {!deletingTarget.isSubarea && ' This will delete all associated sub-areas and cannot be undone.'}
             </p>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-stone-100 text-xs">
+            <div className="flex justify-end gap-2 pt-2 border-t border-stone-100 text-xs shrink-0">
               <button
                 onClick={() => setDeletingTarget(null)}
-                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-850 rounded-xl font-bold"
+                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-850 rounded-xl font-bold cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
                 disabled={isSaving}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold disabled:opacity-50"
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold disabled:opacity-50 cursor-pointer"
               >
                 {isSaving ? 'Deleting...' : 'Delete Permanently'}
               </button>

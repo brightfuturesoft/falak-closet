@@ -1199,8 +1199,8 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           aria-label="Write a review"
           onClick={(e) => e.target === e.currentTarget && setIsWriteReviewOpen(false)}
         >
-          <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[92vh] overflow-y-auto animate-fade-in">
-            <div className="sticky top-0 bg-white border-b border-stone-100 px-5 py-4 flex items-center justify-between">
+          <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden animate-fade-in mb-[calc(66px+env(safe-area-inset-bottom))] sm:mb-0">
+            <div className="shrink-0 bg-white border-b border-stone-100 px-5 py-4 flex items-center justify-between z-10">
               <h3 className="font-serif font-bold text-base sm:text-lg text-stone-900">Write a Review</h3>
               <button
                 onClick={() => setIsWriteReviewOpen(false)}
@@ -1210,6 +1210,8 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 <X className="w-4 h-4 text-stone-500" />
               </button>
             </div>
+
+            <div className="flex-1 overflow-y-auto">
 
             {!user ? (
               <div className="p-6 text-center space-y-4">
@@ -1322,6 +1324,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 )}
               </form>
             )}
+            </div>
           </div>
         </div>
       )}

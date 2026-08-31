@@ -560,73 +560,75 @@ export function AdminCreateOrderModal({
       {/* Product Variation Selection Modal */}
       {activeProductForVariation && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-stone-950/80 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="relative w-full max-w-sm bg-stone-900 border border-stone-800 rounded-3xl p-5 shadow-2xl space-y-4 text-stone-100">
-            <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+          <div className="relative w-full max-w-sm max-h-[85vh] bg-stone-900 border border-stone-800 rounded-3xl shadow-2xl text-stone-100 flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between border-b border-stone-800 p-4 shrink-0">
               <h3 className="font-bold text-sm text-amber-400 line-clamp-1">{activeProductForVariation.name}</h3>
               <button
                 onClick={() => setActiveProductForVariation(null)}
-                className="p-1 text-stone-400 hover:text-white rounded-full"
+                className="p-1 text-stone-400 hover:text-white rounded-full cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Colors Picker */}
-            {activeProductForVariation.colors && activeProductForVariation.colors.length > 0 && (
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-stone-400">Select Color</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {activeProductForVariation.colors.map((c, i) => {
-                    const cName = getColorName(c);
-                    return (
+            <div className="p-4 space-y-4 overflow-y-auto flex-1">
+              {/* Colors Picker */}
+              {activeProductForVariation.colors && activeProductForVariation.colors.length > 0 && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-stone-400">Select Color</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {activeProductForVariation.colors.map((c, i) => {
+                      const cName = getColorName(c);
+                      return (
+                        <button
+                          type="button"
+                          key={`${cName}-${i}`}
+                          onClick={() => setVarColor(cName)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                            varColor === cName
+                              ? 'bg-amber-400 text-stone-950 font-extrabold'
+                              : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
+                          }`}
+                        >
+                          {cName}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Sizes Picker */}
+              {activeProductForVariation.sizes && activeProductForVariation.sizes.length > 0 && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-stone-400">Select Size</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {activeProductForVariation.sizes.map((s) => (
                       <button
                         type="button"
-                        key={`${cName}-${i}`}
-                        onClick={() => setVarColor(cName)}
+                        key={s}
+                        onClick={() => setVarSize(s)}
                         className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                          varColor === cName
+                          varSize === s
                             ? 'bg-amber-400 text-stone-950 font-extrabold'
                             : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
                         }`}
                       >
-                        {cName}
+                        {s}
                       </button>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Sizes Picker */}
-            {activeProductForVariation.sizes && activeProductForVariation.sizes.length > 0 && (
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-stone-400">Select Size</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {activeProductForVariation.sizes.map((s) => (
-                    <button
-                      type="button"
-                      key={s}
-                      onClick={() => setVarSize(s)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                        varSize === s
-                          ? 'bg-amber-400 text-stone-950 font-extrabold'
-                          : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
-                      }`}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={() => handleAddProductToTicket(activeProductForVariation, varColor, varSize)}
-              className="w-full py-3 bg-amber-400 hover:bg-amber-300 text-stone-950 font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              <Check className="w-4 h-4" /> Add to POS Ticket ({formatCurrency(activeProductForVariation.price)})
-            </button>
+              <button
+                type="button"
+                onClick={() => handleAddProductToTicket(activeProductForVariation, varColor, varSize)}
+                className="w-full py-3 bg-amber-400 hover:bg-amber-300 text-stone-950 font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <Check className="w-4 h-4" /> Add to POS Ticket ({formatCurrency(activeProductForVariation.price)})
+              </button>
+            </div>
           </div>
         </div>
       )}

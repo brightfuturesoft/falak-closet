@@ -94,8 +94,8 @@ export function PromoFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/70 backdrop-blur-xs animate-in fade-in">
-      <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl relative text-stone-900 dark:text-stone-100">
-        <div className="flex items-center justify-between pb-4 border-b border-stone-200 dark:border-stone-800">
+      <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl relative text-stone-900 dark:text-stone-100 overflow-hidden">
+        <div className="flex items-center justify-between p-6 pb-4 border-b border-stone-200 dark:border-stone-800 shrink-0">
           <div className="flex items-center gap-2">
             <Tag className="w-5 h-5 text-amber-600" />
             <h3 className="font-serif font-bold text-xl text-stone-900 dark:text-stone-100">
@@ -110,7 +110,7 @@ export function PromoFormModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs flex-1 overflow-y-auto">
           <div className="space-y-1.5">
             <label className="font-bold text-stone-700 dark:text-stone-300">Promo Code (Uppercase)</label>
             <input
