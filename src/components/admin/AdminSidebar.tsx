@@ -16,7 +16,8 @@ import {
   Megaphone,
   Images,
   Star,
-  LogOut
+  LogOut,
+  X
 } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 
@@ -158,11 +159,20 @@ export function AdminSidebar({
   ];
 
   return (
-    <aside className="w-full lg:w-64 bg-white border-r border-stone-200 p-6 flex flex-col justify-between flex-shrink-0 h-full text-stone-900 shadow-xs">
+    <aside className="w-full lg:w-64 bg-white border-r border-stone-200 p-6 flex flex-col justify-between flex-shrink-0 h-full text-stone-900 shadow-xs overflow-y-auto">
       <div className="space-y-6">
-        {/* Brand Logo */}
-        <div className="space-y-3 pb-2 border-b border-stone-100">
+        {/* Brand Logo & Mobile Close */}
+        <div className="space-y-3 pb-2 border-b border-stone-100 flex items-center justify-between">
           <Logo variant="full" size="md" href="/admin" />
+          {onCloseMobileDrawer && (
+            <button
+              onClick={onCloseMobileDrawer}
+              className="p-2 text-stone-500 hover:text-stone-900 rounded-lg hover:bg-stone-100 lg:hidden cursor-pointer"
+              aria-label="Close sidebar menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         {/* Navigation Menu */}
