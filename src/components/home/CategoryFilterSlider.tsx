@@ -188,7 +188,7 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
 
   return (
     <section
-      className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 relative"
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onTouchStart={() => setIsPaused(true)}

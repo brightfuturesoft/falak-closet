@@ -103,8 +103,8 @@ export function BestSellersSection({ products }: BestSellersSectionProps) {
   const displayProducts = bestSellersList.length >= 4 ? bestSellersList : products.slice(0, 10);
 
   return (
-    <section className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full">
-      <div className="bg-white border border-[#F8D2D5]/90 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 lg:p-7 space-y-3.5 sm:space-y-6 shadow-xs relative overflow-hidden">
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+      <div className="bg-transparent sm:bg-white border-none sm:border sm:border-[#F8D2D5]/90 rounded-none sm:rounded-3xl p-0 sm:p-6 lg:p-7 space-y-3.5 sm:space-y-6 shadow-none sm:shadow-xs relative overflow-hidden">
         {/* Header Row */}
         <div className="flex items-center justify-between gap-2 border-b border-[#F8D2D5]/60 pb-2.5 sm:pb-4 relative z-10">
           <div className="space-y-0.5 flex-1 min-w-0 pr-2">

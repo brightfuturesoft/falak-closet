@@ -31,8 +31,8 @@ export function TopRatedSection({
   const displayProducts = sortedProducts.slice(0, 10);
 
   return (
-    <section className={cn('md:max-w-7xl mx-auto w-full', place === 'product_details' ? 'p-0 sm:p-0 lg:px-0' : 'px-3 sm:px-6 lg:px-8')}>
-      <div className={cn("bg-white border border-[#F8D2D5]/90 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 lg:p-7 space-y-3.5 sm:space-y-6 shadow-xs relative overflow-hidden", place === 'product_details' && 'p-0 border-none shadow-none rounded-none')}>
+    <section className={cn('max-w-7xl mx-auto w-full', place === 'product_details' ? 'p-0 sm:p-0 lg:px-0' : 'px-4 sm:px-6 lg:px-8')}>
+      <div className={cn("bg-transparent sm:bg-white border-none sm:border sm:border-[#F8D2D5]/90 rounded-none sm:rounded-3xl p-0 sm:p-6 lg:p-7 space-y-3.5 sm:space-y-6 shadow-none sm:shadow-xs relative overflow-hidden", place === 'product_details' && 'p-0 border-none shadow-none rounded-none')}>
         {/* Section Header Row */}
         <div className="flex items-center justify-between gap-2 border-b border-[#F8D2D5]/60 pb-2.5 sm:pb-4 relative z-10">
           <div className="space-y-0.5 flex-1 min-w-0 pr-2">
