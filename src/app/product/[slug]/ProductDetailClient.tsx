@@ -844,7 +844,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           </div>
 
           {/* Trust Badges */}
-          <div className="grid grid-cols-3 gap-2 pt-1">
+          {/* <div className="grid grid-cols-3 gap-2 pt-1">
             <div className="flex flex-col items-center gap-1 rounded-2xl border border-stone-200/80 bg-white px-1.5 py-3 text-center">
               <Banknote className="w-[18px] h-[18px] text-[#A80C14] shrink-0" />
               <span className="text-[10px] font-bold text-stone-600 leading-tight">Cash on<br />Delivery</span>
@@ -857,7 +857,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               <Truck className="w-[18px] h-[18px] text-[#A80C14] shrink-0" />
               <span className="text-[10px] font-bold text-stone-600 leading-tight">Fast<br />Delivery</span>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 
