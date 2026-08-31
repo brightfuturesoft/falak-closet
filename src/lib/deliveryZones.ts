@@ -37,7 +37,7 @@ function serializeZone(row: DeliveryZoneRow): DeliveryZone {
 const SEED_ZONES = [
   {
     name: 'Inside Dhaka',
-    charge: 60,
+    charge: 80,
     etaDays: '1-2 Days',
     isActive: true,
     sortOrder: 1,
@@ -49,16 +49,30 @@ const SEED_ZONES = [
     ],
   },
   {
-    name: 'Outside Dhaka',
-    charge: 120,
-    etaDays: '2-4 Days',
+    name: 'Sub-area Dhaka',
+    charge: 100,
+    etaDays: '2-3 Days',
     isActive: true,
     sortOrder: 2,
     subAreas: [
-      { id: 'sub-seed-5', name: 'Chattogram', charge: null },
-      { id: 'sub-seed-6', name: 'Sylhet', charge: null },
-      { id: 'sub-seed-7', name: 'Khulna', charge: null },
-      { id: 'sub-seed-8', name: 'Rajshahi', charge: null },
+      { id: 'sub-seed-5', name: 'Savar', charge: null },
+      { id: 'sub-seed-6', name: 'Gazipur', charge: null },
+      { id: 'sub-seed-7', name: 'Narayanganj', charge: null },
+      { id: 'sub-seed-8', name: 'Tongi', charge: null },
+      { id: 'sub-seed-9', name: 'Keraniganj', charge: null },
+    ],
+  },
+  {
+    name: 'Outside Dhaka',
+    charge: 150,
+    etaDays: '3-5 Days',
+    isActive: true,
+    sortOrder: 3,
+    subAreas: [
+      { id: 'sub-seed-10', name: 'Chattogram', charge: null },
+      { id: 'sub-seed-11', name: 'Sylhet', charge: null },
+      { id: 'sub-seed-12', name: 'Khulna', charge: null },
+      { id: 'sub-seed-13', name: 'Rajshahi', charge: null },
     ],
   },
 ];

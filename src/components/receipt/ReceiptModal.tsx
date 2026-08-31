@@ -42,13 +42,15 @@ const FALLBACK_IDENTITY: StoreIdentity = {
 
 function statusLabel(s: string) {
   switch (s) {
-    case 'Delivered': return 'DELIVERED';
-    case 'Out for Delivery': return 'OUT FOR DELIVERY';
-    case 'Shipped': return 'SHIPPED';
-    case 'Quality Checked': return 'QUALITY CHECKED';
+    case 'Pending Payment': return 'PENDING PAYMENT';
     case 'Processing': return 'PROCESSING';
-    case 'Pending': return 'PENDING';
+    case 'On Hold': return 'ON HOLD';
+    case 'Shipped': return 'SHIPPED';
+    case 'Delivered': return 'DELIVERED';
+    case 'Completed': return 'COMPLETED';
     case 'Cancelled': return 'CANCELLED';
+    case 'Refunded': return 'REFUNDED';
+    case 'Failed': return 'FAILED';
     default: return s.toUpperCase();
   }
 }

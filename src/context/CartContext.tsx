@@ -38,7 +38,26 @@ export interface OrderRecord {
   discount: number;
   shippingFee: number;
   total: number;
-  status: 'Pending' | 'Processing' | 'Quality Checked' | 'Shipped' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
+  status:
+    | 'Pending'
+    | 'Confirmed'
+    | 'Processing'
+    | 'Packed'
+    | 'Ready for Shipment'
+    | 'Shipped'
+    | 'Out for Delivery'
+    | 'Delivered'
+    | 'Completed'
+    | 'Payment Pending'
+    | 'Payment Failed'
+    | 'Cancelled'
+    | 'Return Requested'
+    | 'Returned'
+    | 'Refund Processing'
+    | 'Refunded'
+    | 'Failed Delivery'
+    | 'On Hold'
+    | 'Quality Checked';
   userEmail?: string;
   userIp?: string;
   courierDeliveryFee?: number;

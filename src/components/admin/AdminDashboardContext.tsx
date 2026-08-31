@@ -529,7 +529,15 @@ export function AdminDashboardProvider({ children }: { children: React.ReactNode
   };
 
   const pendingOrdersCount = ordersList.filter(
-    (o) => o.status === 'Processing' || o.status === 'Quality Checked' || o.status === 'Pending'
+    (o) =>
+      o.status === 'Payment Pending' ||
+      o.status === 'Pending' ||
+      o.status === 'Confirmed' ||
+      o.status === 'Processing' ||
+      o.status === 'Packed' ||
+      o.status === 'Ready for Shipment' ||
+      o.status === 'On Hold' ||
+      o.status === 'Quality Checked'
   ).length;
 
   const lowStockCount = productsList.filter((p) => (p.stock ?? 10) < 5).length;
