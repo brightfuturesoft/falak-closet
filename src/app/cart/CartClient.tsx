@@ -249,11 +249,11 @@ export default function CartClient() {
                             <span className="text-stone-900">Color:</span> {item.selectedColor}
                           </span>
                         )}
-                        {/* {item.selectedSize && (
+                        {item.selectedSize && (
                           <span className="font-bold text-[#A80C14]">
                             <span className="text-stone-900">Size:</span> {item.selectedSize}
                           </span>
-                        )} */}
+                        )}
                       </div>
                     </div>
                   </div>

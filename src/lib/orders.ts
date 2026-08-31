@@ -13,6 +13,7 @@
  */
 
 import type { Order as OrderRow, Prisma } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
 /** Statuses the admin UI can set. Stored as a plain String — see the schema comment. */
 export const ORDER_STATUSES = [
@@ -175,4 +176,85 @@ export function buildOrderData(body: Raw): Prisma.OrderCreateInput {
     ...(toStr(body.paymentStatus) ? { paymentStatus: toStr(body.paymentStatus) } : {}),
     ...(toStr(body.promoCode) ? { promoCode: toStr(body.promoCode) } : {}),
   };
+}
+
+/**
+ * Adjust stock quantities across product level and variation matrix for order items.
+ * Direction:
+ *   - 'decrease': Order placed or un-cancelled -> reduce stock
+ *   - 'increase': Order cancelled -> restock items
+ */
+export async function adjustStockForOrderItems(
+  items: Array<any>,
+  direction: 'decrease' | 'increase'
+) {
+  if (!Array.isArray(items) || items.length === 0) return;
+
+  for (const item of items) {
+    const rawProd = item.product;
+    const pId =
+      typeof rawProd === 'object' && rawProd
+        ? (rawProd.id || rawProd._id)
+        : item.productId;
+
+    if (!pId || typeof pId !== 'string') continue;
+
+    const qty = Math.max(1, Number(item.quantity) || 1);
+    const color = toStr(item.selectedColor).toLowerCase();
+    const size = toStr(item.selectedSize).toLowerCase();
+
+    try {
+      const product = await prisma.product.findUnique({ where: { id: pId } });
+      if (!product) continue;
+
+      let updatedVariations = [...(product.variations || [])];
+
+      if (updatedVariations.length > 0) {
+        updatedVariations = updatedVariations.map((v) => {
+          const vColor = (v.colorName || '').toLowerCase();
+          const vSize = (v.size || '').toLowerCase();
+
+          const isMatch =
+            color && size
+              ? vColor === color && vSize === size
+              : color
+              ? vColor === color
+              : size
+              ? vSize === size
+              : false;
+
+          if (isMatch) {
+            const currentStock = typeof v.stock === 'number' ? v.stock : 0;
+            const newVarStock =
+              direction === 'decrease'
+                ? Math.max(0, currentStock - qty)
+                : currentStock + qty;
+            return { ...v, stock: newVarStock };
+          }
+          return v;
+        });
+      }
+
+      // Compute total product stock
+      let newStock = product.stock;
+      if (updatedVariations.length > 0) {
+        newStock = updatedVariations.reduce((sum, v) => sum + (v.stock || 0), 0);
+      } else {
+        newStock =
+          direction === 'decrease'
+            ? Math.max(0, product.stock - qty)
+            : product.stock + qty;
+      }
+
+      await prisma.product.update({
+        where: { id: pId },
+        data: {
+          stock: newStock,
+          variations: updatedVariations,
+        },
+      });
+    } catch (err) {
+      console.error(`[adjustStockForOrderItems] Failed to adjust stock for product ${pId}:`, err);
+    }
+  }
 }

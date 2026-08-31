@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { buildOrderData, serializeOrder, OrderValidationError } from '@/lib/orders';
+import { buildOrderData, serializeOrder, OrderValidationError, adjustStockForOrderItems } from '@/lib/orders';
 import { evaluatePromotion } from '@/lib/promotions';
 
 function errorMessage(err: unknown) {
@@ -175,6 +175,13 @@ export async function POST(req: Request) {
       order = await prisma.order.create({ data });
     }
 
+    // Deduct stock for ordered items from product stock & variation matrix
+    try {
+      await adjustStockForOrderItems(order.items, 'decrease');
+    } catch (stockErr) {
+      console.error('[POST /api/orders] stock deduction failed:', stockErr);
+    }
+
     // Auto-register the customer as a user profile. Deliberately in its own
     // try/catch: the order is already committed, so a profile-sync failure must
     // not turn a successful purchase into an error response.
@@ -242,6 +249,24 @@ export async function PATCH(req: Request) {
     const updateData: { status?: string; paymentStatus?: string } = {};
     if (status !== undefined) updateData.status = String(status);
     if (paymentStatus !== undefined) updateData.paymentStatus = String(paymentStatus);
+
+    // If order status changes to or from 'Cancelled', adjust stock accordingly
+    if (status !== undefined && String(status) !== existing.status) {
+      const newStatus = String(status);
+      const oldStatus = existing.status;
+
+      try {
+        if (newStatus === 'Cancelled' && oldStatus !== 'Cancelled') {
+          // Restock items back to inventory
+          await adjustStockForOrderItems(existing.items, 'increase');
+        } else if (oldStatus === 'Cancelled' && newStatus !== 'Cancelled') {
+          // Re-deduct items from inventory
+          await adjustStockForOrderItems(existing.items, 'decrease');
+        }
+      } catch (stockErr) {
+        console.error('[PATCH /api/orders] stock adjustment failed:', stockErr);
+      }
+    }
 
     const order = await prisma.order.update({
       where: { orderNumber: existing.orderNumber },
