@@ -58,7 +58,15 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
     ? product.images
     : ['https://images.unsplash.com/photo-1583391733956-6c78276477e2?auto=format&fit=crop&w=800&q=80'];
 
-  const [selectedColor, setSelectedColor] = useState(colorsList[0]?.name || 'Standard');
+  const [selectedColor, setSelectedColor] = useState(() => {
+    if (colorQueryParam && colorsList) {
+      const colorObj = colorsList.find((c) => c.name.toLowerCase() === colorQueryParam.toLowerCase());
+      if (colorObj) return colorObj.name;
+      const matchedVar = product?.variations?.find((v) => v.colorName.toLowerCase() === colorQueryParam.toLowerCase());
+      if (matchedVar) return matchedVar.colorName;
+    }
+    return colorsList[0]?.name || 'Standard';
+  });
 
   const sizesList = useMemo(() => {
     if (product?.variations && product.variations.length > 0) {
@@ -73,71 +81,15 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
     return product?.sizes && product.sizes.length > 0 ? product.sizes : ['Free Size'];
   }, [product?.variations, product?.sizes, selectedColor]);
 
-  const [selectedSize, setSelectedSize] = useState(sizesList[0] || 'Free Size');
-
-  useEffect(() => {
-    if (sizesList.length > 0 && !sizesList.includes(selectedSize)) {
-      setSelectedSize(sizesList[0]);
+  const [selectedSize, setSelectedSize] = useState(() => {
+    if (sizeQueryParam && sizesList.includes(sizeQueryParam)) {
+      return sizeQueryParam;
     }
-  }, [sizesList, selectedSize]);
+    return sizesList[0] || 'Free Size';
+  });
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
-
-  // Sync selected color and size into URL query parameters (?color=...&size=...)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    let changed = false;
-
-    if (selectedColor && params.get('color') !== selectedColor) {
-      params.set('color', selectedColor);
-      changed = true;
-    }
-
-    if (selectedSize && params.get('size') !== selectedSize) {
-      params.set('size', selectedSize);
-      changed = true;
-    }
-
-    if (changed) {
-      const newUrl = `${window.location.pathname}?${params.toString()}`;
-      window.history.replaceState(null, '', newUrl);
-    }
-  }, [selectedColor, selectedSize]);
-
-  // Pre-select color & size from URL search parameter (e.g. ?color=Obsidian%20Black&size=54)
-  useEffect(() => {
-    if (colorQueryParam && colorsList) {
-      const colorObj = colorsList.find(
-        (c) => c.name.toLowerCase() === colorQueryParam.toLowerCase()
-      );
-      if (colorObj) {
-        setSelectedColor(colorObj.name);
-        if (typeof colorObj.imageIndex === 'number' && imagesList[colorObj.imageIndex]) {
-          setSelectedImageIndex(colorObj.imageIndex);
-        }
-      }
-
-      // Check variations array
-      const matchedVar = product?.variations?.find(
-        (v) => v.colorName.toLowerCase() === colorQueryParam.toLowerCase()
-      );
-      if (matchedVar) {
-        setSelectedColor(matchedVar.colorName);
-        if (matchedVar.imageUrl) {
-          const varImgIdx = imagesList.findIndex((img) => img === matchedVar.imageUrl);
-          if (varImgIdx !== -1) {
-            setSelectedImageIndex(varImgIdx);
-          }
-        }
-      }
-    }
-
-    if (sizeQueryParam && sizesList.includes(sizeQueryParam)) {
-      setSelectedSize(sizeQueryParam);
-    }
-  }, [colorQueryParam, sizeQueryParam, colorsList, sizesList, imagesList, product?.variations]);
 
   // Mouse Hover Image Zoom Lens State
   const [isHovering, setIsHovering] = useState(false);
@@ -206,16 +158,26 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
       setSelectedImageIndex(matchedImgIdx);
     }
 
-    // If the currently selected size is sold out in the new color, hop to the
-    // first size that still has stock so the Buy buttons never go dead.
-    if (product?.variations?.length) {
+    // Compute available sizes for the new color synchronously
+    const newColorSizes = product?.variations && product.variations.length > 0
+      ? Array.from(new Set(product.variations.filter((v) => v.colorName.toLowerCase() === colorName.toLowerCase()).map((v) => v.size).filter(Boolean)))
+      : (product?.sizes && product.sizes.length > 0 ? product.sizes : ['Free Size']);
+
+    let nextSize = selectedSize;
+    if (newColorSizes.length > 0 && !newColorSizes.includes(selectedSize)) {
+      nextSize = newColorSizes[0];
+      setSelectedSize(nextSize);
+    } else if (product?.variations?.length) {
       const selStock = stockForSize(colorName, selectedSize);
       if (selStock !== undefined && selStock <= 0) {
-        const fallback = sizesList.find((s) => {
+        const fallback = newColorSizes.find((s) => {
           const st = stockForSize(colorName, s);
           return st === undefined || st > 0;
         });
-        if (fallback) setSelectedSize(fallback);
+        if (fallback) {
+          nextSize = fallback;
+          setSelectedSize(fallback);
+        }
       }
     }
 
@@ -223,6 +185,17 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       url.searchParams.set('color', colorName);
+      if (nextSize) url.searchParams.set('size', nextSize);
+      window.history.replaceState({}, '', url.toString());
+    }
+  };
+
+  const handleSelectSize = (sz: string) => {
+    setSelectedSize(sz);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('color', selectedColor);
+      url.searchParams.set('size', sz);
       window.history.replaceState({}, '', url.toString());
     }
   };
@@ -760,7 +733,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                     key={sz}
                     title={`${sz} (Stock: ${sizeStock})`}
                     type="button"
-                    onClick={() => setSelectedSize(sz)}
+                    onClick={() => handleSelectSize(sz)}
                     disabled={isSoldOut}
                     aria-pressed={isSelected}
                     className={`min-w-[52px] h-11 px-3 text-xs font-bold rounded-xl border transition-all flex items-center justify-center cursor-pointer ${isSelected
