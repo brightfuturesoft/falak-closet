@@ -709,13 +709,14 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           </div>
 
           {/* Size Selector */}
-          {/* <div className="space-y-2">
+          <div className="space-y-2">
             <div className="flex items-center justify-between gap-2 text-xs">
               <label className="font-bold uppercase tracking-wider text-stone-700">
                 Size: <span className="text-[#A80C14] normal-case tracking-normal">{selectedSize}</span>
               </label>
               <button
-                // onClick={() => setIsSizeGuideOpen(true)}
+                type="button"
+                onClick={() => setIsSizeGuideOpen(true)}
                 className="text-[#A80C14] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
               >
                 <Ruler className="w-3.5 h-3.5" /> Size Guide
@@ -730,6 +731,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 return (
                   <button
                     key={sz}
+                    type="button"
                     onClick={() => setSelectedSize(sz)}
                     disabled={isSoldOut}
                     aria-pressed={isSelected}
@@ -745,7 +747,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 );
               })}
             </div>
-          </div> */}
+          </div>
 
           {/* Quantity Selector */}
           <div className="space-y-2">
@@ -1098,81 +1100,87 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         subtitle="Explore more of our latest modest fashion creations"
       />
 
-      {/* Size Guide Modal — bottom sheet on mobile, centered dialog on desktop */}
+      {/* Size Guide Modal — floating bottom sheet on mobile, centered dialog on desktop */}
       {isSizeGuideOpen && (
         <div
-          className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4"
+          className="fixed inset-0 z-[60] bg-stone-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-3 sm:p-4"
           role="dialog"
           aria-modal="true"
           aria-label="Size guide"
           onClick={(e) => e.target === e.currentTarget && setIsSizeGuideOpen(false)}
         >
-          <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[85vh] flex flex-col animate-fade-in">
-            <div className="sticky top-0 bg-white border-b border-stone-100 px-5 py-4 flex items-center justify-between shrink-0">
+          <div className="bg-white w-full sm:max-w-md rounded-3xl shadow-2xl max-h-[calc(85vh-70px)] sm:max-h-[85vh] flex flex-col animate-in fade-in slide-in-from-bottom-6 duration-200 overflow-hidden mb-[calc(66px+env(safe-area-inset-bottom))] sm:mb-0">
+            <div className="sticky top-0 bg-white border-b border-stone-100 px-5 py-4 flex items-center justify-between shrink-0 z-10">
               <div className="flex items-center gap-2">
                 <Ruler className="w-4 h-4 text-[#A80C14]" />
-                <h3 className="font-serif font-bold text-base sm:text-lg text-stone-900">Size Guide</h3>
+                <h3 className="font-serif font-bold text-base sm:text-lg text-stone-900">Size Guide &amp; Measurements</h3>
               </div>
               <button
+                type="button"
                 onClick={() => setIsSizeGuideOpen(false)}
-                className="p-2 -mr-2 hover:bg-stone-100 rounded-xl transition-colors cursor-pointer active:scale-90"
+                className="p-2 -mr-2 hover:bg-stone-100 rounded-xl transition-colors cursor-pointer active:scale-90 min-h-[44px] min-w-[44px] flex items-center justify-center"
                 aria-label="Close size guide"
               >
-                <X className="w-4 h-4 text-stone-500" />
+                <X className="w-5 h-5 text-stone-500" />
               </button>
             </div>
 
-            <div className="hidden overflow-y-auto p-5 space-y-4">
+            <div className="overflow-y-auto p-4 sm:p-5 pb-6 sm:pb-5 space-y-4 font-sans">
               {isOneSize ? (
                 <div className="text-center py-6 space-y-2">
-                  <Shirt className="w-8 h-8 text-[#A80C14] mx-auto" />
+                  <Shirt className="w-10 h-10 text-[#A80C14] mx-auto" />
                   <p className="text-sm font-bold text-stone-900">One Size (Free Size)</p>
                   <p className="text-xs text-stone-500 leading-relaxed max-w-[280px] mx-auto">
-                    This piece comes in a relaxed free-size cut designed to fit most body types comfortably.
+                    This piece comes in a relaxed free-size cut designed to fit most body types comfortably (Bust 38&quot;–44&quot;, Length 54&quot;–56&quot;).
                   </p>
                 </div>
               ) : (
                 <>
-                  <div className="hidden overflow-x-auto rounded-2xl border border-stone-100">
-                    <table className="w-full text-left text-xs border-collapse min-w-[320px]">
+                  <div className="overflow-x-auto rounded-2xl border border-stone-200 shadow-2xs">
+                    <table className="w-full text-left text-xs border-collapse min-w-[280px]">
                       <thead>
-                        <tr className="bg-[#FFF0F6] text-[10px] uppercase tracking-wider text-stone-600">
-                          <th className="px-3 py-2.5 font-bold">Size</th>
-                          <th className="px-3 py-2.5 font-bold">Bust</th>
-                          <th className="px-3 py-2.5 font-bold">Waist</th>
-                          <th className="px-3 py-2.5 font-bold">Length</th>
+                        <tr className="bg-[#FFF0F6] text-[10px] uppercase tracking-wider text-stone-700 border-b border-stone-200">
+                          <th className="px-3.5 py-3 font-extrabold">Size</th>
+                          <th className="px-3.5 py-3 font-extrabold">Bust</th>
+                          <th className="px-3.5 py-3 font-extrabold">Waist</th>
+                          <th className="px-3.5 py-3 font-extrabold">Length</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-stone-100">
-                        {SIZE_GUIDE_ROWS.map((row) => (
-                          <tr
-                            key={row.size}
-                            className={selectedSize.toUpperCase() === row.size ? 'bg-[#FDF2F3]/60' : ''}
-                          >
-                            <td className="px-3 py-2.5 font-bold text-stone-900">
-                              {row.size}
-                              {selectedSize.toUpperCase() === row.size && (
-                                <span className="ml-1.5 text-[#A80C14]">●</span>
-                              )}
-                            </td>
-                            <td className="px-3 py-2.5 text-stone-600 font-mono text-[11px]">{row.bust}</td>
-                            <td className="px-3 py-2.5 text-stone-600 font-mono text-[11px]">{row.waist}</td>
-                            <td className="px-3 py-2.5 text-stone-600 font-mono text-[11px]">{row.length}</td>
-                          </tr>
-                        ))}
+                        {SIZE_GUIDE_ROWS.map((row) => {
+                          const isCurrent = selectedSize.toUpperCase() === row.size;
+                          return (
+                            <tr
+                              key={row.size}
+                              className={isCurrent ? 'bg-[#FDF2F3] font-bold' : 'hover:bg-stone-50/80'}
+                            >
+                              <td className="px-3.5 py-2.5 font-bold text-stone-900">
+                                {row.size}
+                                {isCurrent && (
+                                  <span className="ml-1.5 text-[#A80C14] text-[10px] font-black uppercase tracking-wider bg-[#FFF0F6] px-1.5 py-0.5 rounded-md">
+                                    Selected
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-3.5 py-2.5 text-stone-700 font-mono text-[11px]">{row.bust}</td>
+                              <td className="px-3.5 py-2.5 text-stone-700 font-mono text-[11px]">{row.waist}</td>
+                              <td className="px-3.5 py-2.5 text-stone-700 font-mono text-[11px]">{row.length}</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
 
-                  <div className="hidden bg-stone-50 border border-stone-100 rounded-2xl p-3.5 space-y-1.5">
-                    <p className="text-[11px] text-stone-500 leading-relaxed">
+                  <div className="bg-stone-50 border border-stone-200/80 rounded-2xl p-3.5 space-y-1.5 text-[11px] text-stone-600">
+                    <p className="leading-relaxed">
                       • Measurements are in inches and may vary ±1&quot; due to manual tailoring.
                     </p>
-                    <p className="text-[11px] text-stone-500 leading-relaxed">
-                      • <span className="font-bold text-stone-700">Free Size</span> is a relaxed cut that fits sizes M–L comfortably.
+                    <p className="leading-relaxed">
+                      • <span className="font-bold text-stone-800">Free Size</span> fits sizes M–L comfortably.
                     </p>
-                    <p className="text-[11px] text-stone-500 leading-relaxed">
-                      • Still unsure? Message us on WhatsApp with your measurements — we&apos;ll help you pick.
+                    <p className="leading-relaxed">
+                      • Need custom fitting assistance? Message our support team for personalized size advice.
                     </p>
                   </div>
                 </>

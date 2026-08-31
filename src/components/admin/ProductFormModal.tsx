@@ -248,27 +248,30 @@ export function ProductFormModal({
 
   // Re-generate variation combinations matrix whenever colorVariations or sizes change
   useEffect(() => {
-    const matrix: ProductVariation[] = [];
-    colorVariations.forEach((c) => {
-      selectedSizes.forEach((sz) => {
-        const existing = variationsMatrix.find(
-          (v) => v.colorName === c.name && v.size === sz
-        );
-        const mappedImage = c.images[c.mainImageIndex || 0] || c.images[0] || '';
+    setVariationsMatrix((prev) => {
+      const matrix: ProductVariation[] = [];
+      colorVariations.forEach((c) => {
+        selectedSizes.forEach((sz) => {
+          const existing = prev.find(
+            (v) => v.colorName === c.name && v.size === sz
+          );
+          const mappedImage = c.images[c.mainImageIndex || 0] || c.images[0] || '';
 
-        matrix.push({
-          id: existing?.id || `var-${c.name}-${sz}-${Date.now()}`,
-          colorName: c.name,
-          colorHex: c.hex,
-          size: sz,
-          stock: existing?.stock ?? 5,
-          priceOverride: sizePriceAdjustments[sz] ? formData.price + sizePriceAdjustments[sz] : undefined,
-          imageUrl: mappedImage
+          matrix.push({
+            id: existing?.id || `var-${c.name}-${sz}-${Date.now()}`,
+            colorName: c.name,
+            colorHex: c.hex,
+            size: sz,
+            stock: existing?.stock ?? 5,
+            priceOverride: sizePriceAdjustments[sz] ? formData.price + sizePriceAdjustments[sz] : undefined,
+            imageUrl: mappedImage
+          });
         });
       });
+      return matrix;
     });
-    setVariationsMatrix(matrix);
   }, [colorVariations, selectedSizes, formData.price, sizePriceAdjustments]);
+
 
   if (!isOpen) return null;
 
@@ -728,6 +731,33 @@ export function ProductFormModal({
                     </div>
                   </div>
 
+                  {/* Available Sizes Selection */}
+                  <div className="space-y-2">
+                    <label className="font-bold text-stone-700 flex items-center justify-between text-xs sm:text-sm">
+                      <span>Available Sizes</span>
+                      <span className="text-[10px] text-stone-400 font-normal">(Select sizes offered for this product)</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {(['S', 'M', 'L', 'XL', 'XXL', 'Free Size'] as const).map((sz) => {
+                        const isSelected = selectedSizes.includes(sz);
+                        return (
+                          <button
+                            key={sz}
+                            type="button"
+                            onClick={() => toggleSize(sz)}
+                            className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                              isSelected
+                                ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
+                                : 'bg-stone-50 text-stone-700 border-stone-200 hover:border-stone-400'
+                            }`}
+                          >
+                            {sz} {isSelected && '✓'}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <label className="flex items-center gap-3 px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl cursor-pointer">
                     <input
                       type="checkbox"
@@ -977,6 +1007,45 @@ export function ProductFormModal({
                                 className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-stone-900 font-mono font-bold text-sm focus:outline-none focus:ring-2 focus:ring-stone-900"
                               />
                             </div>
+
+                            {/* 4. Size-wise Stock Matrix */}
+                            {selectedSizes.length > 0 && (
+                              <div className="space-y-1.5 pt-2 border-t border-stone-200">
+                                <label className="font-extrabold text-stone-900 text-xs flex items-center justify-between">
+                                  <span>Size-wise Stock Matrix</span>
+                                  <span className="text-[10px] text-stone-400 font-mono font-normal">(Stock per size)</span>
+                                </label>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                  {selectedSizes.map((sz) => {
+                                    const matchedVar = variationsMatrix.find(
+                                      (v) => v.colorName === colorVar.name && v.size === sz
+                                    );
+                                    const currentVarStock = matchedVar?.stock ?? 5;
+                                    return (
+                                      <div key={sz} className="p-2 bg-stone-50 border border-stone-200 rounded-xl space-y-1">
+                                        <span className="text-[10px] font-black text-stone-700 font-mono uppercase block">{sz}</span>
+                                        <input
+                                          type="number"
+                                          min={0}
+                                          value={currentVarStock}
+                                          onChange={(e) => {
+                                            const newStock = Number(e.target.value);
+                                            setVariationsMatrix((prev) =>
+                                              prev.map((v) =>
+                                                v.colorName === colorVar.name && v.size === sz
+                                                  ? { ...v, stock: newStock }
+                                                  : v
+                                              )
+                                            );
+                                          }}
+                                          className="w-full px-2 py-1 bg-white border border-stone-300 rounded-lg text-xs font-mono font-bold text-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900"
+                                        />
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
 
