@@ -217,7 +217,7 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
     <>
       <div className="group relative bg-white rounded-3xl border border-stone-200/60 p-2.5 sm:p-3 shadow-xs hover:shadow-md hover:border-[#F8D2D5] transition-all h-full duration-300 flex flex-col overflow-hidden active:scale-[0.98]">
         {/* Top Image Container */}
-        <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-stone-100">
+        <div className="relative aspect-[3/4] sm:aspect-[4/5] w-full rounded-2xl overflow-hidden bg-stone-100">
           <Link href={productUrl} className="block relative w-full h-full" aria-label={product?.name}>
             <SmartImage
               src={currentImage}

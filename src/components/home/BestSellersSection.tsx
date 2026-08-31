@@ -104,21 +104,21 @@ export function BestSellersSection({ products }: BestSellersSectionProps) {
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-      <div className="bg-white border border-[#F8D2D5] rounded-3xl p-4 sm:p-7 space-y-4 sm:space-y-6 shadow-xs relative overflow-hidden">
+      <div className="bg-transparent sm:bg-white border-none sm:border sm:border-[#F8D2D5]/90 rounded-none sm:rounded-3xl p-0 sm:p-6 lg:p-7 space-y-3.5 sm:space-y-6 shadow-none sm:shadow-xs relative overflow-hidden">
         {/* Header Row */}
-        <div className="flex items-center justify-between border-b border-[#F8D2D5]/60 pb-3 sm:pb-4 relative z-10">
-          <div className="space-y-0. w-[75%]">
-            <h2 className="font-sans font-black text-[#0D153A] text-base sm:text-lg tracking-wider uppercase leading-tight">
+        <div className="flex items-center justify-between gap-2 border-b border-[#F8D2D5]/60 pb-2.5 sm:pb-4 relative z-10">
+          <div className="space-y-0.5 flex-1 min-w-0 pr-2">
+            <h2 className="font-sans font-black text-[#0D153A] text-sm sm:text-base md:text-lg tracking-wider uppercase leading-tight truncate sm:whitespace-normal">
               BEST SELLING
             </h2>
-            <p className="text-[11px] sm:text-xs text-stone-500 leading-relaxed">
+            <p className="text-[11px] sm:text-xs text-stone-500 font-sans line-clamp-1 sm:line-clamp-none">
               Our most beloved luxury abayas and hijabs loved by thousands of modest fashion enthusiasts.
             </p>
           </div>
 
           <Link
             href="/shop?sort=popular"
-            className="inline-flex min-h-[36px] sm:min-h-[40px] items-center justify-center px-4 bg-[#0D153A] hover:bg-black text-white rounded-full text-xs font-bold transition-colors shadow-xs active:scale-95 cursor-pointer"
+            className="inline-flex min-h-[34px] sm:min-h-[40px] items-center justify-center px-3.5 sm:px-4 bg-[#0D153A] hover:bg-black text-white rounded-full text-[11px] sm:text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer shrink-0"
           >
             Shop All
           </Link>
@@ -127,7 +127,7 @@ export function BestSellersSection({ products }: BestSellersSectionProps) {
         {/* Product Cards Grid */}
         <div className="relative z-10">
           {displayProducts.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-4">
               {displayProducts.map((product) => (
                 <ProductCard key={product?.id} product={product} />
               ))}

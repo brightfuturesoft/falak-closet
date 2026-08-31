@@ -1,61 +1,34 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Sparkles, ArrowRight, MoreHorizontal, MoreHorizontalIcon, MoveRight } from 'lucide-react';
+import { MoveRight } from 'lucide-react';
 import { Product } from '@/data/products';
 import { ProductCard } from '@/components/product/ProductCard';
 import { cn } from '@/lib/utils';
 
-interface NewArrivalSectionProps {
+interface TopRatedSectionProps {
   products: Product[];
   title?: string;
   subtitle?: string;
-  /** Pill next to the heading — pass `null` to hide (e.g. on the product page). */
-  badge?: string | null;
-  place: 'product_details' | 'home'
+  place?: 'product_details' | 'home';
 }
 
-export function NewArrivalSection({
+export function TopRatedSection({
   products,
-  title = 'NEW ARRIVALS',
-  subtitle = 'Discover our latest modest luxury Abayas, Kaftans & Hijabs',
-  badge = 'Fresh Drop',
+  title = 'TOP RATED PRODUCTS',
+  subtitle = 'Customer favorites with our highest ratings and reviews',
   place = 'home'
-}: NewArrivalSectionProps) {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
+}: TopRatedSectionProps) {
+  // Sort products by rating descending, then review count descending
+  const sortedProducts = [...products].sort((a, b) => {
+    const rA = a.rating ?? 0;
+    const rB = b.rating ?? 0;
+    if (rB !== rA) return rB - rA;
+    return (b.reviewCount ?? 0) - (a.reviewCount ?? 0);
+  });
 
-  // Filter or sort for new arrivals (newest items first)
-  const newArrivalsList = products.length > 0 ? products : [];
-
-  const updateScrollState = () => {
-    if (!scrollContainerRef.current) return;
-    const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-    setCanScrollLeft(scrollLeft > 10);
-    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 10);
-  };
-
-  useEffect(() => {
-    const el = scrollContainerRef.current;
-    if (el) {
-      el.addEventListener('scroll', updateScrollState, { passive: true });
-      updateScrollState();
-    }
-    return () => el?.removeEventListener('scroll', updateScrollState);
-  }, [products]);
-
-  const handleScroll = (direction: 'left' | 'right') => {
-    if (!scrollContainerRef.current) return;
-    const scrollAmount = scrollContainerRef.current.clientWidth * 0.75;
-    scrollContainerRef.current.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
-      behavior: 'smooth'
-    });
-  };
-
-  const displayProducts = newArrivalsList.slice(0, 10);
+  const displayProducts = sortedProducts.slice(0, 10);
 
   return (
     <section className={cn('max-w-7xl mx-auto w-full', place === 'product_details' ? 'p-0 sm:p-0 lg:px-0' : 'px-4 sm:px-6 lg:px-8')}>
@@ -70,7 +43,7 @@ export function NewArrivalSection({
           </div>
 
           <Link
-            href="/shop?sort=newest"
+            href="/shop?sort=rating"
             className={cn("inline-flex min-h-[34px] sm:min-h-[40px] items-center justify-center px-3.5 sm:px-4 bg-[#A80C14] hover:bg-[#8C0A10] text-white rounded-full text-[11px] sm:text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer shrink-0", place === 'product_details' && 'text-xs px-0')}
           >
             {place === 'product_details' ? <MoveRight size={20} aria-label='see more' /> : 'See More'}
@@ -87,7 +60,7 @@ export function NewArrivalSection({
             </div>
           ) : (
             <div className="w-full py-12 text-center text-stone-400 font-mono text-xs">
-              No products found in new arrivals collection.
+              No top rated products found.
             </div>
           )}
         </div>

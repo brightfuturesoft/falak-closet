@@ -22,7 +22,7 @@ export function Logo({
 
   // Pick between transparent logo (/transparent_logo.png) or normal logo (/logo.png)
   // const isTransparent = variant === 'transparent' || (transparent && variant !== 'normal');
-  const logoSrc = '/apple-touch-icon.png';
+  const logoSrc = '/favicon.ico';
 
   const sizeMap = {
     sm: 'h-8 sm:h-9 max-w-[140px]',

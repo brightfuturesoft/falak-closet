@@ -492,10 +492,18 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
           {/* Main Gallery Image */}
           <div
             onClick={() => setIsLightboxOpen(true)}
-            onMouseEnter={() => setIsHovering(true)}
+            onMouseEnter={() => {
+              if (typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches) {
+                setIsHovering(true);
+              }
+            }}
             onMouseLeave={() => setIsHovering(false)}
-            onMouseMove={handleMouseMove}
-            className="relative aspect-[4/5] w-full sm:aspect-[3/4] rounded-3xl overflow-hidden bg-stone-100 border border-[#F8D2D5] shadow-md group cursor-crosshair flex-grow"
+            onMouseMove={(e) => {
+              if (typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches) {
+                handleMouseMove(e);
+              }
+            }}
+            className="relative aspect-[4/5] w-full sm:aspect-[3/4] rounded-3xl overflow-hidden bg-stone-100 border border-[#F8D2D5] shadow-md group cursor-pointer flex-grow"
           >
             <SmartImage
               src={imagesList[selectedImageIndex] || imagesList[0]}
@@ -536,8 +544,11 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
             </div>
 
             <button
-              onClick={() => setIsLightboxOpen(true)}
-              className="absolute top-3 right-3 p-2.5 bg-stone-900/70 hover:bg-stone-900 text-white rounded-full backdrop-blur-xs transition-all shadow-md cursor-pointer z-10 active:scale-90"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsLightboxOpen(true);
+              }}
+              className="absolute top-3 right-3 p-2.5 bg-stone-900/70 hover:bg-stone-900 text-white rounded-full backdrop-blur-xs transition-all shadow-md cursor-pointer z-20 active:scale-90"
               title="Fullscreen Zoom"
               aria-label="Open fullscreen zoom"
             >
