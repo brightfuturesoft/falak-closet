@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { SmartImage } from '@/components/ui/SmartImage';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -9,7 +9,6 @@ import {
   Heart,
   ShoppingBag,
   Zap,
-  Ruler,
   ChevronRight,
   Maximize2,
   Sparkles,
@@ -34,17 +33,12 @@ import { getProductSchema, getBreadcrumbSchema } from '@/lib/schema';
 import { ProductZoomModal } from '@/components/product/ProductZoomModal';
 import { NewArrivalSection } from '@/components/home/NewArrivalSection';
 
-const SIZE_GUIDE_ROWS: { size: string; bust: string; waist: string; length: string }[] = [
-  { size: 'S', bust: '34"–36"', waist: '26"–28"', length: '52"' },
-  { size: 'M', bust: '37"–39"', waist: '29"–31"', length: '54"' },
-  { size: 'L', bust: '40"–42"', waist: '32"–34"', length: '56"' },
-  { size: 'XL', bust: '43"–45"', waist: '35"–37"', length: '58"' },
-  { size: 'XXL', bust: '46"–48"', waist: '38"–40"', length: '60"' }
-];
+
 
 export default function ProductDetailClient({ initialProduct }: { initialProduct: Product }) {
   const searchParams = useSearchParams();
   const colorQueryParam = searchParams.get('color');
+  const sizeQueryParam = searchParams.get('size');
   const router = useRouter();
   const { addToCart, toggleWishlist, isInWishlist, products, user } = useCart();
   const { trackEvent } = useAnalytics();
@@ -60,27 +54,65 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
     ? product.colors
     : [{ name: 'Standard', hex: '#000000' }];
 
-  const sizesList = product?.sizes && product.sizes.length > 0
-    ? product.sizes
-    : ['Free Size'];
-
   const imagesList = product?.images && product.images.length > 0
     ? product.images
     : ['https://images.unsplash.com/photo-1583391733956-6c78276477e2?auto=format&fit=crop&w=800&q=80'];
 
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedColor, setSelectedColor] = useState(colorsList[0]?.name || 'Standard');
+
+  const sizesList = useMemo(() => {
+    if (product?.variations && product.variations.length > 0) {
+      const varSizes = product.variations
+        .filter((v) => v.colorName.toLowerCase() === selectedColor.toLowerCase())
+        .map((v) => v.size)
+        .filter(Boolean);
+      if (varSizes.length > 0) {
+        return Array.from(new Set(varSizes));
+      }
+    }
+    return product?.sizes && product.sizes.length > 0 ? product.sizes : ['Free Size'];
+  }, [product?.variations, product?.sizes, selectedColor]);
+
   const [selectedSize, setSelectedSize] = useState(sizesList[0] || 'Free Size');
+
+  useEffect(() => {
+    if (sizesList.length > 0 && !sizesList.includes(selectedSize)) {
+      setSelectedSize(sizesList[0]);
+    }
+  }, [sizesList, selectedSize]);
+
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
 
-  // Pre-select color from URL search parameter (e.g. ?color=Obsidian%20Black)
+  // Sync selected color and size into URL query parameters (?color=...&size=...)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    let changed = false;
+
+    if (selectedColor && params.get('color') !== selectedColor) {
+      params.set('color', selectedColor);
+      changed = true;
+    }
+
+    if (selectedSize && params.get('size') !== selectedSize) {
+      params.set('size', selectedSize);
+      changed = true;
+    }
+
+    if (changed) {
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.replaceState(null, '', newUrl);
+    }
+  }, [selectedColor, selectedSize]);
+
+  // Pre-select color & size from URL search parameter (e.g. ?color=Obsidian%20Black&size=54)
   useEffect(() => {
     if (colorQueryParam && colorsList) {
       const colorObj = colorsList.find(
         (c) => c.name.toLowerCase() === colorQueryParam.toLowerCase()
       );
       if (colorObj) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedColor(colorObj.name);
         if (typeof colorObj.imageIndex === 'number' && imagesList[colorObj.imageIndex]) {
           setSelectedImageIndex(colorObj.imageIndex);
@@ -101,7 +133,11 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         }
       }
     }
-  }, [colorQueryParam, colorsList, imagesList, product?.variations]);
+
+    if (sizeQueryParam && sizesList.includes(sizeQueryParam)) {
+      setSelectedSize(sizeQueryParam);
+    }
+  }, [colorQueryParam, sizeQueryParam, colorsList, sizesList, imagesList, product?.variations]);
 
   // Mouse Hover Image Zoom Lens State
   const [isHovering, setIsHovering] = useState(false);
@@ -237,7 +273,6 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
   // Modals & UI States
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
   const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false);
 
   // Review Form State
@@ -261,19 +296,18 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
   // Lock body scroll while any owned modal is open
   useEffect(() => {
-    const anyOpen = isWriteReviewOpen || isSizeGuideOpen || isLightboxOpen;
+    const anyOpen = isWriteReviewOpen || isLightboxOpen;
     document.body.style.overflow = anyOpen ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isWriteReviewOpen, isSizeGuideOpen, isLightboxOpen]);
+  }, [isWriteReviewOpen, isLightboxOpen]);
 
   // Escape closes owned modals (zoom modal handles its own)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setIsWriteReviewOpen(false);
-        setIsSizeGuideOpen(false);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -714,13 +748,6 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               <label className="font-bold uppercase tracking-wider text-stone-700">
                 Size: <span className="text-[#A80C14] normal-case tracking-normal">{selectedSize}</span>
               </label>
-              <button
-                type="button"
-                onClick={() => setIsSizeGuideOpen(true)}
-                className="text-[#A80C14] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
-              >
-                <Ruler className="w-3.5 h-3.5" /> Size Guide
-              </button>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -731,6 +758,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 return (
                   <button
                     key={sz}
+                    title={`${sz} (Stock: ${sizeStock})`}
                     type="button"
                     onClick={() => setSelectedSize(sz)}
                     disabled={isSoldOut}
@@ -738,7 +766,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                     className={`min-w-[52px] h-11 px-3 text-xs font-bold rounded-xl border transition-all flex items-center justify-center cursor-pointer ${isSelected
                       ? 'border-[#A80C14] bg-[#A80C14] text-white shadow-xs scale-[1.03]'
                       : isSoldOut
-                        ? 'border-stone-100 text-stone-300 line-through cursor-not-allowed bg-stone-50'
+                        ? 'border-stone-200 text-stone-300 line-through cursor-not-allowed bg-stone-50'
                         : 'border-stone-200 text-stone-800 hover:bg-[#FDF2F3] active:scale-95'
                       }`}
                   >
@@ -1100,96 +1128,6 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         subtitle="Explore more of our latest modest fashion creations"
       />
 
-      {/* Size Guide Modal — floating bottom sheet on mobile, centered dialog on desktop */}
-      {isSizeGuideOpen && (
-        <div
-          className="fixed inset-0 z-[60] bg-stone-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-3 sm:p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Size guide"
-          onClick={(e) => e.target === e.currentTarget && setIsSizeGuideOpen(false)}
-        >
-          <div className="bg-white w-full sm:max-w-md rounded-3xl shadow-2xl max-h-[calc(85vh-70px)] sm:max-h-[85vh] flex flex-col animate-in fade-in slide-in-from-bottom-6 duration-200 overflow-hidden mb-[calc(66px+env(safe-area-inset-bottom))] sm:mb-0">
-            <div className="sticky top-0 bg-white border-b border-stone-100 px-5 py-4 flex items-center justify-between shrink-0 z-10">
-              <div className="flex items-center gap-2">
-                <Ruler className="w-4 h-4 text-[#A80C14]" />
-                <h3 className="font-serif font-bold text-base sm:text-lg text-stone-900">Size Guide &amp; Measurements</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsSizeGuideOpen(false)}
-                className="p-2 -mr-2 hover:bg-stone-100 rounded-xl transition-colors cursor-pointer active:scale-90 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                aria-label="Close size guide"
-              >
-                <X className="w-5 h-5 text-stone-500" />
-              </button>
-            </div>
-
-            <div className="overflow-y-auto p-4 sm:p-5 pb-6 sm:pb-5 space-y-4 font-sans">
-              {isOneSize ? (
-                <div className="text-center py-6 space-y-2">
-                  <Shirt className="w-10 h-10 text-[#A80C14] mx-auto" />
-                  <p className="text-sm font-bold text-stone-900">One Size (Free Size)</p>
-                  <p className="text-xs text-stone-500 leading-relaxed max-w-[280px] mx-auto">
-                    This piece comes in a relaxed free-size cut designed to fit most body types comfortably (Bust 38&quot;–44&quot;, Length 54&quot;–56&quot;).
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <div className="overflow-x-auto rounded-2xl border border-stone-200 shadow-2xs">
-                    <table className="w-full text-left text-xs border-collapse min-w-[280px]">
-                      <thead>
-                        <tr className="bg-[#FFF0F6] text-[10px] uppercase tracking-wider text-stone-700 border-b border-stone-200">
-                          <th className="px-3.5 py-3 font-extrabold">Size</th>
-                          <th className="px-3.5 py-3 font-extrabold">Bust</th>
-                          <th className="px-3.5 py-3 font-extrabold">Waist</th>
-                          <th className="px-3.5 py-3 font-extrabold">Length</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-stone-100">
-                        {SIZE_GUIDE_ROWS.map((row) => {
-                          const isCurrent = selectedSize.toUpperCase() === row.size;
-                          return (
-                            <tr
-                              key={row.size}
-                              className={isCurrent ? 'bg-[#FDF2F3] font-bold' : 'hover:bg-stone-50/80'}
-                            >
-                              <td className="px-3.5 py-2.5 font-bold text-stone-900">
-                                {row.size}
-                                {isCurrent && (
-                                  <span className="ml-1.5 text-[#A80C14] text-[10px] font-black uppercase tracking-wider bg-[#FFF0F6] px-1.5 py-0.5 rounded-md">
-                                    Selected
-                                  </span>
-                                )}
-                              </td>
-                              <td className="px-3.5 py-2.5 text-stone-700 font-mono text-[11px]">{row.bust}</td>
-                              <td className="px-3.5 py-2.5 text-stone-700 font-mono text-[11px]">{row.waist}</td>
-                              <td className="px-3.5 py-2.5 text-stone-700 font-mono text-[11px]">{row.length}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="bg-stone-50 border border-stone-200/80 rounded-2xl p-3.5 space-y-1.5 text-[11px] text-stone-600">
-                    <p className="leading-relaxed">
-                      • Measurements are in inches and may vary ±1&quot; due to manual tailoring.
-                    </p>
-                    <p className="leading-relaxed">
-                      • <span className="font-bold text-stone-800">Free Size</span> fits sizes M–L comfortably.
-                    </p>
-                    <p className="leading-relaxed">
-                      • Need custom fitting assistance? Message our support team for personalized size advice.
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Write a Review Modal — bottom sheet on mobile, centered dialog on desktop */}
       {isWriteReviewOpen && (
         <div
@@ -1213,117 +1151,117 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
             <div className="flex-1 overflow-y-auto">
 
-            {!user ? (
-              <div className="p-6 text-center space-y-4">
-                <div className="w-12 h-12 bg-[#FDF2F3] text-[#A80C14] rounded-full flex items-center justify-center mx-auto">
-                  <Star className="w-6 h-6 fill-current" />
-                </div>
-                <h4 className="font-bold text-base text-stone-900 font-sans">Sign In Required</h4>
-                <p className="text-xs text-stone-500 leading-relaxed">
-                  Only customers who have purchased and received delivery of this product can write a review. Please sign in to verify your purchase.
-                </p>
-                <div className="flex gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsWriteReviewOpen(false)}
-                    className="flex-1 py-3 min-h-[44px] bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl transition-colors cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <Link
-                    href="/account"
-                    className="flex-1 py-3 min-h-[44px] bg-[#A80C14] hover:bg-[#8C0A10] text-white font-bold text-xs rounded-xl text-center transition-colors shadow-sm flex items-center justify-center"
-                  >
-                    Sign In
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <form onSubmit={handleReviewSubmit} className="p-5 sm:p-6 space-y-4">
-                {reviewSubmitted ? (
-                  <div className="py-8 text-center space-y-2">
-                    <Sparkles className="w-8 h-8 text-emerald-500 mx-auto" />
-                    <p className="text-sm font-bold text-stone-900">Thank you for your review!</p>
-                    <p className="text-xs text-stone-500">It will appear on this page after our team approves it.</p>
+              {!user ? (
+                <div className="p-6 text-center space-y-4">
+                  <div className="w-12 h-12 bg-[#FDF2F3] text-[#A80C14] rounded-full flex items-center justify-center mx-auto">
+                    <Star className="w-6 h-6 fill-current" />
                   </div>
-                ) : (
-                  <>
-                    <div className="space-y-1.5">
-                      <label htmlFor="review-author" className="text-xs font-bold text-stone-700">Your Name *</label>
-                      <input
-                        id="review-author"
-                        type="text"
-                        required
-                        maxLength={60}
-                        value={newReview.author}
-                        onChange={(e) => setNewReview({ ...newReview, author: e.target.value })}
-                        placeholder="e.g. Ayesha R."
-                        className="w-full px-4 py-3 min-h-[44px] bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14]"
-                      />
+                  <h4 className="font-bold text-base text-stone-900 font-sans">Sign In Required</h4>
+                  <p className="text-xs text-stone-500 leading-relaxed">
+                    Only customers who have purchased and received delivery of this product can write a review. Please sign in to verify your purchase.
+                  </p>
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsWriteReviewOpen(false)}
+                      className="flex-1 py-3 min-h-[44px] bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <Link
+                      href="/account"
+                      className="flex-1 py-3 min-h-[44px] bg-[#A80C14] hover:bg-[#8C0A10] text-white font-bold text-xs rounded-xl text-center transition-colors shadow-sm flex items-center justify-center"
+                    >
+                      Sign In
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleReviewSubmit} className="p-5 sm:p-6 space-y-4">
+                  {reviewSubmitted ? (
+                    <div className="py-8 text-center space-y-2">
+                      <Sparkles className="w-8 h-8 text-emerald-500 mx-auto" />
+                      <p className="text-sm font-bold text-stone-900">Thank you for your review!</p>
+                      <p className="text-xs text-stone-500">It will appear on this page after our team approves it.</p>
                     </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-stone-700">Your Rating *</label>
-                      <div className="flex items-center gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            type="button"
-                            onClick={() => setNewReview({ ...newReview, rating: star })}
-                            aria-label={`${star} star${star > 1 ? 's' : ''}`}
-                            className="p-1.5 -m-0.5 cursor-pointer transition-transform hover:scale-110 active:scale-95"
-                          >
-                            <Star
-                              className={`w-7 h-7 transition-colors ${star <= newReview.rating
-                                ? 'fill-amber-400 text-amber-400'
-                                : 'text-stone-300'
-                                }`}
-                            />
-                          </button>
-                        ))}
-                        <span className="ml-2 text-xs font-bold text-stone-600 font-mono">{newReview.rating}/5</span>
+                  ) : (
+                    <>
+                      <div className="space-y-1.5">
+                        <label htmlFor="review-author" className="text-xs font-bold text-stone-700">Your Name *</label>
+                        <input
+                          id="review-author"
+                          type="text"
+                          required
+                          maxLength={60}
+                          value={newReview.author}
+                          onChange={(e) => setNewReview({ ...newReview, author: e.target.value })}
+                          placeholder="e.g. Ayesha R."
+                          className="w-full px-4 py-3 min-h-[44px] bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14]"
+                        />
                       </div>
-                    </div>
 
-                    <div className="space-y-1.5">
-                      <label htmlFor="review-comment" className="text-xs font-bold text-stone-700">Your Review *</label>
-                      <textarea
-                        id="review-comment"
-                        required
-                        rows={4}
-                        maxLength={1000}
-                        value={newReview.comment}
-                        onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
-                        placeholder="How was the fabric, fit, and delivery experience?"
-                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14]"
-                      />
-                      <p className="text-[10px] text-stone-400 text-right">{newReview.comment.length}/1000</p>
-                    </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-stone-700">Your Rating *</label>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setNewReview({ ...newReview, rating: star })}
+                              aria-label={`${star} star${star > 1 ? 's' : ''}`}
+                              className="p-1.5 -m-0.5 cursor-pointer transition-transform hover:scale-110 active:scale-95"
+                            >
+                              <Star
+                                className={`w-7 h-7 transition-colors ${star <= newReview.rating
+                                  ? 'fill-amber-400 text-amber-400'
+                                  : 'text-stone-300'
+                                  }`}
+                              />
+                            </button>
+                          ))}
+                          <span className="ml-2 text-xs font-bold text-stone-600 font-mono">{newReview.rating}/5</span>
+                        </div>
+                      </div>
 
-                    {reviewError && (
-                      <p className="text-[11px] font-bold text-rose-600" role="alert">{reviewError}</p>
-                    )}
+                      <div className="space-y-1.5">
+                        <label htmlFor="review-comment" className="text-xs font-bold text-stone-700">Your Review *</label>
+                        <textarea
+                          id="review-comment"
+                          required
+                          rows={4}
+                          maxLength={1000}
+                          value={newReview.comment}
+                          onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                          placeholder="How was the fabric, fit, and delivery experience?"
+                          className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14]"
+                        />
+                        <p className="text-[10px] text-stone-400 text-right">{newReview.comment.length}/1000</p>
+                      </div>
 
-                    <div className="flex items-center justify-end gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => setIsWriteReviewOpen(false)}
-                        className="px-4 py-3 min-h-[44px] bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl transition-colors cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={isSubmittingReview}
-                        className="px-5 py-3 min-h-[44px] bg-[#A80C14] hover:bg-[#8C0A10] text-white font-bold text-xs rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50 active:scale-95"
-                      >
-                        {isSubmittingReview ? 'Submitting…' : 'Submit Review'}
-                      </button>
-                    </div>
-                  </>
-                )}
-              </form>
-            )}
+                      {reviewError && (
+                        <p className="text-[11px] font-bold text-rose-600" role="alert">{reviewError}</p>
+                      )}
+
+                      <div className="flex items-center justify-end gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setIsWriteReviewOpen(false)}
+                          className="px-4 py-3 min-h-[44px] bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={isSubmittingReview}
+                          className="px-5 py-3 min-h-[44px] bg-[#A80C14] hover:bg-[#8C0A10] text-white font-bold text-xs rounded-xl transition-all shadow-sm cursor-pointer disabled:opacity-50 active:scale-95"
+                        >
+                          {isSubmittingReview ? 'Submitting…' : 'Submit Review'}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </form>
+              )}
             </div>
           </div>
         </div>

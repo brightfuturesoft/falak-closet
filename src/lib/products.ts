@@ -72,6 +72,7 @@ export function serializeProduct(row: ProductRow): Product {
       price: opt(v.price),
       priceOverride: opt(v.priceOverride),
       imageUrl: opt(v.imageUrl),
+      shortDetails: opt(v.shortDetails),
     })),
     stock: row.stock,
     images: row.images,
@@ -335,6 +336,7 @@ function toVariations(value: unknown) {
         ? {}
         : { priceOverride: toNum(v.priceOverride) }),
       ...(v.imageUrl === undefined || v.imageUrl === null ? {} : { imageUrl: toStr(v.imageUrl) }),
+      ...(v.shortDetails === undefined || v.shortDetails === null ? {} : { shortDetails: toStr(v.shortDetails) }),
     }));
 }
 
