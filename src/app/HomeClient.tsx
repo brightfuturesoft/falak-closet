@@ -6,11 +6,12 @@ import { useCart } from '@/context/CartContext';
 import { HeroCarousel } from '@/components/home/HeroCarousel';
 import { CategoryFilterSlider } from '@/components/home/CategoryFilterSlider';
 import { NewArrivalSection } from '@/components/home/NewArrivalSection';
-import { LatestProductsSection } from '@/components/home/LatestProductsSection';
+import { TopRatedSection } from '@/components/home/TopRatedSection';
+// import { LatestProductsSection } from '@/components/home/LatestProductsSection';
 import { BestSellersSection } from '@/components/home/BestSellersSection';
 import type { HeroSlideView } from '@/lib/heroSlides';
-import { PromotionBanner } from '@prisma/client';
-import { ValuePropItem } from '@/lib/siteSettings';
+// import { PromotionBanner } from '@prisma/client';
+// import { ValuePropItem } from '@/lib/siteSettings';
 
 /**
  * The interactive half of the home page — everything that needs `useCart` or
@@ -98,7 +99,7 @@ export default function HomeClient({
       )}
 
       {isBusy ? (
-        /* Skeleton stands in for the three product rows below — same column
+        /* Skeleton stands in for the product rows below — same column
            counts as the real grids so nothing shifts when data lands. */
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           {Array.from({ length: 2 }).map((_, row) => (
@@ -130,11 +131,14 @@ export default function HomeClient({
           {/* 3. NEW ARRIVALS Section */}
           <NewArrivalSection place="home" products={filteredProducts} />
 
-          {/* 4. BEST SELLERS Section */}
+          {/* 4. TOP RATED Section */}
+          <TopRatedSection place="home" products={filteredProducts} />
+
+          {/* 5. BEST SELLERS Section */}
           <BestSellersSection products={products} />
 
-          {/* 5. LATEST PRODUCTS Section */}
-          <LatestProductsSection products={filteredProducts} />
+          {/* 6. LATEST PRODUCTS Section */}
+          {/* <LatestProductsSection products={filteredProducts} /> */}
         </>
       )}
     </div>

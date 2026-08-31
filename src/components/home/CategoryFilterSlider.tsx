@@ -188,7 +188,7 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
 
   return (
     <section
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative"
+      className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 relative"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onTouchStart={() => setIsPaused(true)}
@@ -258,7 +258,7 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
             return (
               <article
                 key={card.id}
-                className="w-[290px] sm:w-[360px] flex-shrink-0 snap-start bg-white border border-[#F8D2D5] rounded-3xl p-4 sm:p-5 shadow-xs flex flex-col justify-between"
+                className="w-[280px] sm:w-[360px] flex-shrink-0 snap-start bg-white border border-[#F8D2D5]/90 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-xs flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center gap-3 mb-2">

@@ -36,7 +36,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
 
   return (
     <div
-      className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-4 sm:my-6"
+      className="relative w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 my-3 sm:my-6"
       role="region"
       aria-roledescription="carousel"
       aria-label="Featured promotions"
@@ -61,7 +61,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
         setTimeout(() => setIsPaused(false), 4000);
       }}
     >
-      <div className="relative aspect-[16/9] sm:aspect-[21/9] lg:aspect-[24/9] w-full rounded-3xl overflow-hidden shadow-xl bg-[#0D153A]">
+      <div className="relative aspect-[16/9] sm:aspect-[21/9] lg:aspect-[24/9] w-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl bg-[#0D153A]">
         {slides.map((slide, idx) => (
           <div
             key={slide.id}
