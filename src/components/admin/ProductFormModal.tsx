@@ -102,15 +102,13 @@ export function ProductFormModal({
   // Color Variations State (Color-wise image arrays)
   const [colorVariations, setColorVariations] = useState<DetailedColorVariation[]>([]);
 
-  // Sizes Selection
-  const [selectedSizes, setSelectedSizes] = useState<('S' | 'M' | 'L' | 'XL' | 'XXL' | 'Free Size')[]>([
-    'M'
-  ]);
+  // Per-color variation size input text state (e.g. { "Emerald Green": "52" })
+  const [variationSizeInputs, setVariationSizeInputs] = useState<Record<string, string>>({});
 
   // Size Price Overrides map
   const [sizePriceAdjustments, setSizePriceAdjustments] = useState<Record<string, number>>({});
 
-  // Variation Combinations Matrix (Generated Color x Size items)
+  // Product Variations List (Generated Color x Size items)
   const [variationsMatrix, setVariationsMatrix] = useState<ProductVariation[]>([]);
 
   // Interactive Eyedropper Modal State
@@ -186,11 +184,30 @@ export function ProductFormModal({
         ]);
       }
 
-      if (editingProduct.sizes && editingProduct.sizes.length > 0) {
-        setSelectedSizes(editingProduct.sizes as any);
-      }
       if (editingProduct.variations && editingProduct.variations.length > 0) {
         setVariationsMatrix(editingProduct.variations);
+      } else {
+        const colors = editingProduct.colors && editingProduct.colors.length > 0
+          ? editingProduct.colors
+          : [{ name: 'Royal Crimson', hex: '#9B050B' }];
+        const sizes = editingProduct.sizes && editingProduct.sizes.length > 0
+          ? editingProduct.sizes
+          : ['Free Size'];
+
+        const initialMatrix: ProductVariation[] = [];
+        colors.forEach((c) => {
+          sizes.forEach((sz) => {
+            initialMatrix.push({
+              id: `var-${c.name}-${sz}-${Date.now()}`,
+              colorName: c.name,
+              colorHex: c.hex,
+              size: sz,
+              stock: editingProduct.stock ?? 10,
+              imageUrl: editingProduct.images?.[0] || ''
+            });
+          });
+        });
+        setVariationsMatrix(initialMatrix);
       }
     } else {
       setFormData({
@@ -220,7 +237,16 @@ export function ProductFormModal({
           mainImageIndex: 0
         }
       ]);
-      setSelectedSizes(['M']);
+      setVariationsMatrix([
+        {
+          id: `var-Emerald Green-Free Size-${Date.now()}`,
+          colorName: 'Emerald Green',
+          colorHex: '#0B6623',
+          size: 'Free Size',
+          stock: 10,
+          imageUrl: ''
+        }
+      ]);
     }
   }, [editingProduct, isOpen]);
 
@@ -246,32 +272,6 @@ export function ProductFormModal({
     }
   };
 
-  // Re-generate variation combinations matrix whenever colorVariations or sizes change
-  useEffect(() => {
-    setVariationsMatrix((prev) => {
-      const matrix: ProductVariation[] = [];
-      colorVariations.forEach((c) => {
-        selectedSizes.forEach((sz) => {
-          const existing = prev.find(
-            (v) => v.colorName === c.name && v.size === sz
-          );
-          const mappedImage = c.images[c.mainImageIndex || 0] || c.images[0] || '';
-
-          matrix.push({
-            id: existing?.id || `var-${c.name}-${sz}-${Date.now()}`,
-            colorName: c.name,
-            colorHex: c.hex,
-            size: sz,
-            stock: existing?.stock ?? 5,
-            priceOverride: sizePriceAdjustments[sz] ? formData.price + sizePriceAdjustments[sz] : undefined,
-            imageUrl: mappedImage
-          });
-        });
-      });
-      return matrix;
-    });
-  }, [colorVariations, selectedSizes, formData.price, sizePriceAdjustments]);
-
 
   if (!isOpen) return null;
 
@@ -290,33 +290,54 @@ export function ProductFormModal({
         mainImageIndex: 0
       }
     ]);
+
+    setVariationsMatrix((prev) => [
+      ...prev,
+      {
+        id: `var-${name}-Free Size-${Date.now()}`,
+        colorName: name,
+        colorHex: hex,
+        size: 'Free Size',
+        stock: 10,
+        imageUrl: defaultImage || ''
+      }
+    ]);
   };
 
   // Remove Color Variation
   const handleRemoveColorVariation = (id: string) => {
     if (colorVariations.length === 1) return; // Keep at least 1 color variation
+    const target = colorVariations.find((c) => c.id === id);
     setColorVariations((prev) => prev.filter((c) => c.id !== id));
+    if (target) {
+      setVariationsMatrix((prev) => prev.filter((v) => v.colorName !== target.name));
+    }
   };
 
   // Update Color Variation Name inline
   const handleUpdateColorName = (id: string, name: string) => {
+    const oldColor = colorVariations.find((c) => c.id === id);
     setColorVariations((prev) =>
       prev.map((c) => (c.id === id ? { ...c, name } : c))
     );
+    if (oldColor) {
+      setVariationsMatrix((prev) =>
+        prev.map((v) => (v.colorName === oldColor.name ? { ...v, colorName: name } : v))
+      );
+    }
   };
 
   // Update Color Variation Hex Code inline
   const handleUpdateColorHex = (id: string, hex: string) => {
+    const oldColor = colorVariations.find((c) => c.id === id);
     setColorVariations((prev) =>
       prev.map((c) => (c.id === id ? { ...c, hex } : c))
     );
-  };
-
-  // Update Color Variation Stock Quantity inline
-  const handleUpdateColorStock = (id: string, stock: number) => {
-    setColorVariations((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, stock } : c))
-    );
+    if (oldColor) {
+      setVariationsMatrix((prev) =>
+        prev.map((v) => (v.colorName === oldColor.name ? { ...v, colorHex: hex } : v))
+      );
+    }
   };
 
   // Append new empty Color Variation card when clicking [ Add More ]
@@ -342,6 +363,18 @@ export function ProductFormModal({
         stock: 10,
         images: [],
         mainImageIndex: 0
+      }
+    ]);
+
+    setVariationsMatrix((prev) => [
+      ...prev,
+      {
+        id: `var-${unused.name}-Free Size-${Date.now()}`,
+        colorName: unused.name,
+        colorHex: unused.hex,
+        size: 'Free Size',
+        stock: 10,
+        imageUrl: ''
       }
     ]);
   };
@@ -416,16 +449,50 @@ export function ProductFormModal({
     setEyedropperImageUrl(null);
   };
 
-  const toggleSize = (sz: 'S' | 'M' | 'L' | 'XL' | 'XXL' | 'Free Size') => {
-    setSelectedSizes((prev) => {
-      if (prev.includes(sz)) return prev.filter((s) => s !== sz);
-      return [...prev, sz];
+  const handleAddSizeToVariation = (colorName: string, colorHex: string, rawSize: string) => {
+    const sz = rawSize.trim();
+    if (!sz) return;
+    setVariationsMatrix((prev) => {
+      const exists = prev.some(
+        (v) => v.colorName === colorName && v.size.toLowerCase() === sz.toLowerCase()
+      );
+      if (exists) return prev;
+      const colorObj = colorVariations.find((c) => c.name === colorName);
+      const img = colorObj?.images[colorObj.mainImageIndex || 0] || colorObj?.images[0] || '';
+      return [
+        ...prev,
+        {
+          id: `var-${colorName}-${sz}-${Date.now()}`,
+          colorName,
+          colorHex,
+          size: sz,
+          stock: 10,
+          imageUrl: img
+        }
+      ];
     });
+    setVariationSizeInputs((prev) => ({ ...prev, [colorName]: '' }));
   };
 
-  const handleVariationStockChange = (varId: string, newStock: number) => {
+  const handleRemoveSizeFromVariation = (colorName: string, sizeName: string) => {
     setVariationsMatrix((prev) =>
-      prev.map((v) => (v.id === varId ? { ...v, stock: newStock } : v))
+      prev.filter((v) => !(v.colorName === colorName && v.size === sizeName))
+    );
+  };
+
+  const handleUpdateSizeStock = (colorName: string, sizeName: string, stock: number) => {
+    setVariationsMatrix((prev) =>
+      prev.map((v) =>
+        v.colorName === colorName && v.size === sizeName ? { ...v, stock: Math.max(0, stock) } : v
+      )
+    );
+  };
+
+  const handleUpdateSizeShortDetails = (colorName: string, sizeName: string, shortDetails: string) => {
+    setVariationsMatrix((prev) =>
+      prev.map((v) =>
+        v.colorName === colorName && v.size === sizeName ? { ...v, shortDetails } : v
+      )
     );
   };
 
@@ -475,6 +542,9 @@ export function ProductFormModal({
         .map((c) => c.trim())
         .filter(Boolean);
 
+      const aggregatedSizes = Array.from(
+        new Set(variationsMatrix.map((v) => v.size).filter(Boolean))
+      );
       const totalStockFromMatrix = variationsMatrix.reduce((sum, v) => sum + v.stock, 0);
 
       // Field-by-field, not `...formData`: the spread also carried `featuresText`
@@ -494,7 +564,7 @@ export function ProductFormModal({
         isNew: formData.isNew,
         description: formData.description,
         colors: formattedColors,
-        sizes: selectedSizes,
+        sizes: aggregatedSizes.length > 0 ? aggregatedSizes : ['Free Size'],
         images: allAggregatedImages.length > 0 ? allAggregatedImages : ['https://images.unsplash.com/photo-1609357605129-26f69add5d6e?auto=format&fit=crop&w=1000&q=80'],
         variations: variationsMatrix,
         stock: totalStockFromMatrix > 0 ? totalStockFromMatrix : formData.stock,
@@ -734,32 +804,7 @@ export function ProductFormModal({
                     </div>
                   </div>
 
-                  {/* Available Sizes Selection */}
-                  <div className="space-y-2">
-                    <label className="font-bold text-stone-700 flex items-center justify-between text-xs sm:text-sm">
-                      <span>Available Sizes</span>
-                      <span className="text-[10px] text-stone-400 font-normal">(Select sizes offered for this product)</span>
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {(['S', 'M', 'L', 'XL', 'XXL', 'Free Size'] as const).map((sz) => {
-                        const isSelected = selectedSizes.includes(sz);
-                        return (
-                          <button
-                            key={sz}
-                            type="button"
-                            onClick={() => toggleSize(sz)}
-                            className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                              isSelected
-                                ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-                                : 'bg-stone-50 text-stone-700 border-stone-200 hover:border-stone-400'
-                            }`}
-                          >
-                            {sz} {isSelected && '✓'}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+
 
                   <label className="flex items-center gap-3 px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl cursor-pointer">
                     <input
@@ -995,60 +1040,149 @@ export function ProductFormModal({
                               </div>
                             </div>
 
-                            {/* 3. Stock Quantity */}
-                            <div className="space-y-1">
-                              <label className="font-extrabold text-stone-900 text-xs flex items-center justify-between">
-                                <span>Stock Quantity</span>
-                                <span className="text-[10px] text-stone-400 font-normal font-mono">(Units in stock)</span>
-                              </label>
-                              <input
-                                type="number"
-                                min={0}
-                                value={colorVar.stock ?? 10}
-                                onChange={(e) => handleUpdateColorStock(colorVar.id, Number(e.target.value))}
-                                placeholder="Stock Quantity"
-                                className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-stone-900 font-mono font-bold text-sm focus:outline-none focus:ring-2 focus:ring-stone-900"
-                              />
-                            </div>
-
-                            {/* 4. Size-wise Stock Matrix */}
-                            {selectedSizes.length > 0 && (
-                              <div className="space-y-1.5 pt-2 border-t border-stone-200">
-                                <label className="font-extrabold text-stone-900 text-xs flex items-center justify-between">
-                                  <span>Size-wise Stock Matrix</span>
-                                  <span className="text-[10px] text-stone-400 font-mono font-normal">(Stock per size)</span>
+                            {/* Sizes & Stock Manager for this Color Variation */}
+                            <div className="space-y-3 pt-3 border-t border-stone-200">
+                              <div className="flex items-center justify-between">
+                                <label className="font-extrabold text-stone-900 text-xs flex items-center gap-1.5">
+                                  <span>Sizes & Stock for {colorVar.name}</span>
+                                  <span className="px-2 py-0.5 rounded-full bg-stone-200 text-stone-800 text-[10px] font-mono font-bold">
+                                    {variationsMatrix.filter((v) => v.colorName === colorVar.name).length} sizes
+                                  </span>
                                 </label>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                  {selectedSizes.map((sz) => {
-                                    const matchedVar = variationsMatrix.find(
-                                      (v) => v.colorName === colorVar.name && v.size === sz
+                              </div>
+
+                              {/* Active Sizes List with Stock Inputs */}
+                              <div className="space-y-2">
+                                {variationsMatrix.filter((v) => v.colorName === colorVar.name).length === 0 ? (
+                                  <p className="text-xs italic text-stone-400">
+                                    No sizes added for this color yet. Type a size below to add.
+                                  </p>
+                                ) : (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    {variationsMatrix
+                                      .filter((v) => v.colorName === colorVar.name)
+                                      .map((v) => (
+                                        <div
+                                          key={v.id || `${v.colorName}-${v.size}`}
+                                          className="p-3 bg-stone-50 border border-stone-200 rounded-xl space-y-2 shadow-2xs"
+                                        >
+                                          <div className="flex items-center justify-between gap-2">
+                                            <span className="text-xs font-black font-mono text-stone-900 uppercase truncate">
+                                              Size: {v.size}
+                                            </span>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                              <div className="flex items-center gap-1">
+                                                <span className="text-[10px] text-stone-500 font-mono font-bold">Stock:</span>
+                                                <input
+                                                  type="number"
+                                                  min={0}
+                                                  value={v.stock}
+                                                  onChange={(e) =>
+                                                    handleUpdateSizeStock(colorVar.name, v.size, Number(e.target.value))
+                                                  }
+                                                  className="w-16 px-2 py-1 bg-white border border-stone-300 rounded-lg text-xs font-mono font-bold text-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900"
+                                                />
+                                              </div>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleRemoveSizeFromVariation(colorVar.name, v.size)}
+                                                className="w-5 h-5 rounded-full bg-stone-200 hover:bg-rose-500 hover:text-white text-stone-600 flex items-center justify-center text-[10px] transition-colors cursor-pointer"
+                                                title={`Remove ${v.size} size`}
+                                              >
+                                                ✕
+                                              </button>
+                                            </div>
+                                          </div>
+
+                                          {/* Short Details Note Input */}
+                                          <div>
+                                            <input
+                                              type="text"
+                                              value={v.shortDetails || ''}
+                                              onChange={(e) =>
+                                                handleUpdateSizeShortDetails(colorVar.name, v.size, e.target.value)
+                                              }
+                                              placeholder="Short details (e.g. Bust 38-40, Length 52)"
+                                              className="w-full px-2.5 py-1 bg-white border border-stone-300 rounded-lg text-[11px] font-medium text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-900"
+                                            />
+                                          </div>
+                                        </div>
+                                      ))}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Add Custom Size Input */}
+                              <div className="flex items-center gap-2 pt-1">
+                                <input
+                                  type="text"
+                                  value={variationSizeInputs[colorVar.name] || ''}
+                                  onChange={(e) =>
+                                    setVariationSizeInputs((prev) => ({
+                                      ...prev,
+                                      [colorVar.name]: e.target.value
+                                    }))
+                                  }
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      handleAddSizeToVariation(
+                                        colorVar.name,
+                                        colorVar.hex,
+                                        variationSizeInputs[colorVar.name] || ''
+                                      );
+                                    }
+                                  }}
+                                  placeholder="Add size (e.g. 52, 54, S, M, XL, Free Size)..."
+                                  className="flex-1 px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs font-medium text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleAddSizeToVariation(
+                                      colorVar.name,
+                                      colorVar.hex,
+                                      variationSizeInputs[colorVar.name] || ''
+                                    )
+                                  }
+                                  className="px-3.5 py-2 bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+                                >
+                                  + Add Size
+                                </button>
+                              </div>
+
+                              {/* Quick Suggestion Chips */}
+                              <div className="space-y-1 pt-1">
+                                <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider font-mono">Quick Add Size:</span>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {['52', '54', '56', '58', '60', 'Free Size', 'S', 'M', 'L', 'XL', 'XXL'].map((chip) => {
+                                    const isAdded = variationsMatrix.some(
+                                      (v) => v.colorName === colorVar.name && v.size === chip
                                     );
-                                    const currentVarStock = matchedVar?.stock ?? 5;
                                     return (
-                                      <div key={sz} className="p-2 bg-stone-50 border border-stone-200 rounded-xl space-y-1">
-                                        <span className="text-[10px] font-black text-stone-700 font-mono uppercase block">{sz}</span>
-                                        <input
-                                          type="number"
-                                          min={0}
-                                          value={currentVarStock}
-                                          onChange={(e) => {
-                                            const newStock = Number(e.target.value);
-                                            setVariationsMatrix((prev) =>
-                                              prev.map((v) =>
-                                                v.colorName === colorVar.name && v.size === sz
-                                                  ? { ...v, stock: newStock }
-                                                  : v
-                                              )
-                                            );
-                                          }}
-                                          className="w-full px-2 py-1 bg-white border border-stone-300 rounded-lg text-xs font-mono font-bold text-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900"
-                                        />
-                                      </div>
+                                      <button
+                                        key={chip}
+                                        type="button"
+                                        onClick={() => {
+                                          if (isAdded) {
+                                            handleRemoveSizeFromVariation(colorVar.name, chip);
+                                          } else {
+                                            handleAddSizeToVariation(colorVar.name, colorVar.hex, chip);
+                                          }
+                                        }}
+                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer font-mono ${
+                                          isAdded
+                                            ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
+                                            : 'bg-white border-stone-200 text-stone-600 hover:border-stone-400'
+                                        }`}
+                                      >
+                                        {chip} {isAdded ? '✓' : '+'}
+                                      </button>
                                     );
                                   })}
                                 </div>
                               </div>
-                            )}
+                            </div>
                           </div>
                         </div>
 
@@ -1238,9 +1372,9 @@ export function ProductFormModal({
                 </div>
 
                 {/* Size Pills */}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 flex-wrap">
                   <span className="text-[10px] text-stone-500 font-bold uppercase">Sizes:</span>
-                  {selectedSizes.map((s) => (
+                  {Array.from(new Set(variationsMatrix.map((v) => v.size).filter(Boolean))).map((s) => (
                     <span key={s} className="px-1.5 py-0.5 bg-stone-100 border border-stone-200 text-[10px] rounded font-mono font-bold text-stone-800">
                       {s}
                     </span>

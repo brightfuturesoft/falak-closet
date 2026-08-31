@@ -136,6 +136,7 @@ type ProductVariation {
   price         Float?
   priceOverride Float?
   imageUrl      String?
+  shortDetails  String?
 }
 
 type ProductReview {

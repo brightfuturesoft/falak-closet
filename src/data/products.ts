@@ -15,6 +15,7 @@ export interface ProductVariation {
   price?: number;
   priceOverride?: number;
   imageUrl?: string;
+  shortDetails?: string;
 }
 
 export interface Review {
