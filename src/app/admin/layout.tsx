@@ -57,10 +57,10 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       {isMobileDrawerOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs"
+            className="fixed inset-0 bg-stone-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
             onClick={() => setIsMobileDrawerOpen(false)}
           />
-          <div className="relative w-72 bg-white h-full z-10">
+          <div className="relative w-[85vw] max-w-xs bg-white h-full z-10 shadow-2xl animate-in slide-in-from-left duration-200">
             <AdminSidebar
               pendingOrdersCount={admin.pendingOrdersCount}
               productsCount={admin.productsList.length}
@@ -74,7 +74,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Main Content Workspace — each route renders into this slot */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen lg:h-screen lg:overflow-y-auto">
         {/* Header Bar */}
         <AdminHeader
           searchQuery={admin.globalSearchQuery}
@@ -96,7 +96,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
         />
 
         {/* Route Content */}
-        <main className="p-4 sm:p-6 lg:p-10 space-y-8 flex-1">{children}</main>
+        <main className="p-3 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 flex-1 w-full max-w-full overflow-x-hidden">{children}</main>
       </div>
 
       {/* Printable Order Receipt Modal */}

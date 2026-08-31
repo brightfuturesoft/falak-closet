@@ -267,7 +267,7 @@ export function AdminCreateOrderModal({
         </div>
 
         {/* Dual Panel Split View */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-y-auto lg:overflow-hidden">
           {/* LEFT PANEL: Product Catalog Grid & Search (7 Cols) */}
           <div className="lg:col-span-7 p-4 sm:p-5 flex flex-col gap-4 border-r border-stone-800 bg-stone-900/60 overflow-hidden">
             {/* Catalog Search & Category Filter Bar */}

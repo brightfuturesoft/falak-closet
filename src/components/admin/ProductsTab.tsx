@@ -795,8 +795,8 @@ export function ProductsTab({
             </label>
           </div>
 
-          <div className={`overflow-x-auto transition-opacity ${isLoading ? 'opacity-60 pointer-events-none' : ''}`}>
-            <table className="w-full text-left text-xs">
+          <div className={`overflow-x-auto pb-2 transition-opacity ${isLoading ? 'opacity-60 pointer-events-none' : ''}`}>
+            <table className="w-full text-left text-xs min-w-[700px]">
               <thead>
                 <tr className="border-b border-stone-200 text-stone-500 font-mono text-[11px]">
                   <SortableHeader label="Product" sortKey="name" activeKey={sortKey} dir={sortDir} onSort={handleSort} />
@@ -830,28 +830,30 @@ export function ProductsTab({
                 <ChevronLeft className="w-3.5 h-3.5" /> Prev
               </button>
 
-              {pagination.totalPages > 1 &&
-                pageWindow(pagination.page, pagination.totalPages).map((p, idx) =>
-                  p === '…' ? (
-                    <span key={`ellipsis-${idx}`} className="px-1.5 text-stone-400 text-xs font-mono">
-                      …
-                    </span>
-                  ) : (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setPage(p)}
-                      className={`min-w-8 h-8 px-2 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
-                        p === pagination.page
-                          ? 'bg-stone-900 text-white shadow-sm'
-                          : 'bg-stone-100 text-stone-700 hover:bg-stone-200 border border-stone-200'
-                      }`}
-                      aria-current={p === pagination.page ? 'page' : undefined}
-                    >
-                      {p}
-                    </button>
-                  )
-                )}
+              <div className="hidden sm:flex items-center gap-1">
+                {pagination.totalPages > 1 &&
+                  pageWindow(pagination.page, pagination.totalPages).map((p, idx) =>
+                    p === '…' ? (
+                      <span key={`ellipsis-${idx}`} className="px-1.5 text-stone-400 text-xs font-mono">
+                        …
+                      </span>
+                    ) : (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setPage(p)}
+                        className={`min-w-8 h-8 px-2 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
+                          p === pagination.page
+                            ? 'bg-stone-900 text-white shadow-sm'
+                            : 'bg-stone-100 text-stone-700 hover:bg-stone-200 border border-stone-200'
+                        }`}
+                        aria-current={p === pagination.page ? 'page' : undefined}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+              </div>
 
               <button
                 type="button"

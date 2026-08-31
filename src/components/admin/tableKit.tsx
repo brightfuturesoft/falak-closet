@@ -181,13 +181,13 @@ export function PaginationBar({
       <span className="text-[10px] font-mono text-stone-400">
         Page {pagination.page} of {pagination.totalPages} · {pagination.totalItems} total
       </span>
-      <div className="flex items-center gap-3">
-        <label className="flex items-center gap-2 text-[10px] font-mono text-stone-500 uppercase tracking-wide">
+      <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 sm:gap-3 w-full sm:w-auto">
+        <label className="flex items-center gap-1.5 text-[10px] font-mono text-stone-500 uppercase tracking-wide">
           Rows
           <select
             value={pagination.pageSize}
             onChange={(e) => onPageSize(Number(e.target.value))}
-            className="bg-stone-50 border border-stone-200 rounded-lg px-2 py-1.5 text-xs font-mono text-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900 cursor-pointer"
+            className="bg-stone-50 border border-stone-200 rounded-lg px-2 py-1 text-xs font-mono text-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900 cursor-pointer"
             title="Rows per page"
           >
             {pageSizeOptions.map((size) => (
@@ -209,28 +209,30 @@ export function PaginationBar({
             <ChevronLeft className="w-3.5 h-3.5" /> Prev
           </button>
 
-          {pagination.totalPages > 1 &&
-            pageWindow(pagination.page, pagination.totalPages).map((p, idx) =>
-              p === '…' ? (
-                <span key={`ellipsis-${idx}`} className="px-1.5 text-stone-400 text-xs font-mono">
-                  …
-                </span>
-              ) : (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => onPage(p)}
-                  className={`min-w-8 h-8 px-2 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
-                    p === pagination.page
-                      ? 'bg-stone-900 text-white shadow-sm'
-                      : 'bg-stone-100 text-stone-700 hover:bg-stone-200 border border-stone-200'
-                  }`}
-                  aria-current={p === pagination.page ? 'page' : undefined}
-                >
-                  {p}
-                </button>
-              )
-            )}
+          <div className="hidden sm:flex items-center gap-1">
+            {pagination.totalPages > 1 &&
+              pageWindow(pagination.page, pagination.totalPages).map((p, idx) =>
+                p === '…' ? (
+                  <span key={`ellipsis-${idx}`} className="px-1.5 text-stone-400 text-xs font-mono">
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => onPage(p)}
+                    className={`min-w-8 h-8 px-2 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
+                      p === pagination.page
+                        ? 'bg-stone-900 text-white shadow-sm'
+                        : 'bg-stone-100 text-stone-700 hover:bg-stone-200 border border-stone-200'
+                    }`}
+                    aria-current={p === pagination.page ? 'page' : undefined}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+          </div>
 
           <button
             type="button"

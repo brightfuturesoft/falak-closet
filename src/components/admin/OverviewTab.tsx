@@ -320,8 +320,8 @@ export function OverviewTab({
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+        <div className="overflow-x-auto pb-2">
+          <table className="w-full text-left text-xs min-w-[700px]">
             <thead>
               <tr className="border-b border-stone-200 text-stone-500 font-mono text-[11px]">
                 <th className="pb-3 font-semibold">Order ID</th>
