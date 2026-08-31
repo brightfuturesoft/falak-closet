@@ -193,6 +193,7 @@ model Product {
   reviewsList        ProductReview[]
 
   freeDeliveryQuantity Int?
+  weight               Float?             @default(0.5)
 
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
@@ -213,14 +214,20 @@ type OrderItem {
 // fullName/phone are the only fields the checkout always collects. The rest vary
 // by locale — this storefront sends district + fullAddress, not street/postalCode.
 type ShippingAddress {
-  fullName    String
-  phone       String
-  district    String?
-  fullAddress String?
-  street      String?
-  city        String?
-  country     String?
-  postalCode  String?
+  fullName       String
+  phone          String
+  district       String?
+  fullAddress    String?
+  street         String?
+  city           String?
+  country        String?
+  postalCode     String?
+  pathaoCityId   Int?
+  pathaoZoneId   Int?
+  pathaoAreaId   Int?
+  pathaoCityName String?
+  pathaoZoneName String?
+  pathaoAreaName String?
 }
 
 model Order {
@@ -260,6 +267,10 @@ model Order {
   paymentSenderNumber String?
   paymentTrxId        String?
   paymentStatus       String?
+
+  courierDeliveryFee  Float?
+  consignmentId       String?
+  courierStatus       String?
 
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt

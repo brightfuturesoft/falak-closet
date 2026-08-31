@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -72,6 +72,154 @@ function Field({
   );
 }
 
+/** Interactive searchable select dropdown for City, Zone, Area */
+function SearchableSelect({
+  label,
+  id,
+  options,
+  value,
+  onChange,
+  placeholder,
+  disabled = false,
+  required = false,
+  loading = false,
+  className = '',
+}: {
+  label: string;
+  id: string;
+  options: Array<{ value: number; label: string }>;
+  value: number | null;
+  onChange: (val: number | null) => void;
+  placeholder: string;
+  disabled?: boolean;
+  required?: boolean;
+  loading?: boolean;
+  className?: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const selectedOption = useMemo(
+    () => options.find((o) => o.value === value),
+    [options, value]
+  );
+
+  const filteredOptions = useMemo(() => {
+    if (!searchQuery.trim()) return options;
+    const q = searchQuery.toLowerCase().trim();
+    return options.filter((o) => o.label.toLowerCase().includes(q));
+  }, [options, searchQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={containerRef} className={`space-y-1.5 relative ${className}`}>
+      <label htmlFor={id} className="text-[11px] sm:text-xs font-bold text-stone-700 flex items-center justify-between">
+        <span>{label} {required && <span className="text-[#A80C14]">*</span>}</span>
+        {selectedOption && <span className="text-[10px] text-emerald-600 font-semibold">✓ Selected</span>}
+      </label>
+
+      {/* Hidden input for standard HTML form validation */}
+      <input
+        type="text"
+        id={id}
+        tabIndex={-1}
+        required={required}
+        value={value ? String(value) : ''}
+        onChange={() => {}}
+        className="sr-only"
+        aria-hidden="true"
+      />
+
+      <button
+        type="button"
+        disabled={disabled || loading}
+        onClick={() => {
+          setIsOpen((prev) => !prev);
+          setSearchQuery('');
+        }}
+        className={`w-full min-h-[44px] px-4 bg-stone-50 border rounded-2xl text-xs sm:text-sm text-left flex items-center justify-between gap-2 transition-all ${
+          isOpen
+            ? 'border-[#A80C14] ring-2 ring-[#A80C14]/20 bg-white shadow-sm'
+            : 'border-stone-200 hover:border-stone-300'
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+      >
+        <span className={`truncate ${selectedOption ? 'font-bold text-stone-900' : 'text-stone-400'}`}>
+          {loading ? 'Loading options…' : selectedOption ? selectedOption.label : placeholder}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-stone-400 shrink-0 transition-transform ${isOpen ? 'rotate-180 text-[#A80C14]' : ''}`} />
+      </button>
+
+      {/* Floating Search Dropdown Overlay */}
+      {isOpen && !disabled && (
+        <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-white border border-stone-200 rounded-2xl shadow-xl overflow-hidden animate-in fade-in-50 slide-in-from-top-2 duration-150">
+          <div className="p-2 border-b border-stone-100 bg-stone-50">
+            <div className="relative flex items-center">
+              <input
+                type="text"
+                autoFocus
+                placeholder={`Search ${label.toLowerCase()}…`}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-9 pl-3 pr-8 bg-white border border-stone-200 rounded-xl text-xs text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-[#A80C14]"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 text-stone-400 hover:text-stone-600 p-1"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="max-h-52 overflow-y-auto divide-y divide-stone-50 text-xs">
+            {filteredOptions.length === 0 ? (
+              <div className="p-4 text-center text-stone-400 text-[11px] font-medium">
+                No matching {label.toLowerCase()} found
+              </div>
+            ) : (
+              filteredOptions.map((opt) => {
+                const isSelected = opt.value === value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => {
+                      onChange(opt.value);
+                      setIsOpen(false);
+                      setSearchQuery('');
+                    }}
+                    className={`w-full px-4 py-2.5 text-left flex items-center justify-between transition-colors ${
+                      isSelected
+                        ? 'bg-[#FDF2F3] text-[#A80C14] font-bold'
+                        : 'text-stone-700 hover:bg-stone-50'
+                    }`}
+                  >
+                    <span>{opt.label}</span>
+                    {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#A80C14]" />}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function CheckoutClient() {
   const searchParams = useSearchParams();
   const {
@@ -138,10 +286,191 @@ export default function CheckoutClient() {
     return subtotal >= freeShippingThreshold ? 0 : cartShippingFee;
   }, [buyNowItems, cartShippingFee, subtotal, freeShippingThreshold]);
 
-  const totalAmount = useMemo(() => {
-    if (!buyNowItems) return cartTotalAmount;
-    return Math.max(0, subtotal + shippingFee);
-  }, [buyNowItems, cartTotalAmount, subtotal, shippingFee]);
+  // ── Pathao Dynamic Shipping State ──────────────────────────────────────────
+  const [pathaoCities, setPathaoCities] = useState<Array<{ city_id: number; city_name: string }>>([]);
+  const [pathaoZones, setPathaoZones] = useState<Array<{ zone_id: number; zone_name: string }>>([]);
+  const [pathaoAreas, setPathaoAreas] = useState<Array<{ area_id: number; area_name: string }>>([]);
+
+  const [selectedPathaoCityId, setSelectedPathaoCityId] = useState<number | null>(null);
+  const [selectedPathaoZoneId, setSelectedPathaoZoneId] = useState<number | null>(null);
+  const [selectedPathaoAreaId, setSelectedPathaoAreaId] = useState<number | null>(null);
+
+  const [isLoadingCities, setIsLoadingCities] = useState(false);
+  const [isLoadingZones, setIsLoadingZones] = useState(false);
+  const [isLoadingAreas, setIsLoadingAreas] = useState(false);
+  const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
+  const [pathaoShippingError, setPathaoShippingError] = useState<string | null>(null);
+
+  const [pathaoCourierFee, setPathaoCourierFee] = useState<number | null>(null);
+  const [pathaoCustomerFee, setPathaoCustomerFee] = useState<number | null>(null);
+  const [isPathaoFreeShipping, setIsPathaoFreeShipping] = useState<boolean>(false);
+
+  // Load Pathao Cities on Mount
+  useEffect(() => {
+    const fetchCities = async () => {
+      setIsLoadingCities(true);
+      try {
+        const res = await fetch('/api/shipping/pathao/cities');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.cities)) {
+          setPathaoCities(data.cities);
+        }
+      } catch (err) {
+        console.error('Failed to fetch Pathao cities:', err);
+      } finally {
+        setIsLoadingCities(false);
+      }
+    };
+    fetchCities();
+  }, []);
+
+  // Auto-fill Postal Code based on selected Pathao City & Zone
+  useEffect(() => {
+    if (!selectedPathaoCityId) return;
+
+    const ZONE_POSTAL_MAP: Record<number, string> = {
+      101: '1205', // Dhanmondi
+      102: '1230', // Uttara
+      103: '1212', // Gulshan
+      104: '1216', // Mirpur
+      105: '1207', // Mohammadpur
+      106: '1229', // Bashundhara
+      201: '4100', // Agrabad
+      202: '4000', // GEC
+      301: '3100', // Zindabazar
+    };
+
+    const CITY_POSTAL_MAP: Record<number, string> = {
+      1: '1200', // Dhaka
+      2: '4000', // Chattogram
+      3: '3100', // Sylhet
+      4: '9000', // Khulna
+      5: '6000', // Rajshahi
+      6: '8200', // Barishal
+      7: '5400', // Rangpur
+      8: '2200', // Mymensingh
+    };
+
+    const autoPostcode =
+      (selectedPathaoZoneId && ZONE_POSTAL_MAP[selectedPathaoZoneId]) ||
+      CITY_POSTAL_MAP[selectedPathaoCityId] ||
+      '1000';
+
+    setFormData((prev) => ({ ...prev, postalCode: autoPostcode }));
+  }, [selectedPathaoCityId, selectedPathaoZoneId]);
+
+  // Load Pathao Zones when City is selected
+  useEffect(() => {
+    if (!selectedPathaoCityId) {
+      setPathaoZones([]);
+      setSelectedPathaoZoneId(null);
+      setPathaoAreas([]);
+      setSelectedPathaoAreaId(null);
+      setPathaoCourierFee(null);
+      setPathaoCustomerFee(null);
+      return;
+    }
+
+    const fetchZones = async () => {
+      setIsLoadingZones(true);
+      setPathaoZones([]);
+      setSelectedPathaoZoneId(null);
+      setPathaoAreas([]);
+      setSelectedPathaoAreaId(null);
+      setPathaoCourierFee(null);
+      setPathaoCustomerFee(null);
+      try {
+        const res = await fetch(`/api/shipping/pathao/zones?cityId=${selectedPathaoCityId}`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.zones)) {
+          setPathaoZones(data.zones);
+        }
+      } catch (err) {
+        console.error('Failed to fetch Pathao zones:', err);
+      } finally {
+        setIsLoadingZones(false);
+      }
+    };
+    fetchZones();
+  }, [selectedPathaoCityId]);
+
+  // Load Pathao Areas and calculate price quote when Zone is selected
+  useEffect(() => {
+    if (!selectedPathaoCityId || !selectedPathaoZoneId) {
+      setPathaoAreas([]);
+      setSelectedPathaoAreaId(null);
+      setPathaoCourierFee(null);
+      setPathaoCustomerFee(null);
+      return;
+    }
+
+    const fetchAreas = async () => {
+      setIsLoadingAreas(true);
+      setPathaoAreas([]);
+      setSelectedPathaoAreaId(null);
+      try {
+        const res = await fetch(`/api/shipping/pathao/areas?zoneId=${selectedPathaoZoneId}`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.areas)) {
+          setPathaoAreas(data.areas);
+        }
+      } catch (err) {
+        console.error('Failed to fetch Pathao areas:', err);
+      } finally {
+        setIsLoadingAreas(false);
+      }
+    };
+    fetchAreas();
+
+    const fetchPriceQuote = async () => {
+      setIsCalculatingShipping(true);
+      setPathaoShippingError(null);
+      try {
+        const res = await fetch('/api/shipping/pathao/price-quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cityId: selectedPathaoCityId,
+            zoneId: selectedPathaoZoneId,
+            items: activeItems,
+            subtotal,
+          }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setPathaoCourierFee(data.courierDeliveryFee);
+          setPathaoCustomerFee(data.customerShippingFee);
+          setIsPathaoFreeShipping(data.isFreeShipping);
+        } else {
+          setPathaoShippingError(data.error || 'Failed to calculate delivery fee');
+          setPathaoCourierFee(null);
+          setPathaoCustomerFee(null);
+        }
+      } catch (err) {
+        console.error('Pathao quote fetch error:', err);
+        setPathaoShippingError('Unable to calculate shipping fee. Please check your network connection.');
+        setPathaoCourierFee(null);
+        setPathaoCustomerFee(null);
+      } finally {
+        setIsCalculatingShipping(false);
+      }
+    };
+    fetchPriceQuote();
+  }, [selectedPathaoCityId, selectedPathaoZoneId, activeItems, subtotal]);
+
+  // Effective shipping fee and total calculation incorporating Pathao dynamic pricing
+  const effectiveShippingFee = useMemo(() => {
+    if (pathaoCustomerFee !== null) {
+      return pathaoCustomerFee;
+    }
+    return shippingFee;
+  }, [pathaoCustomerFee, shippingFee]);
+
+  const effectiveTotalAmount = useMemo(() => {
+    return Math.max(0, subtotal - (buyNowItems ? 0 : discountAmount) + effectiveShippingFee);
+  }, [subtotal, buyNowItems, discountAmount, effectiveShippingFee]);
+
+  const totalAmount = effectiveTotalAmount;
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -306,37 +635,39 @@ export default function CheckoutClient() {
     setBkashError(null);
 
     try {
-      const orderPayload: {
-        items: typeof activeItems;
-        subtotal: number;
-        discount: number;
-        shippingFee: number;
-        total: number;
-        shippingAddress: typeof formData;
-        deliveryMethod: string;
-        paymentMethod: string;
-        userEmail?: string;
-        userIp: string;
-        deliveryZone: string;
-        deliverySubArea?: string;
-        paymentSenderNumber?: string;
-        paymentTrxId?: string;
-        paymentStatus?: string;
-        promoCode?: string;
-      } = {
+      const selectedCityObj = pathaoCities.find((c) => c.city_id === selectedPathaoCityId);
+      const selectedZoneObj = pathaoZones.find((z) => z.zone_id === selectedPathaoZoneId);
+      const selectedAreaObj = pathaoAreas.find((a) => a.area_id === selectedPathaoAreaId);
+
+      const updatedShippingAddress = {
+        ...formData,
+        city: selectedCityObj?.city_name || formData.city,
+        district: selectedCityObj?.city_name || formData.city,
+        pathaoCityId: selectedPathaoCityId || undefined,
+        pathaoZoneId: selectedPathaoZoneId || undefined,
+        pathaoAreaId: selectedPathaoAreaId || undefined,
+        pathaoCityName: selectedCityObj?.city_name || undefined,
+        pathaoZoneName: selectedZoneObj?.zone_name || undefined,
+        pathaoAreaName: selectedAreaObj?.area_name || undefined,
+      };
+
+      const orderPayload: Record<string, unknown> = {
         items: activeItems,
         subtotal,
         discount: buyNowItems ? 0 : discountAmount,
-        shippingFee,
+        shippingFee: effectiveShippingFee,
+        courierDeliveryFee: pathaoCourierFee || undefined,
         total: totalAmount,
-        shippingAddress: formData,
-        deliveryMethod: selectedZoneName + (selectedSubAreaName ? ` - ${selectedSubAreaName}` : ''),
+        shippingAddress: updatedShippingAddress,
+        deliveryMethod: selectedCityObj
+          ? `Pathao Express (${selectedCityObj.city_name}${selectedZoneObj ? ` - ${selectedZoneObj.zone_name}` : ''})`
+          : selectedZoneName + (selectedSubAreaName ? ` - ${selectedSubAreaName}` : ''),
         paymentMethod,
         userEmail,
         userIp,
-        deliveryZone: selectedZoneName,
-        deliverySubArea: selectedSubAreaName || undefined,
-        promoCode: appliedCoupon?.code || undefined
+        deliveryZone: selectedZoneObj?.zone_name || selectedZoneName,
+        deliverySubArea: selectedAreaObj?.area_name || selectedSubAreaName || undefined,
+        promoCode: appliedCoupon?.code || undefined,
       };
 
       if (paymentMethod === 'bKash Send Money (Manual)') {
@@ -355,7 +686,7 @@ export default function CheckoutClient() {
         orderPayload.paymentStatus = 'Pending';
       }
 
-      const order = await placeOrder(orderPayload);
+      const order = await placeOrder(orderPayload as any);
 
       trackEvent('purchase', {
         orderId: order.id,
@@ -655,11 +986,29 @@ export default function CheckoutClient() {
                     <span>-৳ {discountAmount}</span>
                   </div>
                 )}
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center text-xs">
                   <span>Delivery Fee</span>
-                  <span className="font-bold text-stone-900">
-                    {shippingFee === 0 ? <strong className="text-emerald-600 uppercase font-bold">Free</strong> : `৳ ${shippingFee}`}
-                  </span>
+                  <div className="text-right font-bold text-stone-900">
+                    {isCalculatingShipping ? (
+                      <span className="text-stone-400 italic text-[11px] flex items-center gap-1">
+                        <Truck className="w-3 h-3 animate-pulse" /> Calculating...
+                      </span>
+                    ) : effectiveShippingFee === 0 ? (
+                      <div className="flex flex-col items-end">
+                        <span className="text-emerald-600 uppercase font-extrabold">Free Shipping</span>
+                        {pathaoCourierFee !== null && (
+                          <span className="text-[10px] text-stone-400 line-through">৳ {pathaoCourierFee} (Courier Fee)</span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-end">
+                        <span>৳ {effectiveShippingFee}</span>
+                        {pathaoCourierFee !== null && (
+                          <span className="text-[9px] text-stone-400">Pathao Live Fee</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex justify-between text-base font-bold text-stone-900 pt-2 border-t border-[#F8D2D5]">
                   <span>Total</span>
@@ -670,7 +1019,7 @@ export default function CheckoutClient() {
               {/* Desktop CTA (mobile uses the sticky bottom bar) */}
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isCalculatingShipping}
                 className="hidden lg:flex w-full min-h-[52px] items-center justify-center bg-[#A80C14] hover:bg-[#8C0A10] active:scale-[0.99] text-white font-extrabold text-xs uppercase tracking-wider rounded-full transition-all shadow-md gap-2 cursor-pointer disabled:opacity-50"
               >
                 <span>{isSubmitting ? 'Processing Order…' : 'Complete Order'}</span>
@@ -687,10 +1036,15 @@ export default function CheckoutClient() {
         {/* Shipping Details */}
         <div className="lg:col-span-7 lg:order-1 space-y-5 lg:space-y-6">
           <section className="bg-white p-4 sm:p-6 rounded-3xl border border-[#F8D2D5] shadow-xs space-y-4">
-            <h2 className="font-bold text-base sm:text-lg text-stone-900 flex items-center gap-2">
-              <span className="w-7 h-7 rounded-full bg-[#A80C14]/10 text-[#A80C14] text-xs font-black flex items-center justify-center shrink-0">1</span>
-              Shipping &amp; Contact Details
-            </h2>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <h2 className="font-bold text-base sm:text-lg text-stone-900 flex items-center gap-2">
+                <span className="w-7 h-7 rounded-full bg-[#A80C14]/10 text-[#A80C14] text-xs font-black flex items-center justify-center shrink-0">1</span>
+                Shipping &amp; Contact Details
+              </h2>
+              <span className="px-2.5 py-1 bg-rose-50 border border-rose-200 rounded-full text-[10px] font-bold text-[#A80C14] flex items-center gap-1">
+                <Truck className="w-3 h-3" /> Pathao Express Courier
+              </span>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <Field
@@ -715,115 +1069,100 @@ export default function CheckoutClient() {
                 maxLength={11}
               />
 
+              {/* Pathao Searchable City Selection */}
+              <SearchableSelect
+                label="City / District"
+                id="co-pathao-city"
+                required
+                options={pathaoCities.map((city) => ({ value: city.city_id, label: city.city_name }))}
+                value={selectedPathaoCityId}
+                loading={isLoadingCities}
+                placeholder="-- Type to search Pathao City --"
+                onChange={(val) => {
+                  setSelectedPathaoCityId(val);
+                  if (val) {
+                    const cityObj = pathaoCities.find((c) => c.city_id === val);
+                    if (cityObj) {
+                      setFormData((prev) => ({ ...prev, city: cityObj.city_name }));
+                    }
+                  }
+                }}
+              />
+
+              {/* Pathao Searchable Zone Selection */}
+              <SearchableSelect
+                label="Zone"
+                id="co-pathao-zone"
+                required
+                disabled={!selectedPathaoCityId || isLoadingZones}
+                loading={isLoadingZones}
+                options={pathaoZones.map((zone) => ({ value: zone.zone_id, label: zone.zone_name }))}
+                value={selectedPathaoZoneId}
+                placeholder={!selectedPathaoCityId ? '-- Select City First --' : '-- Type to search Zone --'}
+                onChange={(val) => setSelectedPathaoZoneId(val)}
+              />
+
+              {/* Pathao Searchable Area Selection (Optional) */}
+              {pathaoAreas.length > 0 && (
+                <SearchableSelect
+                  label="Area / Post Office (Optional)"
+                  id="co-pathao-area"
+                  className="sm:col-span-2"
+                  disabled={isLoadingAreas}
+                  loading={isLoadingAreas}
+                  options={pathaoAreas.map((area) => ({ value: area.area_id, label: area.area_name }))}
+                  value={selectedPathaoAreaId}
+                  placeholder="-- Type to search specific area / post office --"
+                  onChange={(val) => setSelectedPathaoAreaId(val)}
+                />
+              )}
+
               <Field
-                label="Street Address"
+                label="Full Address (House, Road, Flat & Landmark)"
                 name="street"
                 value={formData.street}
                 onChange={handleInputChange}
-                placeholder="e.g. House 42, Road 11, Banani"
+                placeholder="e.g. House 42, Road 11, Flat 4B, near Abahani Field"
                 autoComplete="street-address"
                 className="sm:col-span-2"
               />
-
-              <Field
-                label="City / District"
-                name="city"
-                value={formData.city}
-                onChange={handleInputChange}
-                placeholder="e.g. Dhaka"
-                autoComplete="address-level2"
-              />
-
-              <Field
-                label="Postal Code"
-                name="postalCode"
-                value={formData.postalCode}
-                onChange={handleInputChange}
-                placeholder="e.g. 1213"
-                autoComplete="postal-code"
-                inputMode="numeric"
-              />
-            </div>
-            <p className="text-[10px] text-stone-400 leading-relaxed">
-              💡 Your district automatically picks the matching delivery zone below.
-            </p>
-          </section>
-
-          {/* Delivery Zone Selection */}
-          <section className="bg-white p-4 sm:p-6 rounded-3xl border border-[#F8D2D5] shadow-xs space-y-4">
-            <h2 className="font-bold text-base sm:text-lg text-stone-900 flex items-center gap-2">
-              <span className="w-7 h-7 rounded-full bg-[#A80C14]/10 text-[#A80C14] text-xs font-black flex items-center justify-center shrink-0">2</span>
-              Select Delivery Zone
-            </h2>
-            <div className="space-y-2.5 text-xs" role="radiogroup" aria-label="Delivery zone">
-              {deliveryZones.map((z) => {
-                const isSelected = selectedZoneId === z.id;
-                return (
-                  <label
-                    key={z.id}
-                    className={`flex items-center justify-between gap-3 min-h-[56px] p-3.5 rounded-2xl border cursor-pointer transition-all active:scale-[0.99] ${isSelected
-                      ? 'border-[#A80C14] bg-[#FDF2F3] text-[#A80C14] font-bold shadow-xs'
-                      : 'border-stone-200 text-stone-700 hover:border-[#F8D2D5]'
-                      }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <input
-                        type="radio"
-                        name="deliveryZone"
-                        checked={isSelected}
-                        onChange={() => setSelectedZone(z.id, null)}
-                        className="accent-[#A80C14] w-4 h-4 shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <p className="font-bold flex items-center gap-1.5 flex-wrap">
-                          {z.name}
-                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide ${isSelected ? 'bg-[#A80C14] text-white' : 'bg-stone-100 text-stone-500'}`}>
-                            {z.etaDays}
-                          </span>
-                        </p>
-                        <p className="text-[10px] text-stone-500 font-normal mt-0.5">Base shipping fee{isSelected && selectedZoneName === z.name ? ' · selected' : ''}</p>
-                      </div>
-                    </div>
-                    <span className="font-mono font-bold text-sm shrink-0">৳ {z.charge}</span>
-                  </label>
-                );
-              })}
             </div>
 
-            {/* Sub-areas Dropdown */}
-            {(() => {
-              const selectedZone = deliveryZones.find(z => z.id === selectedZoneId);
-              if (selectedZone?.subAreas && selectedZone.subAreas.length > 0) {
-                return (
-                  <div className="space-y-1.5 pt-1 text-xs">
-                    <label htmlFor="co-subarea" className="font-bold text-stone-700">
-                      Select Specific Delivery Area <span className="text-[#A80C14]">*</span>
-                    </label>
-                    <select
-                      id="co-subarea"
-                      value={selectedSubAreaId || ''}
-                      onChange={(e) => setSelectedZone(selectedZoneId!, e.target.value || null)}
-                      className="w-full min-h-[44px] px-4 bg-stone-50 border border-stone-200 rounded-2xl text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#A80C14] focus:border-transparent font-bold"
-                      required
-                    >
-                      <option value="">-- Choose Area (Custom rate overrides apply) --</option>
-                      {selectedZone.subAreas.map((sub: DeliverySubArea) => (
-                        <option key={sub.id} value={sub.id}>
-                          {sub.name} {sub.charge !== null ? `(৳ ${sub.charge})` : `(৳ ${selectedZone.charge})`}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                );
-              }
-              return null;
-            })()}
+            {/* Pathao Calculation Status Banner */}
+            {isCalculatingShipping && (
+              <div className="p-3 bg-stone-50 border border-stone-200 rounded-2xl text-xs text-stone-600 flex items-center gap-2">
+                <Truck className="w-4 h-4 text-[#A80C14] animate-bounce" />
+                <span>Fetching live Pathao courier delivery fee...</span>
+              </div>
+            )}
+
+            {pathaoShippingError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-700 flex items-center gap-2">
+                <span>⚠️ {pathaoShippingError}</span>
+              </div>
+            )}
+
+            {pathaoCourierFee !== null && !isCalculatingShipping && (
+              <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 space-y-1">
+                <div className="flex items-center justify-between font-bold">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Pathao Live Delivery Fee
+                  </span>
+                  <span className="font-mono text-sm">৳ {pathaoCourierFee}</span>
+                </div>
+                {isPathaoFreeShipping && (
+                  <p className="text-[11px] font-semibold text-emerald-700">
+                    🎉 Free Shipping threshold met! Your delivery fee is waived to ৳0.
+                  </p>
+                )}
+              </div>
+            )}
           </section>
 
           {/* Payment Option */}
           <section className="bg-white p-4 sm:p-6 rounded-3xl border border-[#F8D2D5] shadow-xs space-y-3">
             <h2 className="font-bold text-base sm:text-lg text-stone-900 flex items-center gap-2">
-              <span className="w-7 h-7 rounded-full bg-[#A80C14]/10 text-[#A80C14] text-xs font-black flex items-center justify-center shrink-0">3</span>
+              <span className="w-7 h-7 rounded-full bg-[#A80C14]/10 text-[#A80C14] text-xs font-black flex items-center justify-center shrink-0">2</span>
               Payment Option
             </h2>
 

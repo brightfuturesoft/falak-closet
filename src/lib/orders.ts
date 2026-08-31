@@ -76,6 +76,12 @@ export function serializeOrder(row: OrderRow) {
       city: opt(row.shippingAddress.city),
       country: opt(row.shippingAddress.country),
       postalCode: opt(row.shippingAddress.postalCode),
+      pathaoCityId: opt(row.shippingAddress.pathaoCityId),
+      pathaoZoneId: opt(row.shippingAddress.pathaoZoneId),
+      pathaoAreaId: opt(row.shippingAddress.pathaoAreaId),
+      pathaoCityName: opt(row.shippingAddress.pathaoCityName),
+      pathaoZoneName: opt(row.shippingAddress.pathaoZoneName),
+      pathaoAreaName: opt(row.shippingAddress.pathaoAreaName),
     },
     userEmail: opt(row.userEmail),
     userIp: opt(row.userIp),
@@ -89,6 +95,9 @@ export function serializeOrder(row: OrderRow) {
     paymentTrxId: opt(row.paymentTrxId),
     paymentStatus: opt(row.paymentStatus),
     promoCode: opt(row.promoCode),
+    courierDeliveryFee: opt(row.courierDeliveryFee),
+    consignmentId: opt(row.consignmentId),
+    courierStatus: opt(row.courierStatus),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -118,12 +127,11 @@ function toShippingAddress(value: unknown) {
   }
 
   const optional = (value: unknown): string | undefined => toStr(value) || undefined;
+  const optionalNum = (value: unknown): number | undefined => {
+    const n = typeof value === 'number' ? value : parseInt(String(value), 10);
+    return Number.isFinite(n) ? n : undefined;
+  };
 
-  // Built field-by-field rather than by spreading a computed-key helper: a
-  // `{ [k: string]: string }` spread leaks an index signature into the return
-  // type, and that collides with the `set?: never` arm of Prisma's composite
-  // create input. `undefined` means "not provided" to Prisma, so absent fields
-  // stay absent.
   return {
     fullName,
     phone,
@@ -133,6 +141,12 @@ function toShippingAddress(value: unknown) {
     city: optional(raw.city),
     country: optional(raw.country),
     postalCode: optional(raw.postalCode),
+    pathaoCityId: optionalNum(raw.pathaoCityId),
+    pathaoZoneId: optionalNum(raw.pathaoZoneId),
+    pathaoAreaId: optionalNum(raw.pathaoAreaId),
+    pathaoCityName: optional(raw.pathaoCityName),
+    pathaoZoneName: optional(raw.pathaoZoneName),
+    pathaoAreaName: optional(raw.pathaoAreaName),
   };
 }
 
@@ -150,6 +164,11 @@ export function buildOrderData(body: Raw): Prisma.OrderCreateInput {
   const subtotal = toNum(body.subtotal);
   const discount = toNum(body.discount);
   const shippingFee = toNum(body.shippingFee);
+
+  const optionalNum = (value: unknown): number | undefined => {
+    const n = typeof value === 'number' ? value : parseFloat(String(value));
+    return Number.isFinite(n) ? n : undefined;
+  };
 
   return {
     orderNumber: toStr(body.orderNumber) || toStr(body.id) || generateOrderNumber(),
@@ -175,6 +194,9 @@ export function buildOrderData(body: Raw): Prisma.OrderCreateInput {
     ...(toStr(body.paymentTrxId) ? { paymentTrxId: toStr(body.paymentTrxId) } : {}),
     ...(toStr(body.paymentStatus) ? { paymentStatus: toStr(body.paymentStatus) } : {}),
     ...(toStr(body.promoCode) ? { promoCode: toStr(body.promoCode) } : {}),
+    ...(optionalNum(body.courierDeliveryFee) !== undefined ? { courierDeliveryFee: optionalNum(body.courierDeliveryFee) } : {}),
+    ...(toStr(body.consignmentId) ? { consignmentId: toStr(body.consignmentId) } : {}),
+    ...(toStr(body.courierStatus) ? { courierStatus: toStr(body.courierStatus) } : {}),
   };
 }
 
