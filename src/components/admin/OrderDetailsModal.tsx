@@ -341,7 +341,7 @@ export function OrderDetailsModal({
 
         {/* Footer actions */}
         <div className="sticky bottom-0 bg-white/95 backdrop-blur border-t border-stone-200 px-5 sm:px-7 py-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-stone-400">
               Status
             </span>
@@ -357,7 +357,43 @@ export function OrderDetailsModal({
               ))}
             </select>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {(order as any).consignmentId ? (
+              <span className="px-3 py-1.5 bg-rose-50 border border-rose-200 text-[#9B050B] rounded-xl text-xs font-mono font-bold flex items-center gap-1.5">
+                <Truck className="w-3.5 h-3.5" /> Consignment: {(order as any).consignmentId}
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={async () => {
+                  const btn = document.getElementById(`btn-pathao-dispatch-${order.id}`);
+                  if (btn) btn.innerText = 'Dispatching…';
+                  try {
+                    const res = await fetch('/api/admin/orders/dispatch-pathao', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ orderId: order.id }),
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                      alert(`Successfully dispatched to Pathao!\nConsignment ID: ${data.consignmentId}`);
+                      onUpdateOrderStatus(order.id, 'Shipped');
+                    } else {
+                      alert(`Pathao Dispatch Error: ${data.error}`);
+                    }
+                  } catch (err) {
+                    alert('Network error while dispatching to Pathao');
+                  } finally {
+                    if (btn) btn.innerText = 'Dispatch to Pathao';
+                  }
+                }}
+                id={`btn-pathao-dispatch-${order.id}`}
+                className="px-4 py-2.5 bg-rose-900 hover:bg-rose-950 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-md inline-flex items-center gap-1.5"
+              >
+                <Truck className="w-3.5 h-3.5" /> Dispatch to Pathao
+              </button>
+            )}
+
             <button
               type="button"
               onClick={onClose}

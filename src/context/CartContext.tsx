@@ -41,6 +41,9 @@ export interface OrderRecord {
   status: 'Pending' | 'Processing' | 'Quality Checked' | 'Shipped' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
   userEmail?: string;
   userIp?: string;
+  courierDeliveryFee?: number;
+  consignmentId?: string;
+  courierStatus?: string;
   shippingAddress: {
     fullName: string;
     phone: string;
@@ -50,6 +53,12 @@ export interface OrderRecord {
     city?: string;
     country?: string;
     postalCode?: string;
+    pathaoCityId?: number;
+    pathaoZoneId?: number;
+    pathaoAreaId?: number;
+    pathaoCityName?: string;
+    pathaoZoneName?: string;
+    pathaoAreaName?: string;
   };
   deliveryMethod?: string;
   paymentMethod?: string;

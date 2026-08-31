@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { buildOrderData, serializeOrder, OrderValidationError, adjustStockForOrderItems } from '@/lib/orders';
 import { evaluatePromotion } from '@/lib/promotions';
+import { getPathaoDeliveryFee, calculateOrderWeight } from '@/lib/shipping/pathao';
+import { getStoreSettingsSafe } from '@/lib/siteSettings';
 
 function errorMessage(err: unknown) {
   return err instanceof Error ? err.message : 'Server error';
@@ -127,6 +129,30 @@ export async function POST(req: Request) {
     let warning: string | undefined = undefined;
 
     const subtotal = data.subtotal;
+
+    // Server-side Pathao delivery fee & free-shipping validation
+    const pathaoCityId = body.shippingAddress?.pathaoCityId;
+    const pathaoZoneId = body.shippingAddress?.pathaoZoneId;
+
+    if (pathaoCityId && pathaoZoneId) {
+      try {
+        const weight = calculateOrderWeight(data.items as any);
+        const quote = await getPathaoDeliveryFee({
+          cityId: parseInt(String(pathaoCityId), 10),
+          zoneId: parseInt(String(pathaoZoneId), 10),
+          weight,
+        });
+
+        const storeSettings = await getStoreSettingsSafe();
+        const isFreeShipping = subtotal > 0 && subtotal >= storeSettings.freeShippingThreshold;
+
+        data.courierDeliveryFee = quote.final_price;
+        data.shippingFee = isFreeShipping ? 0 : quote.final_price;
+      } catch (pathaoErr) {
+        console.error('[POST /api/orders] Pathao price calculation failed, preserving provided fee:', pathaoErr);
+      }
+    }
+
     const shippingFee = typeof data.shippingFee === 'number' ? data.shippingFee : 0;
 
     if (body.promoCode) {
@@ -155,7 +181,7 @@ export async function POST(req: Request) {
     } else {
       data.discount = 0;
       data.promoCode = null;
-      data.total = Math.max(0, subtotal + shippingFee);
+      data.total = Math.max(0, subtotal - (data.discount || 0) + shippingFee);
     }
 
     let order;
