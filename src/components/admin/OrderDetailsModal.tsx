@@ -23,6 +23,7 @@ import {
   Truck,
   Tag,
   Package,
+  ExternalLink,
 } from 'lucide-react';
 import { OrderRecord } from '@/context/CartContext';
 import { formatCurrency } from '@/lib/utils';
@@ -109,22 +110,22 @@ export function OrderDetailsModal({
   const orderDate = order.date
     ? !isNaN(new Date(order.date).getTime())
       ? new Date(order.date).toLocaleString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })
-      : order.date
-    : order.createdAt
-    ? new Date(order.createdAt).toLocaleString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
       })
-    : '—';
+      : order.date
+    : order.createdAt
+      ? new Date(order.createdAt).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+      : '—';
 
   /* Thumbnail: prefer the gallery for the chosen colour, else main gallery. */
   const itemThumb = (item: OrderRecord['items'][number]) => {
@@ -221,6 +222,21 @@ export function OrderDetailsModal({
                   {[order.deliveryZone, order.deliverySubArea].filter(Boolean).join(' › ')}
                 </p>
               )}
+              {order.consignmentId && (
+                <div className="pt-1">
+                  <a
+                    href={`https://merchant.pathao.com/courier/orders/${order.consignmentId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-[#9B050B] rounded-lg text-[11px] font-mono font-bold transition-colors group"
+                    title="View order in Pathao Merchant Portal"
+                  >
+                    <Truck className="w-3 h-3 text-[#9B050B]" />
+                    <span>Pathao: {order.consignmentId}</span>
+                    <ExternalLink className="w-3 h-3 text-[#9B050B] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  </a>
+                </div>
+              )}
             </div>
 
             {/* Payment */}
@@ -244,13 +260,12 @@ export function OrderDetailsModal({
               <p className="text-[11px] flex items-center gap-1.5">
                 <span className="text-stone-500">Status:</span>
                 <span
-                  className={`font-black uppercase tracking-wide text-[10px] ${
-                    order.paymentStatus === 'Verified'
+                  className={`font-black uppercase tracking-wide text-[10px] ${order.paymentStatus === 'Verified'
                       ? 'text-emerald-700'
                       : order.paymentStatus === 'Rejected'
-                      ? 'text-rose-700'
-                      : 'text-amber-700'
-                  }`}
+                        ? 'text-rose-700'
+                        : 'text-amber-700'
+                    }`}
                 >
                   {paymentStatusLabel}
                 </span>
@@ -366,16 +381,24 @@ export function OrderDetailsModal({
             </select>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            {(order as any).consignmentId ? (
-              <span className="px-3 py-1.5 bg-rose-50 border border-rose-200 text-[#9B050B] rounded-xl text-xs font-mono font-bold flex items-center gap-1.5">
-                <Truck className="w-3.5 h-3.5" /> Consignment: {(order as any).consignmentId}
-              </span>
+            {order.consignmentId ? (
+              <a
+                href={`https://merchant.pathao.com/courier/orders/${order.consignmentId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-[#9B050B] rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition-colors group"
+                title="Open order in Pathao Merchant Portal"
+              >
+                <Truck className="w-3.5 h-3.5 text-[#9B050B]" />
+                <span>Pathao: {order.consignmentId}</span>
+                <ExternalLink className="w-3.5 h-3.5 text-[#9B050B] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              </a>
             ) : (
               <button
                 type="button"
                 onClick={async () => {
                   const btn = document.getElementById(`btn-pathao-dispatch-${order.id}`);
-                  if (btn) btn.innerText = 'Dispatching…';
+                  if (btn) btn.innerText = 'Sending...';
                   try {
                     const res = await fetch('/api/admin/orders/dispatch-pathao', {
                       method: 'POST',
@@ -398,7 +421,7 @@ export function OrderDetailsModal({
                 id={`btn-pathao-dispatch-${order.id}`}
                 className="px-4 py-2.5 bg-rose-900 hover:bg-rose-950 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-md inline-flex items-center gap-1.5"
               >
-                <Truck className="w-3.5 h-3.5" /> Dispatch to Pathao
+                <Truck className="w-3.5 h-3.5" /> Send to Pathao
               </button>
             )}
 

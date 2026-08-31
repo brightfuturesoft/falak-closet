@@ -16,7 +16,7 @@ function bustZoneCache() {
 const DEFAULT_ZONES = [
   {
     name: 'Inside Dhaka',
-    charge: 60.0,
+    charge: 80.0,
     etaDays: '1-2 Days',
     isActive: true,
     sortOrder: 0,
@@ -28,11 +28,25 @@ const DEFAULT_ZONES = [
     ]
   },
   {
-    name: 'Outside Dhaka',
-    charge: 120.0,
-    etaDays: '2-4 Days',
+    name: 'Sub-area Dhaka',
+    charge: 100.0,
+    etaDays: '2-3 Days',
     isActive: true,
     sortOrder: 1,
+    subAreas: [
+      { id: 'sub-savar', name: 'Savar', charge: null },
+      { id: 'sub-gazipur', name: 'Gazipur', charge: null },
+      { id: 'sub-narayanganj', name: 'Narayanganj', charge: null },
+      { id: 'sub-tongi', name: 'Tongi', charge: null },
+      { id: 'sub-keraniganj', name: 'Keraniganj', charge: null }
+    ]
+  },
+  {
+    name: 'Outside Dhaka',
+    charge: 150.0,
+    etaDays: '3-5 Days',
+    isActive: true,
+    sortOrder: 2,
     subAreas: [
       { id: 'sub-chattogram', name: 'Chattogram', charge: null },
       { id: 'sub-sylhet', name: 'Sylhet', charge: null },

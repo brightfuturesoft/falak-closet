@@ -286,6 +286,15 @@ export default function CheckoutClient() {
     return subtotal >= freeShippingThreshold ? 0 : cartShippingFee;
   }, [buyNowItems, cartShippingFee, subtotal, freeShippingThreshold]);
 
+  const [formData, setFormData] = useState({
+    fullName: '',
+    phone: '',
+    street: '',
+    city: '',
+    country: 'Bangladesh',
+    postalCode: ''
+  });
+
   // ── Pathao Dynamic Shipping State ──────────────────────────────────────────
   const [pathaoCities, setPathaoCities] = useState<Array<{ city_id: number; city_name: string }>>([]);
   const [pathaoZones, setPathaoZones] = useState<Array<{ zone_id: number; zone_name: string }>>([]);
@@ -394,7 +403,24 @@ export default function CheckoutClient() {
     fetchZones();
   }, [selectedPathaoCityId]);
 
-  // Load Pathao Areas and calculate price quote when Zone is selected
+  // Auto-detect Pathao Zone from Full Address or default to first zone when zones arrive
+  useEffect(() => {
+    if (!pathaoZones || pathaoZones.length === 0) return;
+    const cleanStreet = (formData?.street || '').toLowerCase().trim();
+
+    const matchedZone = pathaoZones.find((z) => {
+      const zName = z.zone_name.toLowerCase();
+      return cleanStreet.includes(zName) || (cleanStreet && zName.includes(cleanStreet));
+    });
+
+    if (matchedZone) {
+      setSelectedPathaoZoneId(matchedZone.zone_id);
+    } else if (!selectedPathaoZoneId || !pathaoZones.some((z) => z.zone_id === selectedPathaoZoneId)) {
+      setSelectedPathaoZoneId(pathaoZones[0].zone_id);
+    }
+  }, [pathaoZones, formData?.street]);
+
+  // Load Pathao Areas and auto-detect Area from Full Address
   useEffect(() => {
     if (!selectedPathaoCityId || !selectedPathaoZoneId) {
       setPathaoAreas([]);
@@ -413,6 +439,16 @@ export default function CheckoutClient() {
         const data = await res.json();
         if (data.success && Array.isArray(data.areas)) {
           setPathaoAreas(data.areas);
+          const cleanStreet = (formData?.street || '').toLowerCase().trim();
+          const matchedArea = data.areas.find((a: { area_name: string }) => {
+            const aName = a.area_name.toLowerCase();
+            return cleanStreet.includes(aName);
+          });
+          if (matchedArea) {
+            setSelectedPathaoAreaId(matchedArea.area_id);
+          } else if (data.areas.length > 0) {
+            setSelectedPathaoAreaId(data.areas[0].area_id);
+          }
         }
       } catch (err) {
         console.error('Failed to fetch Pathao areas:', err);
@@ -421,65 +457,55 @@ export default function CheckoutClient() {
       }
     };
     fetchAreas();
+  }, [selectedPathaoCityId, selectedPathaoZoneId]);
 
-    const fetchPriceQuote = async () => {
-      setIsCalculatingShipping(true);
-      setPathaoShippingError(null);
-      try {
-        const res = await fetch('/api/shipping/pathao/price-quote', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            cityId: selectedPathaoCityId,
-            zoneId: selectedPathaoZoneId,
-            items: activeItems,
-            subtotal,
-          }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          setPathaoCourierFee(data.courierDeliveryFee);
-          setPathaoCustomerFee(data.customerShippingFee);
-          setIsPathaoFreeShipping(data.isFreeShipping);
-        } else {
-          setPathaoShippingError(data.error || 'Failed to calculate delivery fee');
-          setPathaoCourierFee(null);
-          setPathaoCustomerFee(null);
-        }
-      } catch (err) {
-        console.error('Pathao quote fetch error:', err);
-        setPathaoShippingError('Unable to calculate shipping fee. Please check your network connection.');
-        setPathaoCourierFee(null);
-        setPathaoCustomerFee(null);
-      } finally {
-        setIsCalculatingShipping(false);
-      }
-    };
-    fetchPriceQuote();
-  }, [selectedPathaoCityId, selectedPathaoZoneId, activeItems, subtotal]);
+  // ── Tiered Delivery Fee Calculation ───────────────────────────────────────
+  // Inside Dhaka: 80 taka, Sub area Dhaka: 100 taka, Outside Dhaka: 150 taka
+  const DHAKA_SUB_AREAS = useMemo(
+    () => [
+      'savar',
+      'gazipur',
+      'narayanganj',
+      'tongi',
+      'keraniganj',
+      'ashulia',
+      'dhamrai',
+      'bhedarganj',
+      'kaliakair',
+      'kapasia',
+      'sreepur',
+      'mirzapur',
+    ],
+    []
+  );
 
-  // Effective shipping fee and total calculation incorporating Pathao dynamic pricing
-  const effectiveShippingFee = useMemo(() => {
-    if (pathaoCustomerFee !== null) {
-      return pathaoCustomerFee;
-    }
-    return shippingFee;
-  }, [pathaoCustomerFee, shippingFee]);
+  const calculatedDeliveryFee = useMemo(() => {
+    if (subtotal >= freeShippingThreshold) return 0;
+
+    const cleanCity = (formData.city || '').toLowerCase().trim();
+    const cleanAddr = (formData.street || '').toLowerCase().trim();
+
+    // Check sub-area match first
+    const isSubArea = DHAKA_SUB_AREAS.some(
+      (sub) => cleanCity.includes(sub) || cleanAddr.includes(sub)
+    );
+    if (isSubArea) return 100;
+
+    // Check Dhaka core match
+    const isDhakaCore = cleanCity.includes('dhaka') || cleanAddr.includes('dhaka');
+    if (isDhakaCore) return 80;
+
+    // Outside Dhaka fallback (when city is empty or any non-Dhaka district)
+    return 150;
+  }, [formData.city, formData.street, subtotal, freeShippingThreshold, DHAKA_SUB_AREAS]);
+
+  const effectiveShippingFee = calculatedDeliveryFee;
 
   const effectiveTotalAmount = useMemo(() => {
     return Math.max(0, subtotal - (buyNowItems ? 0 : discountAmount) + effectiveShippingFee);
   }, [subtotal, buyNowItems, discountAmount, effectiveShippingFee]);
 
   const totalAmount = effectiveTotalAmount;
-
-  const [formData, setFormData] = useState({
-    fullName: '',
-    phone: '',
-    street: '',
-    city: '',
-    country: 'Bangladesh',
-    postalCode: ''
-  });
 
   const [userEmail, setUserEmail] = useState<string | undefined>(undefined);
   const [isIpBlocked, setIsIpBlocked] = useState(false);
@@ -989,24 +1015,10 @@ export default function CheckoutClient() {
                 <div className="flex justify-between items-center text-xs">
                   <span>Delivery Fee</span>
                   <div className="text-right font-bold text-stone-900">
-                    {isCalculatingShipping ? (
-                      <span className="text-stone-400 italic text-[11px] flex items-center gap-1">
-                        <Truck className="w-3 h-3 animate-pulse" /> Calculating...
-                      </span>
-                    ) : effectiveShippingFee === 0 ? (
-                      <div className="flex flex-col items-end">
-                        <span className="text-emerald-600 uppercase font-extrabold">Free Shipping</span>
-                        {pathaoCourierFee !== null && (
-                          <span className="text-[10px] text-stone-400 line-through">৳ {pathaoCourierFee} (Courier Fee)</span>
-                        )}
-                      </div>
+                    {effectiveShippingFee === 0 ? (
+                      <span className="text-emerald-600 uppercase font-extrabold">Free Shipping</span>
                     ) : (
-                      <div className="flex flex-col items-end">
-                        <span>৳ {effectiveShippingFee}</span>
-                        {pathaoCourierFee !== null && (
-                          <span className="text-[9px] text-stone-400">Pathao Live Fee</span>
-                        )}
-                      </div>
+                      <span>৳ {effectiveShippingFee}</span>
                     )}
                   </div>
                 </div>
@@ -1089,34 +1101,6 @@ export default function CheckoutClient() {
                 }}
               />
 
-              {/* Pathao Searchable Zone Selection */}
-              <SearchableSelect
-                label="Zone"
-                id="co-pathao-zone"
-                required
-                disabled={!selectedPathaoCityId || isLoadingZones}
-                loading={isLoadingZones}
-                options={pathaoZones.map((zone) => ({ value: zone.zone_id, label: zone.zone_name }))}
-                value={selectedPathaoZoneId}
-                placeholder={!selectedPathaoCityId ? '-- Select City First --' : '-- Type to search Zone --'}
-                onChange={(val) => setSelectedPathaoZoneId(val)}
-              />
-
-              {/* Pathao Searchable Area Selection (Optional) */}
-              {pathaoAreas.length > 0 && (
-                <SearchableSelect
-                  label="Area / Post Office (Optional)"
-                  id="co-pathao-area"
-                  className="sm:col-span-2"
-                  disabled={isLoadingAreas}
-                  loading={isLoadingAreas}
-                  options={pathaoAreas.map((area) => ({ value: area.area_id, label: area.area_name }))}
-                  value={selectedPathaoAreaId}
-                  placeholder="-- Type to search specific area / post office --"
-                  onChange={(val) => setSelectedPathaoAreaId(val)}
-                />
-              )}
-
               <Field
                 label="Full Address (House, Road, Flat & Landmark)"
                 name="street"
@@ -1128,35 +1112,20 @@ export default function CheckoutClient() {
               />
             </div>
 
-            {/* Pathao Calculation Status Banner */}
-            {isCalculatingShipping && (
-              <div className="p-3 bg-stone-50 border border-stone-200 rounded-2xl text-xs text-stone-600 flex items-center gap-2">
-                <Truck className="w-4 h-4 text-[#A80C14] animate-bounce" />
-                <span>Fetching live Pathao courier delivery fee...</span>
+            {/* Delivery Fee Info Banner */}
+            <div className="p-3.5 bg-rose-50/60 border border-[#F8D2D5] rounded-2xl text-xs text-stone-700 space-y-1">
+              <div className="flex items-center justify-between font-bold text-stone-900">
+                <span className="flex items-center gap-1.5 text-[#A80C14]">
+                  <Truck className="w-4 h-4" /> Standard Delivery Rates
+                </span>
+                <span className="font-mono font-bold text-xs text-[#A80C14]">
+                  {effectiveShippingFee === 0 ? 'Free Shipping' : `৳ ${effectiveShippingFee}`}
+                </span>
               </div>
-            )}
-
-            {pathaoShippingError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-700 flex items-center gap-2">
-                <span>⚠️ {pathaoShippingError}</span>
-              </div>
-            )}
-
-            {pathaoCourierFee !== null && !isCalculatingShipping && (
-              <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 space-y-1">
-                <div className="flex items-center justify-between font-bold">
-                  <span className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Pathao Live Delivery Fee
-                  </span>
-                  <span className="font-mono text-sm">৳ {pathaoCourierFee}</span>
-                </div>
-                {isPathaoFreeShipping && (
-                  <p className="text-[11px] font-semibold text-emerald-700">
-                    🎉 Free Shipping threshold met! Your delivery fee is waived to ৳0.
-                  </p>
-                )}
-              </div>
-            )}
+              <p className="text-[11px] text-stone-500">
+                Inside Dhaka: <strong>৳80</strong> • Sub-area Dhaka: <strong>৳100</strong> • Outside Dhaka: <strong>৳150</strong>
+              </p>
+            </div>
           </section>
 
           {/* Payment Option */}

@@ -39,6 +39,7 @@ export interface PathaoPriceQuoteRequest {
   cityId: number;
   zoneId: number;
   areaId?: number;
+  recipientAddress?: string;
   weight: number;
   deliveryType?: number;
   itemType?: number;
@@ -422,8 +423,18 @@ export async function getPathaoDeliveryFee(
     console.warn('[Pathao] Live price quote failed, using calculated test rate:', err);
   }
 
-  // Testing fallback fee calculation: 60 BDT for Dhaka (city 1), 120 BDT outside Dhaka
-  const basePrice = req.cityId === 1 ? 60 : 120;
+  // Fallback fee calculation: 80 BDT for Dhaka core, 100 BDT for Dhaka Sub-area, 150 BDT Outside Dhaka
+  const cleanAddr = (req.recipientAddress || '').toLowerCase();
+  const isDhakaSubArea =
+    req.cityId === 1 &&
+    (cleanAddr.includes('savar') ||
+      cleanAddr.includes('gazipur') ||
+      cleanAddr.includes('tongi') ||
+      cleanAddr.includes('narayanganj') ||
+      cleanAddr.includes('keraniganj') ||
+      cleanAddr.includes('ashulia') ||
+      cleanAddr.includes('dhamrai'));
+  const basePrice = req.cityId === 1 ? (isDhakaSubArea ? 100 : 80) : 150;
   const extraWeightFee = req.weight > 0.5 ? Math.ceil((req.weight - 0.5) * 20) : 0;
   const finalPrice = basePrice + extraWeightFee;
 
