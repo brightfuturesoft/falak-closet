@@ -135,7 +135,7 @@ function SearchableSelect({
         tabIndex={-1}
         required={required}
         value={value ? String(value) : ''}
-        onChange={() => {}}
+        onChange={() => { }}
         className="sr-only"
         aria-hidden="true"
       />
@@ -147,11 +147,10 @@ function SearchableSelect({
           setIsOpen((prev) => !prev);
           setSearchQuery('');
         }}
-        className={`w-full min-h-[44px] px-4 bg-stone-50 border rounded-2xl text-xs sm:text-sm text-left flex items-center justify-between gap-2 transition-all ${
-          isOpen
-            ? 'border-[#A80C14] ring-2 ring-[#A80C14]/20 bg-white shadow-sm'
-            : 'border-stone-200 hover:border-stone-300'
-        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+        className={`w-full min-h-[44px] px-4 bg-stone-50 border rounded-2xl text-xs sm:text-sm text-left flex items-center justify-between gap-2 transition-all ${isOpen
+          ? 'border-[#A80C14] ring-2 ring-[#A80C14]/20 bg-white shadow-sm'
+          : 'border-stone-200 hover:border-stone-300'
+          } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       >
         <span className={`truncate ${selectedOption ? 'font-bold text-stone-900' : 'text-stone-400'}`}>
           {loading ? 'Loading options…' : selectedOption ? selectedOption.label : placeholder}
@@ -201,11 +200,10 @@ function SearchableSelect({
                       setIsOpen(false);
                       setSearchQuery('');
                     }}
-                    className={`w-full px-4 py-2.5 text-left flex items-center justify-between transition-colors ${
-                      isSelected
-                        ? 'bg-[#FDF2F3] text-[#A80C14] font-bold'
-                        : 'text-stone-700 hover:bg-stone-50'
-                    }`}
+                    className={`w-full px-4 py-2.5 text-left flex items-center justify-between transition-colors ${isSelected
+                      ? 'bg-[#FDF2F3] text-[#A80C14] font-bold'
+                      : 'text-stone-700 hover:bg-stone-50'
+                      }`}
                   >
                     <span>{opt.label}</span>
                     {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#A80C14]" />}
@@ -1053,9 +1051,6 @@ export default function CheckoutClient() {
                 <span className="w-7 h-7 rounded-full bg-[#A80C14]/10 text-[#A80C14] text-xs font-black flex items-center justify-center shrink-0">1</span>
                 Shipping &amp; Contact Details
               </h2>
-              <span className="px-2.5 py-1 bg-rose-50 border border-rose-200 rounded-full text-[10px] font-bold text-[#A80C14] flex items-center gap-1">
-                <Truck className="w-3 h-3" /> Pathao Express Courier
-              </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
