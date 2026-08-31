@@ -21,8 +21,17 @@ function errorMessage(err: unknown) {
 //   sort:   date | total   dir: asc | desc
 //   pageSize caps at 100 for views and 500 for CSV export.
 const STATUS_FILTERS = [
-  'All', 'Unverified Payments', 'Pending', 'Processing', 'Quality Checked',
-  'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled',
+  'All',
+  'Unverified Payments',
+  'Pending Payment',
+  'Processing',
+  'On Hold',
+  'Shipped',
+  'Delivered',
+  'Completed',
+  'Cancelled',
+  'Refunded',
+  'Failed',
 ] as const;
 const ORDER_SORTS = ['date', 'total'] as const;
 
@@ -61,8 +70,14 @@ export async function GET(req: NextRequest) {
       if (counts[o.status] !== undefined) counts[o.status] += 1;
       if (isUnverified(o)) counts['Unverified Payments'] += 1;
       revenue += o.total;
-      if (o.status === 'Delivered') delivered += 1;
-      if (o.status === 'Pending' || o.status === 'Processing' || o.status === 'Quality Checked') {
+      if (o.status === 'Delivered' || o.status === 'Completed') delivered += 1;
+      if (
+        o.status === 'Pending Payment' ||
+        o.status === 'Pending' ||
+        o.status === 'Processing' ||
+        o.status === 'On Hold' ||
+        o.status === 'Quality Checked'
+      ) {
         pendingFulfillment += 1;
       }
     }
@@ -276,16 +291,17 @@ export async function PATCH(req: Request) {
     if (status !== undefined) updateData.status = String(status);
     if (paymentStatus !== undefined) updateData.paymentStatus = String(paymentStatus);
 
-    // If order status changes to or from 'Cancelled', adjust stock accordingly
+    // If order status changes to or from restock statuses ('Cancelled', 'Refunded', 'Failed'), adjust stock accordingly
     if (status !== undefined && String(status) !== existing.status) {
       const newStatus = String(status);
       const oldStatus = existing.status;
+      const isRestock = (st: string) => st === 'Cancelled' || st === 'Refunded' || st === 'Failed';
 
       try {
-        if (newStatus === 'Cancelled' && oldStatus !== 'Cancelled') {
+        if (isRestock(newStatus) && !isRestock(oldStatus)) {
           // Restock items back to inventory
           await adjustStockForOrderItems(existing.items, 'increase');
-        } else if (oldStatus === 'Cancelled' && newStatus !== 'Cancelled') {
+        } else if (!isRestock(newStatus) && isRestock(oldStatus)) {
           // Re-deduct items from inventory
           await adjustStockForOrderItems(existing.items, 'decrease');
         }

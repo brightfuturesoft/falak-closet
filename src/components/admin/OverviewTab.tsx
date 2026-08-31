@@ -21,6 +21,8 @@ import { OrderRecord } from '@/context/CartContext';
 import { Product } from '@/data/products';
 import { formatCurrency } from '@/lib/utils';
 
+import { ORDER_STATUSES } from '@/lib/orders';
+
 interface OverviewTabProps {
   orders: OrderRecord[];
   products: Product[];
@@ -39,7 +41,12 @@ export function OverviewTab({
   const grossRevenue = orders.reduce((sum, o) => sum + o.total, 0);
   const totalOrdersCount = orders.length;
   const pendingShipments = orders.filter(
-    (o) => o.status === 'Processing' || o.status === 'Quality Checked' || o.status === 'Pending'
+    (o) =>
+      o.status === 'Processing' ||
+      o.status === 'On Hold' ||
+      o.status === 'Pending Payment' ||
+      o.status === 'Pending' ||
+      o.status === 'Quality Checked'
   );
   const avgOrderValue = totalOrdersCount > 0 ? grossRevenue / totalOrdersCount : 4990;
 
@@ -368,14 +375,16 @@ export function OverviewTab({
                       onChange={(e) =>
                         onUpdateOrderStatus(order.id, e.target.value as OrderRecord['status'])
                       }
-                      className="bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1 text-[11px] font-bold text-stone-800 focus:outline-none focus:ring-1 focus:ring-stone-900"
+                      className="bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1 text-[11px] font-bold text-stone-800 focus:outline-none focus:ring-1 focus:ring-stone-900 cursor-pointer"
                     >
-                      <option value="Pending">Pending</option>
-                      <option value="Processing">Processing</option>
-                      <option value="Quality Checked">Quality Checked</option>
-                      <option value="Shipped">Shipped</option>
-                      <option value="Delivered">Delivered</option>
-                      <option value="Cancelled">Cancelled</option>
+                      {ORDER_STATUSES.map((st) => (
+                        <option key={st} value={st}>
+                          {st}
+                        </option>
+                      ))}
+                      {!ORDER_STATUSES.includes(order.status as any) && (
+                        <option value={order.status}>{order.status}</option>
+                      )}
                     </select>
                   </td>
                   <td className="py-4 text-right">

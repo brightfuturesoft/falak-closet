@@ -64,18 +64,27 @@ function SafeImage({ src, alt, className }: { src: string; alt: string; classNam
 /* Status → semantic color pill */
 function statusPillClass(status: string) {
   switch (status) {
+    case 'Completed':
     case 'Delivered':
       return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-    case 'Out for Delivery':
-      return 'bg-violet-50 text-violet-700 border-violet-200';
     case 'Shipped':
+    case 'Out for Delivery':
       return 'bg-sky-50 text-sky-700 border-sky-200';
+    case 'On Hold':
     case 'Quality Checked':
-      return 'bg-teal-50 text-teal-700 border-teal-200';
+      return 'bg-purple-50 text-purple-700 border-purple-200';
     case 'Processing':
       return 'bg-amber-50 text-amber-700 border-amber-200';
-    default:
+    case 'Pending Payment':
+    case 'Pending':
+      return 'bg-yellow-50 text-yellow-800 border-yellow-200';
+    case 'Refunded':
+      return 'bg-stone-100 text-stone-700 border-stone-300';
+    case 'Cancelled':
+    case 'Failed':
       return 'bg-[#FDF2F3] text-[#A80C14] border-[#F8D2D5]';
+    default:
+      return 'bg-stone-100 text-stone-800 border-stone-300';
   }
 }
 
@@ -133,21 +142,27 @@ function TrackContent() {
 
   const statusSteps = [
     { title: 'Order Placed', desc: 'Received & logged', icon: PackageCheck },
-    { title: 'Processing', desc: 'Quality check & tailoring', icon: Clock },
-    { title: 'Quality Checked', desc: 'Passed verification', icon: CheckCircle2 },
+    { title: 'Processing', desc: 'Packaging & fulfillment', icon: Clock },
     { title: 'Shipped', desc: 'Dispatched via courier', icon: Truck },
-    { title: 'Out for Delivery', desc: 'With courier rider', icon: MapPin },
-    { title: 'Delivered', desc: 'Received at doorstep', icon: CheckCircle2 },
+    { title: 'Delivered', desc: 'Received at doorstep', icon: MapPin },
+    { title: 'Completed', desc: 'Order completed', icon: CheckCircle2 },
   ];
 
   const getStepIndex = (status: OrderRecord['status']) => {
     switch (status) {
-      case 'Processing': return 1;
-      case 'Quality Checked': return 2;
-      case 'Shipped': return 3;
-      case 'Out for Delivery': return 4;
-      case 'Delivered': return 5;
-      default: return 0;
+      case 'Processing':
+      case 'On Hold':
+      case 'Quality Checked':
+        return 1;
+      case 'Shipped':
+      case 'Out for Delivery':
+        return 2;
+      case 'Delivered':
+        return 3;
+      case 'Completed':
+        return 4;
+      default:
+        return 0;
     }
   };
 

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { OrderRecord } from '@/context/CartContext';
 import { formatCurrency } from '@/lib/utils';
+import { ORDER_STATUSES } from '@/lib/orders';
 import { OrderDetailsModal } from '@/components/admin/OrderDetailsModal';
 
 interface OrdersTabProps {
@@ -47,8 +48,17 @@ type SortDir = 'asc' | 'desc';
 
 const PAGE_SIZE_OPTIONS = [8, 16, 24];
 const STATUS_PILLS = [
-  'All', 'Unverified Payments', 'Pending', 'Processing', 'Quality Checked',
-  'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled',
+  'All',
+  'Unverified Payments',
+  'Pending Payment',
+  'Processing',
+  'On Hold',
+  'Shipped',
+  'Delivered',
+  'Completed',
+  'Cancelled',
+  'Refunded',
+  'Failed',
 ] as const;
 
 // ─── Small building blocks ────────────────────────────────────────────────────
@@ -137,15 +147,23 @@ function pageWindow(current: number, total: number, span = 5): (number | '…')[
 const statusBadgeStyle = (status: OrderRecord['status']) => {
   switch (status) {
     case 'Delivered':
+    case 'Completed':
       return 'bg-emerald-100 text-emerald-800 border-emerald-300';
     case 'Shipped':
     case 'Out for Delivery':
       return 'bg-blue-100 text-blue-800 border-blue-300';
+    case 'On Hold':
     case 'Quality Checked':
       return 'bg-purple-100 text-purple-800 border-purple-300';
     case 'Processing':
       return 'bg-amber-100 text-amber-800 border-amber-300';
+    case 'Pending Payment':
+    case 'Pending':
+      return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+    case 'Refunded':
+      return 'bg-stone-100 text-stone-700 border-stone-300';
     case 'Cancelled':
+    case 'Failed':
       return 'bg-rose-100 text-rose-800 border-rose-300';
     default:
       return 'bg-stone-100 text-stone-800 border-stone-300';
@@ -484,13 +502,16 @@ export function OrdersTab({
           onChange={(e) => handleStatusChange(order.id, e.target.value as OrderRecord['status'])}
           className={`border rounded-lg px-2.5 py-1 text-[11px] font-bold focus:outline-none focus:ring-1 focus:ring-stone-900 cursor-pointer ${statusBadgeStyle(order.status)}`}
         >
-          <option value="Pending" className="bg-white text-stone-800">Pending</option>
-          <option value="Processing" className="bg-white text-amber-800">Processing</option>
-          <option value="Quality Checked" className="bg-white text-purple-800">Quality Checked</option>
-          <option value="Shipped" className="bg-white text-blue-800">Shipped</option>
-          <option value="Out for Delivery" className="bg-white text-blue-800">Out for Delivery</option>
-          <option value="Delivered" className="bg-white text-emerald-800">Delivered</option>
-          <option value="Cancelled" className="bg-white text-rose-800">Cancelled</option>
+          {ORDER_STATUSES.map((st) => (
+            <option key={st} value={st} className="bg-white text-stone-800">
+              {st}
+            </option>
+          ))}
+          {!ORDER_STATUSES.includes(order.status as any) && (
+            <option value={order.status} className="bg-white text-stone-800">
+              {order.status}
+            </option>
+          )}
         </select>
       </td>
 
@@ -581,13 +602,16 @@ export function OrdersTab({
           onChange={(e) => handleStatusChange(order.id, e.target.value as OrderRecord['status'])}
           className={`flex-1 border rounded-xl px-2.5 py-2 text-[11px] font-bold focus:outline-none cursor-pointer ${statusBadgeStyle(order.status)}`}
         >
-          <option value="Pending">Pending</option>
-          <option value="Processing">Processing</option>
-          <option value="Quality Checked">Quality Checked</option>
-          <option value="Shipped">Shipped</option>
-          <option value="Out for Delivery">Out for Delivery</option>
-          <option value="Delivered">Delivered</option>
-          <option value="Cancelled">Cancelled</option>
+          {ORDER_STATUSES.map((st) => (
+            <option key={st} value={st} className="bg-white text-stone-800">
+              {st}
+            </option>
+          ))}
+          {!ORDER_STATUSES.includes(order.status as any) && (
+            <option value={order.status} className="bg-white text-stone-800">
+              {order.status}
+            </option>
+          )}
         </select>
         {order.paymentMethod === 'bKash Send Money (Manual)' && order.paymentStatus === 'Pending' && (
           <button

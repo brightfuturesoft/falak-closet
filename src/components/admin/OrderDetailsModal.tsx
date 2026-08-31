@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { OrderRecord } from '@/context/CartContext';
 import { formatCurrency } from '@/lib/utils';
+import { ORDER_STATUSES } from '@/lib/orders';
 
 interface OrderDetailsModalProps {
   order: OrderRecord;
@@ -35,27 +36,28 @@ interface OrderDetailsModalProps {
   onPrintReceipt: (order: OrderRecord) => void;
 }
 
-const STATUS_OPTIONS: OrderRecord['status'][] = [
-  'Pending',
-  'Processing',
-  'Quality Checked',
-  'Shipped',
-  'Delivered',
-  'Cancelled',
-];
+const STATUS_OPTIONS: OrderRecord['status'][] = [...ORDER_STATUSES];
 
 function statusBadgeStyle(status: OrderRecord['status']) {
   switch (status) {
     case 'Delivered':
+    case 'Completed':
       return 'bg-emerald-100 text-emerald-800 border-emerald-300';
     case 'Shipped':
     case 'Out for Delivery':
       return 'bg-blue-100 text-blue-800 border-blue-300';
+    case 'On Hold':
     case 'Quality Checked':
       return 'bg-purple-100 text-purple-800 border-purple-300';
     case 'Processing':
       return 'bg-amber-100 text-amber-800 border-amber-300';
+    case 'Pending Payment':
+    case 'Pending':
+      return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+    case 'Refunded':
+      return 'bg-stone-100 text-stone-700 border-stone-300';
     case 'Cancelled':
+    case 'Failed':
       return 'bg-rose-100 text-rose-800 border-rose-300';
     default:
       return 'bg-stone-100 text-stone-800 border-stone-300';
