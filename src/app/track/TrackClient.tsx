@@ -69,20 +69,27 @@ function statusPillClass(status: string) {
       return 'bg-emerald-50 text-emerald-700 border-emerald-200';
     case 'Shipped':
     case 'Out for Delivery':
+    case 'Ready for Shipment':
+    case 'Packed':
       return 'bg-sky-50 text-sky-700 border-sky-200';
+    case 'Confirmed':
+    case 'Processing':
+      return 'bg-purple-50 text-purple-700 border-purple-200';
+    case 'Pending':
+    case 'Payment Pending':
+    case 'Refund Processing':
+    case 'Return Requested':
     case 'On Hold':
     case 'Quality Checked':
-      return 'bg-purple-50 text-purple-700 border-purple-200';
-    case 'Processing':
       return 'bg-amber-50 text-amber-700 border-amber-200';
-    case 'Pending Payment':
-    case 'Pending':
-      return 'bg-yellow-50 text-yellow-800 border-yellow-200';
-    case 'Refunded':
-      return 'bg-stone-100 text-stone-700 border-stone-300';
     case 'Cancelled':
+    case 'Payment Failed':
+    case 'Failed Delivery':
     case 'Failed':
       return 'bg-[#FDF2F3] text-[#A80C14] border-[#F8D2D5]';
+    case 'Returned':
+    case 'Refunded':
+      return 'bg-stone-100 text-stone-700 border-stone-300';
     default:
       return 'bg-stone-100 text-stone-800 border-stone-300';
   }
@@ -141,26 +148,33 @@ function TrackContent() {
   };
 
   const statusSteps = [
-    { title: 'Order Placed', desc: 'Received & logged', icon: PackageCheck },
+    { title: 'Pending', desc: 'Received & logged', icon: PackageCheck },
+    { title: 'Confirmed', desc: 'Order confirmed', icon: CheckCircle2 },
     { title: 'Processing', desc: 'Packaging & fulfillment', icon: Clock },
     { title: 'Shipped', desc: 'Dispatched via courier', icon: Truck },
-    { title: 'Delivered', desc: 'Received at doorstep', icon: MapPin },
+    { title: 'Out for Delivery', desc: 'Courier rider on the way', icon: MapPin },
+    { title: 'Delivered', desc: 'Received at doorstep', icon: CheckCircle2 },
     { title: 'Completed', desc: 'Order completed', icon: CheckCircle2 },
   ];
 
   const getStepIndex = (status: OrderRecord['status']) => {
     switch (status) {
+      case 'Confirmed':
+        return 1;
       case 'Processing':
+      case 'Packed':
+      case 'Ready for Shipment':
       case 'On Hold':
       case 'Quality Checked':
-        return 1;
-      case 'Shipped':
-      case 'Out for Delivery':
         return 2;
-      case 'Delivered':
+      case 'Shipped':
         return 3;
-      case 'Completed':
+      case 'Out for Delivery':
         return 4;
+      case 'Delivered':
+        return 5;
+      case 'Completed':
+        return 6;
       default:
         return 0;
     }

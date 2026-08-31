@@ -151,20 +151,26 @@ const statusBadgeStyle = (status: OrderRecord['status']) => {
       return 'bg-emerald-100 text-emerald-800 border-emerald-300';
     case 'Shipped':
     case 'Out for Delivery':
-      return 'bg-blue-100 text-blue-800 border-blue-300';
+    case 'Ready for Shipment':
+    case 'Packed':
+      return 'bg-sky-100 text-sky-800 border-sky-300';
+    case 'Confirmed':
+    case 'Processing':
+      return 'bg-purple-100 text-purple-800 border-purple-300';
+    case 'Pending':
+    case 'Payment Pending':
+    case 'Refund Processing':
+    case 'Return Requested':
     case 'On Hold':
     case 'Quality Checked':
-      return 'bg-purple-100 text-purple-800 border-purple-300';
-    case 'Processing':
       return 'bg-amber-100 text-amber-800 border-amber-300';
-    case 'Pending Payment':
-    case 'Pending':
-      return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-    case 'Refunded':
-      return 'bg-stone-100 text-stone-700 border-stone-300';
     case 'Cancelled':
-    case 'Failed':
+    case 'Payment Failed':
+    case 'Failed Delivery':
       return 'bg-rose-100 text-rose-800 border-rose-300';
+    case 'Returned':
+    case 'Refunded':
+      return 'bg-stone-200 text-stone-800 border-stone-400';
     default:
       return 'bg-stone-100 text-stone-800 border-stone-300';
   }

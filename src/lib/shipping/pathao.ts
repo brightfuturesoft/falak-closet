@@ -3,8 +3,9 @@
  *
  * Keeps all Pathao merchant API credentials, token management, location reads,
  * delivery price calculation, and order/shipment creation isolated on the server.
- * NEVER expose credentials or tokens to the frontend client.
  */
+
+import type { ORDER_STATUSES } from '@/lib/orders';
 
 export const PATHAO_DELIVERY_TYPES = {
   NORMAL: 48,
@@ -502,10 +503,10 @@ export async function createPathaoShipment(
 }
 
 /**
- * Maps Pathao courier status string to Falak Closet internal Order.status and paymentStatus.
+ * Maps Pathao courier status string to Falak Closet internal Order status and paymentStatus.
  */
 export function mapPathaoStatusToOrderStatus(rawPathaoStatus: string): {
-  status: 'Pending' | 'Processing' | 'Shipped' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
+  status: (typeof ORDER_STATUSES)[number];
   courierStatus: string;
   markAsPaid?: boolean;
 } {
@@ -520,38 +521,57 @@ export function mapPathaoStatusToOrderStatus(rawPathaoStatus: string): {
     };
   }
 
-  // Out for Delivery / Last Mile
-  if (s.includes('out_for_delivery') || s.includes('last_mile') || s.includes('dispatched')) {
+  // Ready for Delivery / Out for Delivery / Last Mile
+  if (s.includes('ready_for_delivery') || s.includes('out_for_delivery') || s.includes('last_mile') || s.includes('dispatched')) {
     return {
       status: 'Out for Delivery',
-      courierStatus: 'Out for Delivery',
+      courierStatus: 'Ready for Delivery',
     };
   }
 
-  // Shipped / In Transit / Picked Up
-  if (
-    s.includes('transit') ||
-    s.includes('on_the_way') ||
-    s.includes('picked') ||
-    s.includes('pickup') ||
-    s.includes('assigned')
-  ) {
+  // In Transit / On the Way
+  if (s.includes('transit') || s.includes('on_the_way')) {
     return {
       status: 'Shipped',
       courierStatus: 'In Transit',
     };
   }
 
-  // Cancelled / Returned / Failed
-  if (
-    s.includes('cancel') ||
-    s.includes('return') ||
-    s.includes('failed') ||
-    s.includes('reject')
-  ) {
+  // Picked
+  if (s.includes('picked') || s.includes('pickup')) {
+    return {
+      status: 'Packed',
+      courierStatus: 'Picked',
+    };
+  }
+
+  // Accepted
+  if (s.includes('accept') || s.includes('assigned')) {
+    return {
+      status: 'Confirmed',
+      courierStatus: 'Accepted',
+    };
+  }
+
+  // Return / Failed / Cancelled
+  if (s.includes('return')) {
+    return {
+      status: 'Returned',
+      courierStatus: 'Returned',
+    };
+  }
+
+  if (s.includes('failed')) {
+    return {
+      status: 'Failed Delivery',
+      courierStatus: 'Failed Delivery',
+    };
+  }
+
+  if (s.includes('cancel') || s.includes('reject')) {
     return {
       status: 'Cancelled',
-      courierStatus: 'Cancelled / Returned',
+      courierStatus: 'Cancelled',
     };
   }
 

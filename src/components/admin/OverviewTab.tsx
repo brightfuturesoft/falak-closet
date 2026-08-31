@@ -42,10 +42,13 @@ export function OverviewTab({
   const totalOrdersCount = orders.length;
   const pendingShipments = orders.filter(
     (o) =>
-      o.status === 'Processing' ||
-      o.status === 'On Hold' ||
-      o.status === 'Pending Payment' ||
       o.status === 'Pending' ||
+      o.status === 'Confirmed' ||
+      o.status === 'Processing' ||
+      o.status === 'Packed' ||
+      o.status === 'Ready for Shipment' ||
+      o.status === 'Payment Pending' ||
+      o.status === 'On Hold' ||
       o.status === 'Quality Checked'
   );
   const avgOrderValue = totalOrdersCount > 0 ? grossRevenue / totalOrdersCount : 4990;

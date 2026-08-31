@@ -530,10 +530,13 @@ export function AdminDashboardProvider({ children }: { children: React.ReactNode
 
   const pendingOrdersCount = ordersList.filter(
     (o) =>
-      o.status === 'Pending Payment' ||
-      o.status === 'Processing' ||
-      o.status === 'On Hold' ||
+      o.status === 'Payment Pending' ||
       o.status === 'Pending' ||
+      o.status === 'Confirmed' ||
+      o.status === 'Processing' ||
+      o.status === 'Packed' ||
+      o.status === 'Ready for Shipment' ||
+      o.status === 'On Hold' ||
       o.status === 'Quality Checked'
   ).length;
 

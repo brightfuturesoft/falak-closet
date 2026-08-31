@@ -17,15 +17,23 @@ import { prisma } from '@/lib/prisma';
 
 /** Statuses the admin UI can set. Stored as a plain String — see the schema comment. */
 export const ORDER_STATUSES = [
-  'Pending Payment',
+  'Pending',
+  'Confirmed',
   'Processing',
-  'On Hold',
+  'Packed',
+  'Ready for Shipment',
   'Shipped',
+  'Out for Delivery',
   'Delivered',
   'Completed',
+  'Payment Pending',
+  'Payment Failed',
   'Cancelled',
+  'Return Requested',
+  'Returned',
+  'Refund Processing',
   'Refunded',
-  'Failed',
+  'Failed Delivery',
 ] as const;
 
 export type OrderStatusValue = (typeof ORDER_STATUSES)[number];
@@ -180,7 +188,7 @@ export function buildOrderData(body: Raw): Prisma.OrderCreateInput {
     discount,
     shippingFee,
     total: toNum(body.total, Math.max(0, subtotal - discount + shippingFee)),
-    status: toStr(body.status) || 'Pending Payment',
+    status: toStr(body.status) || 'Pending',
     shippingAddress: toShippingAddress(body.shippingAddress),
     ...(toStr(body.userEmail) ? { userEmail: toStr(body.userEmail) } : {}),
     ...(toStr(body.userIp) ? { userIp: toStr(body.userIp) } : {}),
