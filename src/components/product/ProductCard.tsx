@@ -215,9 +215,9 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
 
   return (
     <>
-      <div className="group relative bg-white rounded-3xl border border-stone-200/60 p-2.5 sm:p-3 shadow-xs hover:shadow-md hover:border-[#F8D2D5] transition-all h-full duration-300 flex flex-col overflow-hidden active:scale-[0.98]">
+      <div className="group relative bg-white rounded-2xl sm:rounded-3xl border border-stone-200/80 p-2 sm:p-3 shadow-xs hover:shadow-md hover:border-[#F8D2D5] transition-all h-full duration-300 flex flex-col overflow-hidden active:scale-[0.98]">
         {/* Top Image Container */}
-        <div className="relative aspect-[3/4] sm:aspect-[4/5] w-full rounded-2xl overflow-hidden bg-stone-100">
+        <div className="relative aspect-[3/4] sm:aspect-[4/5] w-full rounded-xl sm:rounded-2xl overflow-hidden bg-stone-100">
           <Link href={productUrl} className="block relative w-full h-full" aria-label={product?.name}>
             <SmartImage
               src={currentImage}
@@ -232,24 +232,24 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
           <button
             type="button"
             onClick={handleWishlistClick}
-            className="absolute top-2.5 left-2.5 z-20 p-2 rounded-full bg-white/80 hover:bg-white text-stone-700 hover:text-[#A80C14] shadow-sm backdrop-blur-xs transition-all duration-300 cursor-pointer active:scale-90"
+            className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 z-20 p-1.5 sm:p-2 rounded-full bg-white/80 hover:bg-white text-stone-700 hover:text-[#A80C14] shadow-xs backdrop-blur-xs transition-all duration-300 cursor-pointer active:scale-90"
             aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           >
-            <Heart className={`w-4 h-4 transition-transform duration-200 ${isWishlisted ? 'fill-[#A80C14] text-[#A80C14] scale-110' : 'text-stone-600'}`} />
+            <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-200 ${isWishlisted ? 'fill-[#A80C14] text-[#A80C14] scale-110' : 'text-stone-600'}`} />
           </button>
 
           {/* Status badges — top right */}
           <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10 pointer-events-none">
             {isSoldOut ? (
-              <span className="px-2 py-0.5 bg-stone-900/85 text-white text-[9px] font-black uppercase tracking-wider rounded-md backdrop-blur-xs">
+              <span className="px-1.5 sm:px-2 py-0.5 bg-stone-900/85 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider rounded-md backdrop-blur-xs">
                 Sold Out
               </span>
             ) : discountPct > 0 ? (
-              <span className="px-2 py-0.5 bg-[#A80C14] text-white text-[9px] font-black uppercase tracking-wider rounded-md backdrop-blur-xs shadow-xs">
+              <span className="px-1.5 sm:px-2 py-0.5 bg-[#A80C14] text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider rounded-md backdrop-blur-xs shadow-xs">
                 {discountPct}% OFF
               </span>
             ) : product?.isBestSeller ? (
-              <span className="px-2 py-0.5 bg-stone-900/85 text-white text-[9px] font-black uppercase tracking-wider rounded-md backdrop-blur-xs shadow-xs">
+              <span className="px-1.5 sm:px-2 py-0.5 bg-stone-900/85 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-wider rounded-md backdrop-blur-xs shadow-xs">
                 HOT ITEM
               </span>
             ) : null}
@@ -257,16 +257,16 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
         </div>
 
         {/* Product Information Below Image */}
-        <div className="pt-2.5 px-1 pb-0.5 flex flex-col gap-1.5 flex-1">
+        <div className="pt-2 px-0.5 pb-0.5 flex flex-col gap-1 flex-1">
           <Link href={productUrl} className="block">
             <h3 className="font-bold text-stone-900 text-xs sm:text-sm line-clamp-1 group-hover:text-[#A80C14] transition-colors leading-snug">
               {product?.name}
             </h3>
           </Link>
 
-          {/* Interactive Color Swatches Row (fixed height keeps grids aligned) */}
-          {product?.colors && product.colors.length > 1 ? (
-            <div className="px-2 flex items-center flex-nowrap gap-2.5 h-7 py-1 overflow-x-auto no-scrollbar w-full px-0.5" role="group" aria-label="Available colors">
+          {/* Interactive Color Swatches Row (Only shown when multiple colors exist) */}
+          {product?.colors && product.colors.length > 1 && (
+            <div className="flex items-center flex-nowrap gap-1.5 py-0.5 overflow-x-auto no-scrollbar w-full" role="group" aria-label="Available colors">
               {product.colors.map((color) => {
                 const isSelected = activeColor?.name === color.name;
                 return (
@@ -284,9 +284,9 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
                     }}
                     aria-label={`Color: ${color.name}`}
                     aria-pressed={isSelected}
-                    className={`relative w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full transition-all duration-200 cursor-pointer flex-shrink-0 after:content-[''] after:absolute after:-inset-1.5 after:rounded-full border border-stone-200/50 hover:scale-110 active:scale-95
+                    className={`relative w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full transition-all duration-200 cursor-pointer flex-shrink-0 border border-stone-200/60 hover:scale-110 active:scale-95
                       ${isSelected
-                        ? 'ring-2 ring-[#0D153A] ring-offset-2 scale-110 shadow-xs z-10 bg-white'
+                        ? 'ring-2 ring-[#0D153A] ring-offset-1 scale-110 shadow-xs z-10 bg-white'
                         : 'hover:border-stone-400'
                       }`}
                     style={{ backgroundColor: color.hex }}
@@ -295,68 +295,49 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
                 );
               })}
             </div>
-          ) : (
-            /* Placeholder spacer to align card heights perfectly when there are no swatches */
-            <div className="h-7" aria-hidden="true" />
           )}
 
           {/* Price Row */}
-          <div className="flex items-center gap-2 mt-auto pt-0.5">
-            <span className="font-extrabold text-stone-900 text-sm sm:text-base">
+          <div className="flex items-baseline gap-1.5 mt-auto pt-1">
+            <span className="font-extrabold text-stone-900 text-xs sm:text-sm md:text-base">
               ৳ {product?.price}
             </span>
             {product?.originalPrice > product?.price && (
-              <span className="px-2 py-0.5 bg-[#FDF2F3] text-[#A80C14] text-[10px] font-bold rounded-full line-through font-mono">
+              <span className="text-[10px] sm:text-xs text-stone-400 line-through font-medium">
                 ৳ {product?.originalPrice}
               </span>
             )}
           </div>
 
-          {/* Bottom: Bag + Buy Now (inline sm+) + Color dot | Buy Now full-width on mobile */}
-          <div className="flex  flex-col pt-2.5 mt-2 border-t border-stone-100 gap-2">
-            {/* Row 1: Bag icon — Buy Now pill (sm+ only) — color dot */}
-            <div className="flex justify-around items-center gap-[1.2px]">
-              {/* Add to Cart bag */}
-              <button
-                type="button"
-                onClick={handleAddToCartClick}
-                disabled={isSoldOut}
-                className={`p-2 rounded-full transition-all duration-300 shadow-xs cursor-pointer active:scale-95 flex-shrink-0
-                  ${isSoldOut
-                    ? 'bg-stone-100 text-stone-400 border border-stone-200 cursor-not-allowed'
-                    : 'bg-[#FDF2F3] border border-[#F8D2D5] hover:bg-[#A80C14] text-[#A80C14] hover:text-white'
-                  }`}
-                aria-label="Add to cart"
-              >
-                <ShoppingBag className="w-4 h-4" />
-              </button>
+          {/* Bottom Action Buttons: Cart Bag + Buy Now */}
+          <div className="flex items-center gap-1.5 pt-2 mt-1 border-t border-stone-100/80">
+            {/* Add to Cart bag button */}
+            <button
+              type="button"
+              onClick={handleAddToCartClick}
+              disabled={isSoldOut}
+              className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full transition-all duration-200 shadow-xs cursor-pointer active:scale-90 flex items-center justify-center flex-shrink-0
+                ${isSoldOut
+                  ? 'bg-stone-100 text-stone-400 border border-stone-200 cursor-not-allowed'
+                  : 'bg-[#FDF2F3] border border-[#F8D2D5] hover:bg-[#A80C14] text-[#A80C14] hover:text-white'
+                }`}
+              aria-label="Add to cart"
+            >
+              <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </button>
 
-              {/* Buy Now — inline pill, visible on sm+ only */}
-              {!isSoldOut && (
-                <button
-                  type="button"
-                  onClick={handleBuyNow}
-                  className="flex justify-center w-[70%] sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-[#A80C14] hover:bg-[#8C0A10] text-white text-[10px] font-bold shadow-xs transition-all duration-200 active:scale-95 cursor-pointer flex-shrink-0"
-                  aria-label="Buy Now"
-                >
-                  <Zap className="w-3.5 h-3.5 fill-white" />
-                  Buy Now
-                </button>
-              )}
-            </div>
-
-            {/* Row 2: Buy Now full-width — mobile only */}
-            {/* {!isSoldOut && (
+            {/* Buy Now button */}
+            {!isSoldOut && (
               <button
                 type="button"
                 onClick={handleBuyNow}
-                className="sm:hidden w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#A80C14] hover:bg-[#8C0A10] text-white text-[11px] font-bold shadow-xs transition-all duration-200 active:scale-95 cursor-pointer"
+                className="flex-1 min-h-[32px] sm:min-h-[36px] px-2 py-1 rounded-full bg-[#A80C14] hover:bg-[#8C0A10] text-white text-[10px] sm:text-xs font-bold shadow-xs transition-all duration-200 active:scale-95 cursor-pointer flex items-center justify-center gap-1 shrink-0"
                 aria-label="Buy Now"
               >
-                <Zap className="w-3.5 h-3.5 fill-white" />
-                Buy Now
+                <Zap className="w-3 h-3 fill-white shrink-0" />
+                <span className="truncate">Buy Now</span>
               </button>
-            )} */}
+            )}
           </div>
         </div>
       </div>
