@@ -110,18 +110,25 @@ export async function POST(req: NextRequest) {
       data: updateData,
     });
 
-    // Auto-restock product inventory if order transitioned to Cancelled
-    if (newStatus === 'Cancelled' && oldStatus !== 'Cancelled') {
+    // Auto-restock product inventory if order transitioned to restock status (Cancelled, Returned, Refunded, Payment Failed, Failed Delivery)
+    const isRestock = (st: string) =>
+      st === 'Cancelled' ||
+      st === 'Returned' ||
+      st === 'Refunded' ||
+      st === 'Payment Failed' ||
+      st === 'Failed Delivery';
+
+    if (isRestock(newStatus) && !isRestock(oldStatus)) {
       try {
         await adjustStockForOrderItems(order.items, 'increase');
-        console.log(`[Pathao Webhook] Restocked product items for cancelled order #${order.orderNumber}`);
+        console.log(`[Pathao Webhook] Restocked product items for order #${order.orderNumber} (status: ${newStatus})`);
       } catch (stockErr) {
         console.error('[Pathao Webhook] Stock restock error:', stockErr);
       }
-    } else if (oldStatus === 'Cancelled' && newStatus !== 'Cancelled') {
+    } else if (!isRestock(newStatus) && isRestock(oldStatus)) {
       try {
         await adjustStockForOrderItems(order.items, 'decrease');
-        console.log(`[Pathao Webhook] Re-deducted product items for un-cancelled order #${order.orderNumber}`);
+        console.log(`[Pathao Webhook] Re-deducted product items for order #${order.orderNumber} (status: ${newStatus})`);
       } catch (stockErr) {
         console.error('[Pathao Webhook] Stock deduction error:', stockErr);
       }
