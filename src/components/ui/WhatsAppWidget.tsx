@@ -145,7 +145,7 @@ export function WhatsAppWidget({ whatsappNumber, contactPhone }: WhatsAppWidgetP
 
   return (
     <div
-      className="fixed z-[998] transition-transform duration-75"
+      className="hidden lg:block fixed z-[998] transition-transform duration-75"
       style={{
         bottom: '80px',
         right: '24px',

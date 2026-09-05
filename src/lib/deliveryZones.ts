@@ -60,6 +60,8 @@ const SEED_ZONES = [
       { id: 'sub-seed-7', name: 'Narayanganj', charge: null },
       { id: 'sub-seed-8', name: 'Tongi', charge: null },
       { id: 'sub-seed-9', name: 'Keraniganj', charge: null },
+      { id: 'sub-seed-14', name: 'Ashulia', charge: null },
+      { id: 'sub-seed-15', name: 'Dhamrai', charge: null },
     ],
   },
   {

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, Tag, Truck, ShieldCheck, Check, AlertCircle } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getProductVariationImage, getProductVariationPrice } from '@/lib/utils';
 
 export default function CartClient() {
   const {
@@ -95,7 +95,8 @@ export default function CartClient() {
   );
 
   const selectedSubtotal = selectedCartItems.reduce(
-    (sum, item) => sum + (item.product?.price || 0) * item.quantity,
+    (sum, item) =>
+      sum + getProductVariationPrice(item.product, item.selectedColor, item.selectedSize) * item.quantity,
     0
   );
 
@@ -152,52 +153,58 @@ export default function CartClient() {
       </div>
 
       {/* Free Shipping Progress Indicator */}
-      <div className="p-4 bg-white rounded-3xl border border-[#F8D2D5] shadow-xs space-y-2">
-        <div className="flex items-center justify-between text-xs font-bold">
-          <span className="flex items-center gap-1.5 text-stone-900">
-            <Truck className="w-4 h-4 text-[#A80C14]" />
-            {freeShippingProgress >= 100 || quantityFreeDelivery?.unlocked ? (
-              <strong className="text-emerald-700">
-                {quantityFreeDelivery?.unlocked
-                  ? `Congratulations! You unlocked FREE Delivery via "${quantityFreeDelivery.productName}" Qty! 🚚`
-                  : 'Congratulations! You unlocked FREE Nationwide Delivery!'}
-              </strong>
-            ) : (
-              <span>
-                {quantityFreeDelivery ? (
-                  <span>
-                    Buy <strong className="text-[#A80C14]">{quantityFreeDelivery.requiredQty - quantityFreeDelivery.currentQty}</strong> more of <strong className="text-stone-900">"{quantityFreeDelivery.productName}"</strong> for FREE Delivery!
-                  </span>
-                ) : (
-                  <span>Add <strong className="text-[#A80C14]">{formatCurrency(freeShippingThreshold - subtotal)}</strong> more for FREE Shipping!</span>
-                )}
+      {((freeShippingThreshold > 0 && freeShippingThreshold < Infinity) || quantityFreeDelivery) && (
+        <div className="p-4 bg-white rounded-3xl border border-[#F8D2D5] shadow-xs space-y-2">
+          <div className="flex items-center justify-between text-xs font-bold">
+            <span className="flex items-center gap-1.5 text-stone-900">
+              <Truck className="w-4 h-4 text-[#A80C14]" />
+              {freeShippingProgress >= 100 || quantityFreeDelivery?.unlocked ? (
+                <strong className="text-emerald-700">
+                  {quantityFreeDelivery?.unlocked
+                    ? `Congratulations! You unlocked FREE Delivery via "${quantityFreeDelivery.productName}" Qty! 🚚`
+                    : 'Congratulations! You unlocked FREE Nationwide Delivery!'}
+                </strong>
+              ) : (
+                <span>
+                  {quantityFreeDelivery ? (
+                    <span>
+                      Buy <strong className="text-[#A80C14]">{quantityFreeDelivery.requiredQty - quantityFreeDelivery.currentQty}</strong> more of <strong className="text-stone-900">"{quantityFreeDelivery.productName}"</strong> for FREE Delivery!
+                    </span>
+                  ) : (
+                    <span>Add <strong className="text-[#A80C14]">{formatCurrency(freeShippingThreshold - subtotal)}</strong> more for FREE Shipping!</span>
+                  )}
+                </span>
+              )}
+            </span>
+            {freeShippingThreshold > 0 && freeShippingThreshold < Infinity && (
+              <span className="font-mono text-stone-500">
+                {freeShippingProgress >= 100 || quantityFreeDelivery?.unlocked
+                  ? '100%'
+                  : `${Math.round(freeShippingProgress)}%`}
               </span>
             )}
-          </span>
-          <span className="font-mono text-stone-500">
-            {freeShippingProgress >= 100 || quantityFreeDelivery?.unlocked
-              ? '100%'
-              : `${Math.round(freeShippingProgress)}%`}
-          </span>
-        </div>
+          </div>
 
-        <div className="w-full h-2 bg-[#FDF2F3] rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-[#A80C14] to-[#F5C77E] transition-all duration-500 rounded-full"
-            style={{
-              width: `${freeShippingProgress >= 100 || quantityFreeDelivery?.unlocked
-                ? 100
-                : Math.min(100, freeShippingProgress)
-                }%`
-            }}
-          />
+          {freeShippingThreshold > 0 && freeShippingThreshold < Infinity && (
+            <div className="w-full h-2 bg-[#FDF2F3] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-[#A80C14] to-[#F5C77E] transition-all duration-500 rounded-full"
+                style={{
+                  width: `${freeShippingProgress >= 100 || quantityFreeDelivery?.unlocked
+                    ? 100
+                    : Math.min(100, freeShippingProgress)
+                    }%`
+                }}
+              />
+            </div>
+          )}
+          {shippingFee > 0 && (
+            <p className="text-[10px] text-stone-500 font-sans">
+              Delivery to {selectedZoneName}: ৳{shippingFee} (final fee set at checkout)
+            </p>
+          )}
         </div>
-        {shippingFee > 0 && (
-          <p className="text-[10px] text-stone-500 font-sans">
-            Delivery to {selectedZoneName}: ৳{shippingFee} (final fee set at checkout)
-          </p>
-        )}
-      </div>
+      )}
 
       {/* Main Grid: Cart Items List + Order Summary Sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -222,7 +229,7 @@ export default function CartClient() {
             {cart.map((item) => {
               const key = `${item.product?.id}-${item.selectedColor}-${item.selectedSize}`;
               const isSelected = selectedKeys.has(key);
-              const mainImage = item.product?.images?.[0] || 'https://images.unsplash.com/photo-1583391733956-6c78276477e2?auto=format&fit=crop&w=800&q=80';
+              const mainImage = getProductVariationImage(item.product, item.selectedColor);
 
               return (
                 <div key={key} className="p-4 sm:p-5 flex items-center justify-between gap-4 text-xs">
@@ -261,7 +268,9 @@ export default function CartClient() {
                   {/* Quantity & Unit Price */}
                   <div className="flex flex-col items-end gap-2 shrink-0">
                     <span className="font-extrabold text-[#A80C14] text-base sm:text-lg font-mono">
-                      {formatCurrency((item.product?.price || 0) * item.quantity)}
+                      {formatCurrency(
+                        getProductVariationPrice(item.product, item.selectedColor, item.selectedSize) * item.quantity
+                      )}
                     </span>
 
                     <div className="flex items-center gap-2">

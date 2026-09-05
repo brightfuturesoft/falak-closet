@@ -97,9 +97,18 @@ export default async function ShippingPolicyPage() {
             <BadgeCheck className="w-4 h-4 text-emerald-600" /> 2. Free Delivery
           </h3>
           <p>
-            Orders of <strong>{formatCurrency(store.freeShippingThreshold)}</strong> or more get free
-            delivery to any zone — the charge is waived automatically at checkout. Selected products
-            also unlock free delivery when you buy the quantity shown on their page.
+            {store.freeShippingThreshold > 0 && store.freeShippingThreshold < Infinity ? (
+              <>
+                Orders of <strong>{formatCurrency(store.freeShippingThreshold)}</strong> or more get free
+                delivery to any zone — the charge is waived automatically at checkout. Selected products
+                also unlock free delivery when you buy the quantity shown on their page.
+              </>
+            ) : (
+              <>
+                Standard delivery charges apply based on destination area. Selected products
+                unlock free delivery when you buy the quantity shown on their product page.
+              </>
+            )}
           </p>
         </section>
 

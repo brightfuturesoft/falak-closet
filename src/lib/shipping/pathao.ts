@@ -156,6 +156,13 @@ const TEST_MOCK_ZONES: Record<number, PathaoZone[]> = {
     { zone_id: 104, zone_name: 'Mirpur' },
     { zone_id: 105, zone_name: 'Mohammadpur' },
     { zone_id: 106, zone_name: 'Bashundhara' },
+    { zone_id: 107, zone_name: 'Savar' },
+    { zone_id: 108, zone_name: 'Ashulia' },
+    { zone_id: 109, zone_name: 'Keraniganj' },
+    { zone_id: 110, zone_name: 'Gazipur' },
+    { zone_id: 111, zone_name: 'Tongi' },
+    { zone_id: 112, zone_name: 'Narayanganj' },
+    { zone_id: 113, zone_name: 'Dhamrai' },
   ],
   2: [
     { zone_id: 201, zone_name: 'Agrabad' },
@@ -180,6 +187,18 @@ const TEST_MOCK_AREAS: Record<number, PathaoArea[]> = {
     { area_id: 1010, area_name: 'Sector 3' },
     { area_id: 1011, area_name: 'Sector 7' },
     { area_id: 1012, area_name: 'Sector 11' },
+  ],
+  107: [
+    { area_id: 1070, area_name: 'Savar Bazar' },
+    { area_id: 1071, area_name: 'Savar Cantonment' },
+  ],
+  108: [
+    { area_id: 1080, area_name: 'Ashulia Bazar' },
+    { area_id: 1081, area_name: 'Baipal' },
+  ],
+  109: [
+    { area_id: 1090, area_name: 'Keraniganj Model Town' },
+    { area_id: 1091, area_name: 'Zinjira' },
   ],
 };
 
@@ -423,7 +442,7 @@ export async function getPathaoDeliveryFee(
     console.warn('[Pathao] Live price quote failed, using calculated test rate:', err);
   }
 
-  // Fallback fee calculation: 80 BDT for Dhaka core, 100 BDT for Dhaka Sub-area, 150 BDT Outside Dhaka
+  // Fallback fee calculation: 80 BDT for Dhaka core, 120 BDT for Dhaka Sub-area, 150 BDT Outside Dhaka
   const cleanAddr = (req.recipientAddress || '').toLowerCase();
   const isDhakaSubArea =
     req.cityId === 1 &&
@@ -434,7 +453,7 @@ export async function getPathaoDeliveryFee(
       cleanAddr.includes('keraniganj') ||
       cleanAddr.includes('ashulia') ||
       cleanAddr.includes('dhamrai'));
-  const basePrice = req.cityId === 1 ? (isDhakaSubArea ? 100 : 80) : 150;
+  const basePrice = req.cityId === 1 ? (isDhakaSubArea ? 120 : 80) : 150;
   const extraWeightFee = req.weight > 0.5 ? Math.ceil((req.weight - 0.5) * 20) : 0;
   const finalPrice = basePrice + extraWeightFee;
 

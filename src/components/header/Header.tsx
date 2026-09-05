@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -61,9 +61,7 @@ export function Header() {
 
   const userName = user ? user.name.split(' ')[0] : null;
 
-  // Search the live catalog only. Falling back to the seed array meant an empty
-  // store still returned demo products, whose /product links 404.
-  const allStoreProducts = cartProducts || [];
+  const allStoreProducts = useMemo(() => cartProducts || [], [cartProducts]);
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -73,14 +71,14 @@ export function Header() {
       return;
     }
     const q = searchQuery.toLowerCase().trim();
-    const matches = allStoreProducts.filter((p) => {
+    const matches = allStoreProducts.filter((p: Product) => {
       const matchName = p.name.toLowerCase().includes(q);
       const matchCategory = p.category.toLowerCase().includes(q);
       const matchMaterial = (p.material || '').toLowerCase().includes(q);
       const matchWork = (p.workType || '').toLowerCase().includes(q);
       const matchCode = (p.code || '').toLowerCase().includes(q);
-      const matchColor = p.colors?.some((c) => c.name.toLowerCase().includes(q) || (c.hex && c.hex.toLowerCase().includes(q)));
-      const matchVar = p.variations?.some((v) => v.colorName.toLowerCase().includes(q) || (v.colorHex && v.colorHex.toLowerCase().includes(q)) || (v.size && v.size.toLowerCase() === q));
+      const matchColor = p.colors?.some((c: { name: string; hex?: string }) => c.name.toLowerCase().includes(q) || (c.hex && c.hex.toLowerCase().includes(q)));
+      const matchVar = p.variations?.some((v: { colorName: string; colorHex?: string; size?: string }) => v.colorName.toLowerCase().includes(q) || (v.colorHex && v.colorHex.toLowerCase().includes(q)) || (v.size && v.size.toLowerCase() === q));
 
       return matchName || matchCategory || matchMaterial || matchWork || matchCode || matchColor || matchVar;
     }).slice(0, 6);
@@ -102,12 +100,10 @@ export function Header() {
     }
   };
 
-  // Helper to extract matched variation/color details for a product based on current search query
   const getMatchedVariation = (product: Product, queryStr: string) => {
     const q = queryStr.toLowerCase().trim();
     if (!q) return null;
 
-    // 1. Check colors array
     const matchedColor = product.colors?.find((c) => {
       const nameMatch = c.name.toLowerCase().includes(q);
       const hexMatch = c.hex && c.hex.toLowerCase().includes(q);
@@ -128,7 +124,6 @@ export function Header() {
       };
     }
 
-    // 2. Check variations matrix array
     const matchedVar = product.variations?.find((v) => {
       const colorMatch = v.colorName.toLowerCase().includes(q);
       const hexMatch = v.colorHex && v.colorHex.toLowerCase().includes(q);
@@ -155,9 +150,7 @@ export function Header() {
 
           {/* Brand Logo */}
           <div className="shrink-0">
-            <Logo variant="normal"
-              size='md'
-            />
+            <Logo variant="normal" size="md" />
           </div>
 
           {/* Centered Search Pill Input - Only visible on Desktop (lg:) screens */}
@@ -294,19 +287,32 @@ export function Header() {
             )}
           </div>
 
-          {/* Cart Icon - Only visible on Desktop (lg:) screens */}
-          <Link
-            href={'/cart'}
-            className="hidden lg:flex relative p-2.5 text-[#0D153A] hover:text-[#A80C14] transition-colors rounded-full hover:bg-[#FDF2F3] cursor-pointer items-center gap-1.5 shrink-0"
-            aria-label="Shopping Cart"
-          >
-            <ShoppingBag className="w-6 h-6 stroke-[1.8]" />
-            {cartCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-[#A80C14] text-white text-xs font-bold rounded-full flex items-center justify-center shadow-xs">
-                {cartCount}
-              </span>
-            )}
-          </Link>
+          {/* Right Header Actions */}
+          <div className="flex items-center gap-2">
+            {/* Mobile Search Icon Button */}
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('open-mobile-search'))}
+              className="lg:hidden p-2.5 text-[#0D153A] hover:text-[#A80C14] transition-colors rounded-full hover:bg-[#FDF2F3] cursor-pointer flex items-center justify-center shrink-0 active:scale-95"
+              aria-label="Open mobile search"
+            >
+              <Search className="w-5.5 h-5.5 stroke-[2]" />
+            </button>
+
+            {/* Cart Icon - Only visible on Desktop (lg:) screens */}
+            <Link
+              href={'/cart'}
+              className="hidden lg:flex relative p-2.5 text-[#0D153A] hover:text-[#A80C14] transition-colors rounded-full hover:bg-[#FDF2F3] cursor-pointer items-center gap-1.5 shrink-0"
+              aria-label="Shopping Cart"
+            >
+              <ShoppingBag className="w-6 h-6 stroke-[1.8]" />
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-[#A80C14] text-white text-xs font-bold rounded-full flex items-center justify-center shadow-xs">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
       </div>
 

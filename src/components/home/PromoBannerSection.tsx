@@ -122,8 +122,11 @@ export function PromoBannerSection({ banner }: PromoBannerSectionProps) {
                 Free Delivery Offer
               </h4>
               <p className="text-[11px] sm:text-xs text-stone-600 leading-relaxed">
-                Enjoy free express doorstep shipping across Bangladesh on orders{' '}
-                {formatCurrency(freeShippingThreshold)} and above.
+                {freeShippingThreshold > 0 && freeShippingThreshold < Infinity ? (
+                  <>Enjoy free express doorstep shipping across Bangladesh on orders {formatCurrency(freeShippingThreshold)} and above.</>
+                ) : (
+                  <>Nationwide express doorstep delivery across Bangladesh with Cash on Delivery options.</>
+                )}
               </p>
             </div>
 

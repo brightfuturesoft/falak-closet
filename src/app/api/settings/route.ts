@@ -11,7 +11,7 @@ const DEFAULT_SETTINGS = {
   // Free-delivery amount threshold read by CartContext on the storefront.
   // currencySymbol is stored for records — display formatting is ৳ BDT only.
   store: {
-    freeShippingThreshold: 100,
+    freeShippingThreshold: 0,
     currencySymbol: '৳ BDT'
   },
   // Contact details + social profiles shown in the footer and fed to the

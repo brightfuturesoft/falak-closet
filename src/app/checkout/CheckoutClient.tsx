@@ -16,10 +16,24 @@ import {
   Smartphone,
   ChevronDown,
   ShoppingBag,
-  Ticket
+  Ticket,
+  FileText,
+  Info,
+  PhoneCall,
+  Palette,
+  RotateCcw
 } from 'lucide-react';
 import { useCart, OrderRecord, DeliverySubArea } from '@/context/CartContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
+import {
+  isDhakaCity,
+  isDhakaSubArea,
+  getSearchableTerms,
+  matchZoneFromText,
+  calculateShippingFee,
+  checkIsFreeDelivery,
+} from '@/lib/shipping/locationBilingual';
+import { getProductVariationImage, getProductVariationPrice } from '@/lib/utils';
 
 /** Shared 44px-touch-target text field. */
 function Field({
@@ -108,7 +122,10 @@ function SearchableSelect({
   const filteredOptions = useMemo(() => {
     if (!searchQuery.trim()) return options;
     const q = searchQuery.toLowerCase().trim();
-    return options.filter((o) => o.label.toLowerCase().includes(q));
+    return options.filter((o) => {
+      const terms = getSearchableTerms(o.label);
+      return terms.some((t) => t.toLowerCase().includes(q));
+    });
   }, [options, searchQuery]);
 
   useEffect(() => {
@@ -241,6 +258,7 @@ export default function CheckoutClient() {
     getProductBySlug,
     products,
     freeShippingThreshold,
+    quantityFreeDelivery,
   } = useCart();
   const { trackEvent } = useAnalytics();
 
@@ -276,13 +294,21 @@ export default function CheckoutClient() {
   // shipping logic mirrors CartContext)
   const subtotal = useMemo(() => {
     if (!buyNowItems) return cartSubtotal;
-    return buyNowItems.reduce((s, i) => s + i.product.price * i.quantity, 0);
+    return buyNowItems.reduce(
+      (s, i) => s + getProductVariationPrice(i.product, i.selectedColor, i.selectedSize) * i.quantity,
+      0
+    );
   }, [buyNowItems, cartSubtotal]);
 
   const shippingFee = useMemo(() => {
     if (!buyNowItems) return cartShippingFee;
-    return subtotal >= freeShippingThreshold ? 0 : cartShippingFee;
+    const hasFreeThreshold =
+      typeof freeShippingThreshold === 'number' &&
+      freeShippingThreshold > 0 &&
+      freeShippingThreshold < Infinity;
+    return hasFreeThreshold && subtotal >= freeShippingThreshold ? 0 : cartShippingFee;
   }, [buyNowItems, cartShippingFee, subtotal, freeShippingThreshold]);
+
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -330,6 +356,19 @@ export default function CheckoutClient() {
     };
     fetchCities();
   }, []);
+
+  // Auto-match Pathao City ID if formData.city exists
+  useEffect(() => {
+    if (pathaoCities.length > 0 && formData.city && !selectedPathaoCityId) {
+      const cleanCity = formData.city.toLowerCase().trim();
+      const matched = pathaoCities.find(
+        (c) => c.city_name.toLowerCase().trim() === cleanCity || cleanCity.includes(c.city_name.toLowerCase().trim())
+      );
+      if (matched) {
+        setSelectedPathaoCityId(matched.city_id);
+      }
+    }
+  }, [pathaoCities, formData.city, selectedPathaoCityId]);
 
   // Auto-fill Postal Code based on selected Pathao City & Zone
   useEffect(() => {
@@ -401,20 +440,21 @@ export default function CheckoutClient() {
     fetchZones();
   }, [selectedPathaoCityId]);
 
-  // Auto-detect Pathao Zone from Full Address or default to first zone when zones arrive
+  // Auto-detect Pathao Zone from Full Address (supports Bengali & English text)
   useEffect(() => {
     if (!pathaoZones || pathaoZones.length === 0) return;
-    const cleanStreet = (formData?.street || '').toLowerCase().trim();
+    const cleanStreet = (formData?.street || '').trim();
 
-    const matchedZone = pathaoZones.find((z) => {
-      const zName = z.zone_name.toLowerCase();
-      return cleanStreet.includes(zName) || (cleanStreet && zName.includes(cleanStreet));
-    });
+    const matchedZoneId = matchZoneFromText(cleanStreet, pathaoZones);
 
-    if (matchedZone) {
-      setSelectedPathaoZoneId(matchedZone.zone_id);
-    } else if (!selectedPathaoZoneId || !pathaoZones.some((z) => z.zone_id === selectedPathaoZoneId)) {
-      setSelectedPathaoZoneId(pathaoZones[0].zone_id);
+    if (matchedZoneId) {
+      setSelectedPathaoZoneId(matchedZoneId);
+    } else {
+      // If user cleared sub-area or address text doesn't match a sub-area, default to primary city zone
+      const defaultZone = pathaoZones.find((z) => !isDhakaSubArea(z.zone_name)) || pathaoZones[0];
+      if (defaultZone && selectedPathaoZoneId !== defaultZone.zone_id) {
+        setSelectedPathaoZoneId(defaultZone.zone_id);
+      }
     }
   }, [pathaoZones, formData?.street]);
 
@@ -457,47 +497,29 @@ export default function CheckoutClient() {
     fetchAreas();
   }, [selectedPathaoCityId, selectedPathaoZoneId]);
 
-  // ── Tiered Delivery Fee Calculation ───────────────────────────────────────
-  // Inside Dhaka: 80 taka, Sub area Dhaka: 100 taka, Outside Dhaka: 150 taka
-  const DHAKA_SUB_AREAS = useMemo(
-    () => [
-      'savar',
-      'gazipur',
-      'narayanganj',
-      'tongi',
-      'keraniganj',
-      'ashulia',
-      'dhamrai',
-      'bhedarganj',
-      'kaliakair',
-      'kapasia',
-      'sreepur',
-      'mirzapur',
-    ],
-    []
-  );
+  const isFreeDeliveryUnlocked = useMemo(() => {
+    return checkIsFreeDelivery(
+      activeItems,
+      subtotal,
+      Number(freeShippingThreshold)
+    );
+  }, [activeItems, subtotal, freeShippingThreshold]);
 
   const calculatedDeliveryFee = useMemo(() => {
-    if (subtotal >= freeShippingThreshold) return 0;
+    const selectedZoneObj = pathaoZones.find((z) => z.zone_id === selectedPathaoZoneId);
+    const result = calculateShippingFee({
+      city: formData.city,
+      address: formData.street,
+      zoneName: selectedZoneObj?.zone_name,
+      subtotal,
+      freeShippingThreshold: Number(freeShippingThreshold),
+      isFreeDelivery: isFreeDeliveryUnlocked,
+      items: activeItems,
+    });
+    return result.fee;
+  }, [formData.city, formData.street, subtotal, freeShippingThreshold, pathaoZones, selectedPathaoZoneId, isFreeDeliveryUnlocked, activeItems]);
 
-    const cleanCity = (formData.city || '').toLowerCase().trim();
-    const cleanAddr = (formData.street || '').toLowerCase().trim();
-
-    // Check sub-area match first
-    const isSubArea = DHAKA_SUB_AREAS.some(
-      (sub) => cleanCity.includes(sub) || cleanAddr.includes(sub)
-    );
-    if (isSubArea) return 100;
-
-    // Check Dhaka core match
-    const isDhakaCore = cleanCity.includes('dhaka') || cleanAddr.includes('dhaka');
-    if (isDhakaCore) return 80;
-
-    // Outside Dhaka fallback (when city is empty or any non-Dhaka district)
-    return 150;
-  }, [formData.city, formData.street, subtotal, freeShippingThreshold, DHAKA_SUB_AREAS]);
-
-  const effectiveShippingFee = calculatedDeliveryFee;
+  const effectiveShippingFee = isFreeDeliveryUnlocked ? 0 : calculatedDeliveryFee;
 
   const effectiveTotalAmount = useMemo(() => {
     return Math.max(0, subtotal - (buyNowItems ? 0 : discountAmount) + effectiveShippingFee);
@@ -519,6 +541,7 @@ export default function CheckoutClient() {
     instructions?: string[];
   } | null>(null);
   const [isBkashModalOpen, setIsBkashModalOpen] = useState(false);
+  const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
   const [bkashSenderNumber, setBkashSenderNumber] = useState('');
   const [bkashTrxId, setBkashTrxId] = useState('');
   const [bkashError, setBkashError] = useState<string | null>(null);
@@ -601,20 +624,22 @@ export default function CheckoutClient() {
     }
   }, [userIp]);
 
-  // While the bKash sheet is open: lock background scroll, close on Escape
-  // (the main form submit already intercepts the bKash flow).
+  // Lock background scroll, close on Escape for bKash & Policy modals
   useEffect(() => {
-    if (!isBkashModalOpen) return;
+    if (!isBkashModalOpen && !isPolicyModalOpen) return;
     document.body.style.overflow = 'hidden';
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsBkashModalOpen(false);
+      if (e.key === 'Escape') {
+        setIsBkashModalOpen(false);
+        setIsPolicyModalOpen(false);
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = '';
       window.removeEventListener('keydown', onKey);
     };
-  }, [isBkashModalOpen]);
+  }, [isBkashModalOpen, isPolicyModalOpen]);
 
   const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery (COD)');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -931,20 +956,24 @@ export default function CheckoutClient() {
             {/* Collapsible body: always open on lg, toggled on mobile */}
             <div className={`${isSummaryOpen ? 'block' : 'hidden'} lg:block border-t border-[#F8D2D5] p-4 sm:p-6 space-y-4`}>
               <div className="divide-y divide-[#FDF2F3] max-h-64 overflow-y-auto overscroll-contain pr-1 -mr-1">
-                {activeItems.map((item, idx) => (
-                  <div key={idx} className="py-2.5 flex items-center justify-between text-xs gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="relative w-10 h-12 rounded-lg overflow-hidden bg-stone-100 flex-shrink-0">
-                        <Image src={item.product?.images[0]} alt={item.product?.name} fill sizes="40px" className="object-cover" />
+                {activeItems.map((item, idx) => {
+                  const itemImg = getProductVariationImage(item.product, item.selectedColor);
+                  const itemPrice = getProductVariationPrice(item.product, item.selectedColor, item.selectedSize);
+                  return (
+                    <div key={idx} className="py-2.5 flex items-center justify-between text-xs gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="relative w-10 h-12 rounded-lg overflow-hidden bg-stone-100 flex-shrink-0">
+                          <Image src={itemImg} alt={item.product?.name || 'Product'} fill sizes="40px" className="object-cover" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-stone-900 line-clamp-1">{item.product?.name}</p>
+                          <p className="text-[10px] text-stone-400 truncate">{item.selectedColor} • {item.selectedSize} • Qty: {item.quantity}</p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="font-bold text-stone-900 line-clamp-1">{item.product?.name}</p>
-                        <p className="text-[10px] text-stone-400 truncate">{item.selectedColor} • {item.selectedSize} • Qty: {item.quantity}</p>
-                      </div>
+                      <span className="font-bold text-stone-900 shrink-0">৳ {itemPrice * item.quantity}</span>
                     </div>
-                    <span className="font-bold text-stone-900 shrink-0">৳ {item.product?.price * item.quantity}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Promo Code Voucher Input */}
@@ -1045,6 +1074,36 @@ export default function CheckoutClient() {
 
         {/* Shipping Details */}
         <div className="lg:col-span-7 lg:order-1 space-y-5 lg:space-y-6">
+          {/* Delivery & Order Policy Trigger Banner */}
+          <button
+            type="button"
+            onClick={() => setIsPolicyModalOpen(true)}
+            className="w-full flex items-center justify-between p-3.5 sm:p-4 bg-gradient-to-r from-rose-50 via-amber-50/60 to-stone-50 border border-[#F8D2D5] hover:border-[#A80C14]/40 rounded-2xl text-xs transition-all text-stone-900 group cursor-pointer shadow-xs active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-[#A80C14] text-white flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div className="text-left min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-extrabold text-stone-900 text-xs sm:text-sm">
+                    ডেলিভারি ও অর্ডার পলিসি (সকল নিয়মাবলী)
+                  </span>
+                  <span className="px-2 py-0.5 bg-[#A80C14]/10 text-[#A80C14] rounded-full text-[10px] font-bold">
+                    গুরুত্বপূর্ণ
+                  </span>
+                </div>
+                <span className="block text-[11px] text-stone-500 truncate font-normal mt-0.5">
+                  ক্যাশ অন ডেলিভারি, চার্জ, অর্ডার কনফার্মেশন ও রিটার্ন সংক্রান্ত তথ্য
+                </span>
+              </div>
+            </div>
+            <span className="px-3 py-1.5 bg-[#A80C14] text-white rounded-full text-[11px] font-bold shrink-0 group-hover:bg-[#8C0A10] transition-colors flex items-center gap-1 shadow-xs">
+              <span>নিয়মাবলী দেখুন</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </span>
+          </button>
+
           <section className="bg-white p-4 sm:p-6 rounded-3xl border border-[#F8D2D5] shadow-xs space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <h2 className="font-bold text-base sm:text-lg text-stone-900 flex items-center gap-2">
@@ -1076,7 +1135,7 @@ export default function CheckoutClient() {
                 maxLength={11}
               />
 
-              {/* Pathao Searchable City Selection */}
+              {/* Pathao Searchable City Selection — Full width on desktop */}
               <SearchableSelect
                 label="City / District"
                 id="co-pathao-city"
@@ -1084,7 +1143,8 @@ export default function CheckoutClient() {
                 options={pathaoCities.map((city) => ({ value: city.city_id, label: city.city_name }))}
                 value={selectedPathaoCityId}
                 loading={isLoadingCities}
-                placeholder="-- Type to search Pathao City --"
+                placeholder="-- Type or search City (e.g. Dhaka, Chittagong...) --"
+                className="sm:col-span-2"
                 onChange={(val) => {
                   setSelectedPathaoCityId(val);
                   if (val) {
@@ -1092,30 +1152,49 @@ export default function CheckoutClient() {
                     if (cityObj) {
                       setFormData((prev) => ({ ...prev, city: cityObj.city_name }));
                     }
+                  } else {
+                    setFormData((prev) => ({ ...prev, city: '' }));
                   }
                 }}
               />
 
-              <Field
-                label="Full Address (House, Road, Flat & Landmark)"
-                name="street"
-                value={formData.street}
-                onChange={handleInputChange}
-                placeholder="e.g. House 42, Road 11, Flat 4B, near Abahani Field"
-                autoComplete="street-address"
-                className="sm:col-span-2"
-              />
+              {/* Full Address Field — Shown only after City / District is selected */}
+              {Boolean(selectedPathaoCityId || formData.city) ? (
+                <Field
+                  label="Full Address (House, Road, Flat & Landmark)"
+                  name="street"
+                  value={formData.street}
+                  onChange={handleInputChange}
+                  placeholder="e.g. House 42, Road 11, Flat 4B, near Abahani Field"
+                  autoComplete="street-address"
+                  className="sm:col-span-2 animate-in fade-in slide-in-from-top-2 duration-200"
+                />
+              ) : (
+                <div className="sm:col-span-2 p-3 bg-amber-50/60 border border-amber-200/80 rounded-2xl text-[11px] font-semibold text-amber-800 flex items-center gap-2">
+                  <span className="shrink-0 text-amber-600 font-bold">📍</span>
+                  <span>Please select your <strong>City / District</strong> above to enter your detailed delivery address.</span>
+                </div>
+              )}
             </div>
 
             {/* Delivery Fee Info Banner */}
-            <div className="p-3.5 bg-rose-50/60 border border-[#F8D2D5] rounded-2xl text-xs text-stone-700 space-y-1">
-              <div className="flex items-center justify-between font-bold text-stone-900">
+            <div className="p-3.5 bg-rose-50/60 border border-[#F8D2D5] rounded-2xl text-xs text-stone-700 space-y-1.5">
+              <div className="flex items-center justify-between font-bold text-stone-900 flex-wrap gap-1">
                 <span className="flex items-center gap-1.5 text-[#A80C14]">
                   <Truck className="w-4 h-4" /> Standard Delivery Rates
                 </span>
-                <span className="font-mono font-bold text-xs text-[#A80C14]">
-                  {effectiveShippingFee === 0 ? 'Free Shipping' : `৳ ${effectiveShippingFee}`}
-                </span>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsPolicyModalOpen(true)}
+                    className="text-[11px] text-[#A80C14] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <Info className="w-3.5 h-3.5" /> শর্তাবলী দেখুন
+                  </button>
+                  <span className="font-mono font-bold text-xs text-[#A80C14]">
+                    {effectiveShippingFee === 0 ? 'Free Shipping' : `৳ ${effectiveShippingFee}`}
+                  </span>
+                </div>
               </div>
               <p className="text-[11px] text-stone-500">
                 Inside Dhaka: <strong>৳80</strong> • Sub-area Dhaka: <strong>৳100</strong> • Outside Dhaka: <strong>৳150</strong>
@@ -1335,6 +1414,184 @@ export default function CheckoutClient() {
                 className="min-h-[44px] px-5 bg-[#E2136E] hover:bg-[#C2105E] active:scale-95 text-white rounded-xl font-bold transition-all shadow-md cursor-pointer disabled:opacity-50"
               >
                 {isSubmitting ? 'Verifying payment…' : 'Confirm bKash Payment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delivery & Order Policy Modal */}
+      {isPolicyModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-xs animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Delivery and Order Policy"
+          onClick={(e) => e.target === e.currentTarget && setIsPolicyModalOpen(false)}
+        >
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl border border-stone-200 max-w-xl w-full shadow-2xl overflow-hidden text-stone-900 flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-[#A80C14] to-[#8C0A10] text-white p-4 sm:p-5 text-left relative shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsPolicyModalOpen(false)}
+                aria-label="Close policy modal"
+                className="absolute top-3.5 right-3.5 w-8 h-8 flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-white/15 backdrop-blur-xs flex items-center justify-center shrink-0">
+                  <FileText className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base sm:text-lg leading-tight">
+                    ডেলিভারি ও অর্ডার নিয়মাবলী
+                  </h3>
+                  <p className="text-[11px] text-rose-100/90 font-medium">
+                    Falak Closet — Order &amp; Delivery Policy
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Content - Scrollable Organized Sections */}
+            <div className="p-4 sm:p-6 space-y-4 overflow-y-auto overscroll-contain flex-grow text-xs leading-relaxed divide-y divide-stone-100">
+
+              {/* 1. Cash on Delivery Condition */}
+              <div className="space-y-2 pt-1 first:pt-0">
+                <div className="flex items-center gap-2 font-extrabold text-stone-900 text-sm">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                  </span>
+                  <span>ক্যাশ অন ডেলিভারি (Cash on Delivery)</span>
+                </div>
+                <div className="p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl text-emerald-900 font-semibold leading-relaxed">
+                  ৮০% সফলভাবে ডেলিভারী নেওয়ার রেকর্ড থাকলে ক্যাশ অন ডেলিভারী পাবেন, না থাকলে ডেলিভারী চার্জ এডভান্স করে প্রোডাক্ট নিতে হবে।
+                </div>
+              </div>
+
+              {/* 2. Delivery Fee Rates */}
+              <div className="space-y-2 pt-4">
+                <div className="flex items-center gap-2 font-extrabold text-stone-900 text-sm">
+                  <span className="w-6 h-6 rounded-lg bg-rose-100 text-[#A80C14] text-xs flex items-center justify-center shrink-0">
+                    <Truck className="w-3.5 h-3.5" />
+                  </span>
+                  <span>ডেলিভারি চার্জ (Delivery Charges)</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="p-3 bg-stone-50 border border-stone-200/80 rounded-2xl text-center space-y-0.5">
+                    <span className="block text-[10px] text-stone-500 font-semibold">ঢাকার মধ্যে</span>
+                    <span className="block font-black text-sm text-[#A80C14]">৳ ৮০</span>
+                  </div>
+                  <div className="p-3 bg-stone-50 border border-stone-200/80 rounded-2xl text-center space-y-0.5">
+                    <span className="block text-[10px] text-stone-500 font-semibold">ঢাকার পাশ্ববর্তী এরিয়া</span>
+                    <span className="block font-black text-sm text-[#A80C14]">৳ ১০০</span>
+                  </div>
+                  <div className="p-3 bg-stone-50 border border-stone-200/80 rounded-2xl text-center space-y-0.5">
+                    <span className="block text-[10px] text-stone-500 font-semibold">ঢাকার বাহিরে</span>
+                    <span className="block font-black text-sm text-[#A80C14]">৳ ১৫০</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Order Confirmation & Delivery Process */}
+              <div className="space-y-2 pt-4">
+                <div className="flex items-center gap-2 font-extrabold text-stone-900 text-sm">
+                  <span className="w-6 h-6 rounded-lg bg-amber-100 text-amber-800 text-xs flex items-center justify-center shrink-0">
+                    <PhoneCall className="w-3.5 h-3.5" />
+                  </span>
+                  <span>অর্ডার প্রসেসিং ও কনফার্মেশন</span>
+                </div>
+                <ul className="space-y-2 text-stone-700 font-medium pl-1">
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#A80C14] shrink-0 font-bold">•</span>
+                    <span>নাম, ফোন নম্বর ও ঠিকানা দিয়ে অর্ডার কনফার্ম করুন।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#A80C14] shrink-0 font-bold">🍂</span>
+                    <span>আমাদের সব পণ্যের দাম ফিক্সড।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#A80C14] shrink-0 font-bold">•</span>
+                    <span>পেইজ থেকে কনফার্মেশন কল দেওয়া হবে। কনফার্মেশন কলটি রিসিভ করার পর পার্সেলটি পাঠানো হবে।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#A80C14] shrink-0 font-bold">•</span>
+                    <span>কলে কনফার্ম করার পর অর্ডার ক্যান্সেল বা চেঞ্জ করা হয় না।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#A80C14] shrink-0 font-bold">•</span>
+                    <span>কনফার্মেশন কল পাওয়ার পর ২-৩ দিনে পার্সেল পাবেন।</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* 4. Color & Display Disclaimer */}
+              <div className="space-y-2 pt-4">
+                <div className="flex items-center gap-2 font-extrabold text-stone-900 text-sm">
+                  <span className="w-6 h-6 rounded-lg bg-purple-100 text-purple-800 text-xs flex items-center justify-center shrink-0">
+                    <Palette className="w-3.5 h-3.5" />
+                  </span>
+                  <span>কালার সংক্রান্ত নোটিশ (Color Disclaimer)</span>
+                </div>
+                <div className="p-3 bg-purple-50/70 border border-purple-200/80 rounded-2xl text-purple-900 font-medium">
+                  ক্যামেরা এবং ফোনের ডিসপ্লে এর ভিন্নতার জন্যে কালার লাইট কিংবা ডিপ দেখা যেতে পারে।
+                </div>
+              </div>
+
+              {/* 5. Return & Parcel Checking Policy */}
+              <div className="space-y-2 pt-4">
+                <div className="flex items-center gap-2 font-extrabold text-stone-900 text-sm">
+                  <span className="w-6 h-6 rounded-lg bg-rose-100 text-rose-800 text-xs flex items-center justify-center shrink-0">
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </span>
+                  <span>পার্সেল চেক ও রিটার্ন পলিসি</span>
+                </div>
+                <ul className="space-y-2 text-stone-700 font-medium pl-1">
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#A80C14] shrink-0 font-bold">•</span>
+                    <span>ডেলিভারী ম্যানের সামনে পার্সেল চেক করে নিবেন।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#A80C14] shrink-0 font-bold">•</span>
+                    <span>আমাদের পার্সেল রিটার্ন করতে হলে সম্পূর্ণ পার্সেল রিটার্ন করে দিবেন ডেলিভারী খরচ দিয়ে।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#A80C14] shrink-0 font-bold">•</span>
+                    <span>আমাদের পেইজ থেকে কোনো পার্সিয়াল ডেলিভারী দেওয়া হয় না।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#A80C14] shrink-0 font-bold">•</span>
+                    <span>পার্সেলটি রিসিভ করার পর আমাদের পেইজ থেকে রিটার্ন নেওয়া হয় না।</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Accordion showing verbatim full prompt message text */}
+              <div className="pt-4">
+                <details className="bg-stone-50 border border-stone-200 rounded-2xl overflow-hidden group">
+                  <summary className="p-3 font-bold text-stone-700 text-[11px] cursor-pointer flex items-center justify-between group-open:border-b group-open:border-stone-200">
+                    <span>মূল নোটিশের সম্পূর্ণ টেক্সট (Full Policy Text)</span>
+                    <ChevronDown className="w-4 h-4 text-stone-400 group-open:rotate-180 transition-transform" />
+                  </summary>
+                  <div className="p-3.5 text-[11px] text-stone-600 leading-relaxed font-sans bg-white border-t border-stone-100">
+                    &quot;৮০% সফলভাবে ডেলিভারী নেওয়ার রেকর্ড থাকলে ক্যাশ অন ডেলিভারী পাবেন, না থাকলে ডেলিভারী চার্জ এডভান্স করে প্রোডাক্ট নিতে হবে। ঢাকা মধ্যে ডেলিভারি চার্জ ৮০ টাকা, ঢাকার পাশ্ববর্তী এরিয়া ১০০ টাকা এবং ঢাকার বাহিরে ১৫০ টাকা। নাম ফোন নম্বার ঠিকানা দিয়ে অর্ডার কনফার্ম করুন। ক্যামেরা এবং ফোনের ডিস্প্লে এর ভিন্যতার জন্যে কালার লাইট কিংবা ডিপ দেখা যেতে পারে। 🍂আমাদের সব পণ্যের দাম ফিক্সড পেইজ থেকে কনফার্মেশন কল দেওয়া হবে।কনফার্মেশন কলটি রিসিভ করার পর পার্সেলটি পাঠানো হবে। কলে কানফার্ম করার পর অর্ডার ক্যান্সেল বা চেন্জ করা হয় না। কনফার্মেশন কল পাওয়ার পর ২-৩ দিনে পার্সেল পাবেন। ডেলিভারী ম্যানের সামনে পার্সেল চেক করে নিবেন। আমাদের পার্সেল রিটার্ন করতে হলে সম্পূর্ণ পার্সেল রিটার্ন করে দিবেন ডেলিভারী  খরচ দিয়ে। আমাদের পেইজ থেকে কোনো পার্সিয়াল ডেলিভারী দেওয়া হয় না। পার্সেলটি রিসিভ করার পর আমাদের পেইজ থেকে রিটার্ন নেওয়া হয় না।&quot;
+                  </div>
+                </details>
+              </div>
+
+            </div>
+
+            {/* Modal Sticky Footer */}
+            <div className="p-4 bg-stone-50 border-t border-stone-200 flex justify-end shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsPolicyModalOpen(false)}
+                className="w-full sm:w-auto min-h-[44px] px-6 bg-[#A80C14] hover:bg-[#8C0A10] active:scale-95 text-white font-extrabold text-xs rounded-xl transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>বুঝেছি, অর্ডার সম্পন্ন করুন</span>
               </button>
             </div>
           </div>

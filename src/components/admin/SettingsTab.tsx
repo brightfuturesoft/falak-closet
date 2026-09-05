@@ -126,6 +126,7 @@ export function SettingsTab({
       const data = await res.json();
       if (data.success) {
         setStoreSavedSuccess(true);
+        window.dispatchEvent(new Event('falak:settings-changed'));
         setTimeout(() => setStoreSavedSuccess(false), 3000);
       } else {
         setStoreError(data.error || 'Failed to save settings.');

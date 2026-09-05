@@ -134,3 +134,86 @@ export function filterProducts(products: Product[], filters: ProductFilters): Pr
 
   return result;
 }
+
+/**
+ * Resolves the appropriate image URL for a given product and selected color variation.
+ */
+export function getProductVariationImage(
+  product: Product | undefined | null,
+  colorName?: string
+): string {
+  const fallback =
+    product?.images?.[0] ||
+    'https://images.unsplash.com/photo-1583391733956-6c78276477e2?auto=format&fit=crop&w=800&q=80';
+  if (!product || !colorName) return fallback;
+
+  const cleanColor = colorName.toLowerCase().trim();
+
+  // 1. Check variations matrix first for an explicit imageUrl
+  if (product.variations && product.variations.length > 0) {
+    const matchedVar = product.variations.find(
+      (v) => v.colorName && v.colorName.toLowerCase().trim() === cleanColor && v.imageUrl
+    );
+    if (matchedVar?.imageUrl) return matchedVar.imageUrl;
+  }
+
+  // 2. Check colors array for imageIndex or images array
+  if (product.colors && product.colors.length > 0) {
+    const colorObj = product.colors.find(
+      (c) => c.name && c.name.toLowerCase().trim() === cleanColor
+    );
+    if (colorObj) {
+      if (typeof colorObj.imageIndex === 'number' && product.images?.[colorObj.imageIndex]) {
+        return product.images[colorObj.imageIndex];
+      }
+      const colImgs = (colorObj as { images?: string[] }).images;
+      if (Array.isArray(colImgs) && colImgs.length > 0 && colImgs[0]) {
+        return colImgs[0];
+      }
+    }
+
+    // 3. Fallback: match by index in colors array vs images array
+    const colorIdx = product.colors.findIndex(
+      (c) => c.name && c.name.toLowerCase().trim() === cleanColor
+    );
+    if (colorIdx !== -1 && product.images?.[colorIdx]) {
+      return product.images[colorIdx];
+    }
+  }
+
+  return fallback;
+}
+
+/**
+ * Resolves the unit price for a given product and selected color/size variation.
+ */
+export function getProductVariationPrice(
+  product: Product | undefined | null,
+  colorName?: string,
+  sizeName?: string
+): number {
+  if (!product) return 0;
+  const basePrice = product.price || 0;
+  if (!colorName && !sizeName) return basePrice;
+
+  const cleanColor = (colorName || '').toLowerCase().trim();
+  const cleanSize = (sizeName || '').toLowerCase().trim();
+
+  if (product.variations && product.variations.length > 0) {
+    const matchedVar = product.variations.find(
+      (v) =>
+        (!cleanColor || (v.colorName && v.colorName.toLowerCase().trim() === cleanColor)) &&
+        (!cleanSize || (v.size && v.size.toLowerCase().trim() === cleanSize))
+    );
+    if (matchedVar) {
+      if (typeof matchedVar.price === 'number' && matchedVar.price > 0) {
+        return matchedVar.price;
+      }
+      if (typeof matchedVar.priceOverride === 'number' && matchedVar.priceOverride > 0) {
+        return matchedVar.priceOverride;
+      }
+    }
+  }
+
+  return basePrice;
+}
