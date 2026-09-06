@@ -5,7 +5,28 @@ import { serializeOrder } from '@/lib/orders';
 
 export async function POST(req: NextRequest) {
   try {
-    const { orderId } = await req.json();
+    const body = await req.json();
+    const {
+      orderId,
+      recipientName,
+      recipientPhone,
+      recipientAddress,
+      recipientCityId,
+      recipientZoneId,
+      recipientAreaId,
+      recipientCityName,
+      recipientZoneName,
+      recipientAreaName,
+      deliveryType,
+      itemType,
+      itemQuantity,
+      itemWeight,
+      amountToCollect,
+      storeId,
+      itemDescription,
+      specialInstruction,
+    } = body;
+
     if (!orderId) {
       return NextResponse.json({ success: false, error: 'orderId is required' }, { status: 400 });
     }
@@ -35,7 +56,11 @@ export async function POST(req: NextRequest) {
     }
 
     const sh = order.shippingAddress;
-    if (!sh?.pathaoCityId || !sh?.pathaoZoneId) {
+    const finalCityId = recipientCityId ? parseInt(String(recipientCityId), 10) : sh?.pathaoCityId;
+    const finalZoneId = recipientZoneId ? parseInt(String(recipientZoneId), 10) : sh?.pathaoZoneId;
+    const finalAreaId = recipientAreaId ? parseInt(String(recipientAreaId), 10) : sh?.pathaoAreaId;
+
+    if (!finalCityId || !finalZoneId) {
       return NextResponse.json(
         {
           success: false,
@@ -45,46 +70,77 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Determine total item quantity
-    const totalItemsCount = order.items.reduce((acc, i) => acc + (i.quantity || 1), 0);
-    const weight = calculateOrderWeight(order.items);
+    const finalName = recipientName?.trim() || sh?.fullName || 'Valued Customer';
+    const finalPhone = recipientPhone?.trim() || sh?.phone || '';
+    const finalCityName = recipientCityName || sh?.pathaoCityName || sh?.city || 'Dhaka';
+    const finalZoneName = recipientZoneName || sh?.pathaoZoneName;
+    const finalAreaName = recipientAreaName || sh?.pathaoAreaName;
 
-    // Determine COD amount to collect
-    // If prepaid (e.g. bKash verified), amount_to_collect is 0. Otherwise order.total.
-    const isPrepaid =
-      order.paymentMethod?.toLowerCase().includes('bkash') &&
-      order.paymentStatus === 'Verified';
-
-    const amountToCollect = isPrepaid ? 0 : order.total;
-
-    // Build recipient full address text
-    const addressText = [
-      sh.fullAddress || sh.street || '',
-      sh.pathaoAreaName || '',
-      sh.pathaoZoneName || sh.district || '',
-      sh.pathaoCityName || sh.city || '',
+    // Address text for Pathao shipment
+    const addressText = recipientAddress?.trim() || [
+      sh?.fullAddress || sh?.street || '',
+      finalAreaName || '',
+      finalZoneName || sh?.district || '',
+      finalCityName || '',
     ]
       .filter(Boolean)
       .join(', ');
 
+    // Quantities and weights
+    const defaultTotalCount = order.items.reduce((acc, i) => acc + (i.quantity || 1), 0);
+    const finalItemCount = typeof itemQuantity === 'number' && itemQuantity > 0 ? itemQuantity : Math.max(1, defaultTotalCount);
+    const finalWeight = typeof itemWeight === 'number' && itemWeight > 0 ? itemWeight : calculateOrderWeight(order.items);
+
+    // COD Amount calculation: default to order.total if not prepaid
+    const isPrepaid =
+      order.paymentMethod?.toLowerCase().includes('bkash') &&
+      order.paymentStatus === 'Verified';
+
+    const defaultAmountToCollect = isPrepaid ? 0 : order.total;
+    const finalAmountToCollect = typeof amountToCollect === 'number' ? Math.max(0, amountToCollect) : defaultAmountToCollect;
+
     const result = await createPathaoShipment({
+      storeId: storeId ? String(storeId) : undefined,
       merchantOrderId: order.orderNumber,
-      recipientName: sh.fullName,
-      recipientPhone: sh.phone,
+      recipientName: finalName,
+      recipientPhone: finalPhone,
       recipientAddress: addressText || 'Address not specified',
-      recipientCityId: sh.pathaoCityId,
-      recipientZoneId: sh.pathaoZoneId,
-      ...(sh.pathaoAreaId ? { recipientAreaId: sh.pathaoAreaId } : {}),
-      itemQuantity: Math.max(1, totalItemsCount),
-      itemWeight: weight,
-      amountToCollect,
-      itemDescription: `Order ${order.orderNumber} - ${totalItemsCount} item(s)`,
+      recipientCityId: finalCityId,
+      recipientZoneId: finalZoneId,
+      ...(finalAreaId ? { recipientAreaId: finalAreaId } : {}),
+      deliveryType: typeof deliveryType === 'number' ? deliveryType : undefined,
+      itemType: typeof itemType === 'number' ? itemType : undefined,
+      itemQuantity: finalItemCount,
+      itemWeight: finalWeight,
+      amountToCollect: finalAmountToCollect,
+      itemDescription: itemDescription || `Order ${order.orderNumber} - ${finalItemCount} item(s)`,
+      specialInstruction: specialInstruction || undefined,
     });
 
-    // Update order with Pathao consignment info
+    // Update shippingAddress object in Prisma
+    const updatedShippingAddress = {
+      ...sh,
+      fullName: finalName,
+      phone: finalPhone,
+      fullAddress: recipientAddress?.trim() || sh?.fullAddress || sh?.street,
+      street: recipientAddress?.trim() || sh?.street,
+      city: finalCityName,
+      district: finalCityName,
+      pathaoCityId: finalCityId,
+      pathaoZoneId: finalZoneId,
+      pathaoAreaId: finalAreaId,
+      pathaoCityName: finalCityName,
+      pathaoZoneName: finalZoneName,
+      pathaoAreaName: finalAreaName,
+    };
+
+    // Update order with Pathao consignment info and updated address
     const updatedOrder = await prisma.order.update({
       where: { orderNumber: order.orderNumber },
       data: {
+        shippingAddress: updatedShippingAddress,
+        deliveryZone: finalZoneName || order.deliveryZone,
+        deliverySubArea: finalAreaName || order.deliverySubArea,
         consignmentId: result.consignment_id,
         courierStatus: result.order_status || 'Pending',
         status: 'Shipped',

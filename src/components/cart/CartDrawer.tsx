@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { SmartImage } from '@/components/ui/SmartImage';
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Truck, Tag, ShieldCheck } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getProductVariationImage, getProductVariationPrice } from '@/lib/utils';
 
 export function CartDrawer() {
   const {
@@ -66,7 +66,8 @@ export function CartDrawer() {
   );
 
   const selectedSubtotal = selectedCart.reduce(
-    (sum, item) => sum + (item.product?.price || 0) * item.quantity,
+    (sum, item) =>
+      sum + getProductVariationPrice(item.product, item.selectedColor, item.selectedSize) * item.quantity,
     0
   );
 
@@ -85,10 +86,21 @@ export function CartDrawer() {
   const drawerSubArea = drawerZone?.subAreas?.find((s) => s.id === selectedSubAreaId);
   const zoneBaseFee = drawerSubArea?.charge ?? drawerZone?.charge ?? 60;
 
-  const selectedShippingFee = selectedSubtotal === 0 || selectedSubtotal >= freeShippingThreshold ? 0 : zoneBaseFee;
+  const hasFreeThreshold =
+    typeof freeShippingThreshold === 'number' &&
+    freeShippingThreshold > 0 &&
+    freeShippingThreshold < Infinity;
+
+  const isFreeByThreshold = hasFreeThreshold && selectedSubtotal >= freeShippingThreshold;
+  const isFreeDeliveryUnlocked = isFreeByThreshold || quantityFreeDelivery?.unlocked === true;
+
+  const selectedShippingFee = selectedSubtotal === 0 || isFreeDeliveryUnlocked ? 0 : zoneBaseFee;
   const selectedTotalAmount = Math.max(0, selectedSubtotal - selectedDiscountAmount + selectedShippingFee);
 
-  const remainingForFreeShipping = Math.max(0, freeShippingThreshold - selectedSubtotal);
+  const remainingForFreeShipping = hasFreeThreshold ? Math.max(0, freeShippingThreshold - selectedSubtotal) : 0;
+  const drawerProgress = hasFreeThreshold && selectedSubtotal > 0
+    ? Math.min(100, (selectedSubtotal / freeShippingThreshold) * 100)
+    : 0;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -118,54 +130,54 @@ export function CartDrawer() {
         </div>
 
         {/* Free Shipping Progress Indicator */}
-        <div className="bg-amber-50 dark:bg-stone-800/60 p-3 border-b border-stone-200 dark:border-stone-800">
-          <div className="flex items-center justify-between text-xs mb-1.5 font-medium">
-            <span className="flex items-center gap-1.5 text-stone-800 dark:text-stone-200">
-              <Truck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              {selectedSubtotal >= freeShippingThreshold || quantityFreeDelivery?.unlocked ? (
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                  {quantityFreeDelivery?.unlocked
-                    ? `🎉 Free Delivery unlocked via "${quantityFreeDelivery.productName}" Qty! 🚚`
-                    : '🎉 You unlocked FREE Express Shipping!'}
-                </span>
-              ) : (
-                <span>
-                  {quantityFreeDelivery ? (
-                    <span>
-                      Buy <strong className="text-[#A80C14]">{quantityFreeDelivery.requiredQty - quantityFreeDelivery.currentQty}</strong> more of <strong className="text-stone-900 dark:text-stone-100">"{quantityFreeDelivery.productName}"</strong> for FREE Delivery!
-                    </span>
-                  ) : (
-                    <span>
-                      Add <strong className="text-amber-700 dark:text-amber-400">{formatCurrency(remainingForFreeShipping)}</strong> more for FREE Shipping
-                    </span>
-                  )}
+        {(hasFreeThreshold || quantityFreeDelivery) && (
+          <div className="bg-amber-50 dark:bg-stone-800/60 p-3 border-b border-stone-200 dark:border-stone-800">
+            <div className="flex items-center justify-between text-xs mb-1.5 font-medium">
+              <span className="flex items-center gap-1.5 text-stone-800 dark:text-stone-200">
+                <Truck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                {isFreeDeliveryUnlocked ? (
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                    {quantityFreeDelivery?.unlocked
+                      ? `🎉 Free Delivery unlocked via "${quantityFreeDelivery.productName}" Qty! 🚚`
+                      : '🎉 You unlocked FREE Express Shipping!'}
+                  </span>
+                ) : (
+                  <span>
+                    {quantityFreeDelivery ? (
+                      <span>
+                        Buy <strong className="text-[#A80C14]">{quantityFreeDelivery.requiredQty - quantityFreeDelivery.currentQty}</strong> more of <strong className="text-stone-900 dark:text-stone-100">"{quantityFreeDelivery.productName}"</strong> for FREE Delivery!
+                      </span>
+                    ) : (
+                      <span>
+                        Add <strong className="text-amber-700 dark:text-amber-400">{formatCurrency(remainingForFreeShipping)}</strong> more for FREE Shipping
+                      </span>
+                    )}
+                  </span>
+                )}
+              </span>
+              {hasFreeThreshold && (
+                <span className="text-[11px] text-stone-500 font-mono">
+                  {isFreeDeliveryUnlocked ? '100%' : `${Math.round(drawerProgress)}%`}
                 </span>
               )}
-            </span>
-            <span className="text-[11px] text-stone-500 font-mono">
-              {selectedSubtotal >= freeShippingThreshold || quantityFreeDelivery?.unlocked
-                ? '100%'
-                : `${Math.round(Math.min(100, (selectedSubtotal / freeShippingThreshold) * 100))}%`}
-            </span>
+            </div>
+            {hasFreeThreshold && (
+              <div className="w-full bg-stone-200 dark:bg-stone-700 h-2 rounded-full overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-amber-500 to-emerald-500 h-full transition-all duration-500 rounded-full"
+                  style={{
+                    width: `${isFreeDeliveryUnlocked ? 100 : drawerProgress}%`
+                  }}
+                />
+              </div>
+            )}
+            {selectedShippingFee > 0 && (
+              <p className="text-[10px] text-stone-500 mt-1 font-sans">
+                Delivery to {selectedZoneName}: ৳{selectedShippingFee} (final fee set at checkout)
+              </p>
+            )}
           </div>
-          <div className="w-full bg-stone-200 dark:bg-stone-700 h-2 rounded-full overflow-hidden">
-            <div
-              className="bg-gradient-to-r from-amber-500 to-emerald-500 h-full transition-all duration-500 rounded-full"
-              style={{
-                width: `${
-                  selectedSubtotal >= freeShippingThreshold || quantityFreeDelivery?.unlocked
-                    ? 100
-                    : Math.min(100, (selectedSubtotal / freeShippingThreshold) * 100)
-                }%`
-              }}
-            />
-          </div>
-          {shippingFee > 0 && (
-            <p className="text-[10px] text-stone-500 mt-1 font-sans">
-              Delivery to {selectedZoneName}: ৳{shippingFee} (final fee set at checkout)
-            </p>
-          )}
-        </div>
+        )}
 
         {/* Cart Item List */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -214,7 +226,7 @@ export function CartDrawer() {
                   {/* Product Thumbnail */}
                   <div className="relative w-16 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-stone-200">
                     <SmartImage
-                      src={item.product?.images[0]}
+                      src={getProductVariationImage(item.product, item.selectedColor)}
                       alt={item.product?.name}
                       fill
                       sizes="64px"
@@ -286,7 +298,9 @@ export function CartDrawer() {
                       {/* Price */}
                       <div className="text-right">
                         <span className="text-xs font-bold text-amber-700 dark:text-amber-400">
-                          {formatCurrency(item.product?.price * item.quantity)}
+                          {formatCurrency(
+                            getProductVariationPrice(item.product, item.selectedColor, item.selectedSize) * item.quantity
+                          )}
                         </span>
                       </div>
                     </div>

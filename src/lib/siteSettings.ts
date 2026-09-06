@@ -10,8 +10,8 @@ import { prisma } from '@/lib/prisma';
 import { unstable_cache } from 'next/cache';
 import { SITE_SETTINGS_TAG } from '@/lib/fetcher';
 
-/** Mirrors DEFAULT_SETTINGS['store'] in /api/settings. */
-const DEFAULT_FREE_DELIVERY_THRESHOLD = 100;
+/** Mirrors DEFAULT_SETTINGS['store'] in /api/settings. 0 = disabled by default. */
+const DEFAULT_FREE_DELIVERY_THRESHOLD = 0;
 
 export interface StoreSettings {
   freeShippingThreshold: number;

@@ -5,6 +5,8 @@ import { Product } from '@/data/products';
 import { AppliedCoupon } from '@/data/promotions';
 import { useWishlist } from '@/hooks/useWishlist';
 import { sendNewOrderNotification } from '@/lib/socketClient';
+import { getProductVariationPrice } from '@/lib/utils';
+import { checkIsFreeDelivery } from '@/lib/shipping/locationBilingual';
 
 export interface CartItem {
   product: Product;
@@ -160,9 +162,8 @@ interface CartContextType {
   refreshOrdersFromApi: () => Promise<void>;
 }
 
-// Fallback while (or if) the /api/settings read never lands — the admin's
-// configured value replaces this at runtime (see fetchStoreSettings).
-const FREE_SHIPPING_MIN = 100;
+// Fallback while (or if) the /api/settings read never lands — 0 means disabled by default.
+const FREE_SHIPPING_MIN = 0;
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
@@ -227,10 +228,10 @@ export function CartProvider({
 
   const fetchStoreSettings = async () => {
     try {
-      const res = await fetch('/api/settings?key=store');
+      const res = await fetch('/api/settings?key=store', { cache: 'no-store' });
       const data = await res.json();
-      const threshold = data?.setting?.value?.freeShippingThreshold;
-      if (data.success && typeof threshold === 'number' && threshold >= 0) {
+      const threshold = Number(data?.setting?.value?.freeShippingThreshold);
+      if (data.success && !isNaN(threshold) && threshold >= 0) {
         setFreeShippingThreshold(threshold);
       }
     } catch (e) {
@@ -238,6 +239,11 @@ export function CartProvider({
       console.error('Failed to fetch store settings:', e);
     }
   };
+
+  useEffect(() => {
+    window.addEventListener('falak:settings-changed', fetchStoreSettings);
+    return () => window.removeEventListener('falak:settings-changed', fetchStoreSettings);
+  }, []);
 
   const fetchDeliveryZones = async () => {
     try {
@@ -351,19 +357,13 @@ export function CartProvider({
   };
 
   // Load orders from API & localStorage
+  // Load user's own order history from localStorage
   const refreshOrdersFromApi = async () => {
     try {
-      const res = await fetch('/api/orders');
-      const data = await res.json();
-      if (data.orders) {
-        setOrders(data.orders);
-        localStorage.setItem('falak_orders', JSON.stringify(data.orders));
-        return;
-      }
-    } catch { }
+      // Clean up legacy all-orders storage key if present
+      localStorage.removeItem('falak_orders');
 
-    try {
-      const savedOrders = localStorage.getItem('falak_orders');
+      const savedOrders = localStorage.getItem('falak_my_orders');
       if (savedOrders) {
         setOrders(JSON.parse(savedOrders));
       } else {
@@ -549,7 +549,8 @@ export function CartProvider({
 
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
   const subtotal = cart.reduce(
-    (total, item) => total + item.product?.price * item.quantity,
+    (total, item) =>
+      total + getProductVariationPrice(item.product, item.selectedColor, item.selectedSize) * item.quantity,
     0
   );
 
@@ -695,8 +696,17 @@ export function CartProvider({
 
   const baseFee = activeSubArea?.charge ?? activeZone?.charge ?? 60; // fallback charge
 
-  const freeShippingProgress = Math.min(100, (subtotal / freeShippingThreshold) * 100);
-  const isFreeDelivery = subtotal >= freeShippingThreshold || (quantityFreeDelivery?.unlocked === true);
+  const hasFreeShippingThreshold =
+    typeof freeShippingThreshold === 'number' &&
+    freeShippingThreshold > 0 &&
+    freeShippingThreshold < Infinity;
+
+  const freeShippingProgress = hasFreeShippingThreshold && subtotal > 0
+    ? Math.min(100, (subtotal / freeShippingThreshold) * 100)
+    : 0;
+
+  const isFreeDelivery = checkIsFreeDelivery(cart, subtotal, freeShippingThreshold);
+
   const shippingFee = subtotal === 0 || isFreeDelivery ? 0 : baseFee;
   const totalAmount = Math.max(0, subtotal - discountAmount + shippingFee);
 
@@ -741,7 +751,13 @@ export function CartProvider({
       console.warn('API post fallback to local state:', e);
     }
 
-    setOrders((prev) => [finalOrder, ...prev]);
+    setOrders((prev) => {
+      const updated = [finalOrder, ...prev.filter((o) => o.id !== finalOrder.id)];
+      try {
+        localStorage.setItem('falak_my_orders', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
     clearCart();
 
     // Real-Time Socket Notification to Admin

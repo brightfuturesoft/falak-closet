@@ -228,11 +228,10 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
                         key={`${tag.filterType}-${tag.filterVal}-${tag.label}`}
                         onClick={() => handleTagClick(tag.filterType, tag.filterVal)}
                         aria-pressed={isTagActive}
-                        className={`flex-shrink-0 min-h-[36px] inline-flex items-center px-4 rounded-full text-xs font-semibold transition-all cursor-pointer active:scale-95 border ${
-                          isTagActive
-                            ? 'bg-[#A80C14] border-[#A80C14] text-white shadow-xs'
-                            : 'bg-white hover:bg-[#FDF2F3]/60 border-stone-200 text-[#0D153A] hover:text-[#A80C14] hover:border-[#F8D2D5]'
-                        }`}
+                        className={`flex-shrink-0 min-h-[36px] inline-flex items-center px-4 rounded-full text-xs font-semibold transition-all cursor-pointer active:scale-95 border ${isTagActive
+                          ? 'bg-[#A80C14] border-[#A80C14] text-white shadow-xs'
+                          : 'bg-white hover:bg-[#FDF2F3]/60 border-stone-200 text-[#0D153A] hover:text-[#A80C14] hover:border-[#F8D2D5]'
+                          }`}
                       >
                         {tag.label}
                       </button>
@@ -284,11 +283,10 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
                           key={`${tag.filterType}-${tag.filterVal}-${tag.label}`}
                           onClick={() => handleTagClick(tag.filterType, tag.filterVal)}
                           aria-pressed={isTagActive}
-                          className={`flex-shrink-0 min-h-[36px] inline-flex items-center px-3.5 rounded-full text-xs font-semibold transition-all cursor-pointer active:scale-95 border ${
-                            isTagActive
-                              ? 'bg-[#A80C14] border-[#A80C14] text-white shadow-xs'
-                              : 'bg-white hover:bg-[#FDF2F3]/60 border-stone-200 text-[#0D153A] hover:text-[#A80C14] hover:border-[#F8D2D5]'
-                          }`}
+                          className={`flex-shrink-0 min-h-[36px] inline-flex items-center px-3.5 rounded-full text-xs font-semibold transition-all cursor-pointer active:scale-95 border ${isTagActive
+                            ? 'bg-[#A80C14] border-[#A80C14] text-white shadow-xs'
+                            : 'bg-white hover:bg-[#FDF2F3]/60 border-stone-200 text-[#0D153A] hover:text-[#A80C14] hover:border-[#F8D2D5]'
+                            }`}
                         >
                           {tag.label}
                         </button>
@@ -310,15 +308,14 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
           >
             <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
           </button>
-          
+
           <div className="flex items-center gap-1.5" aria-hidden="true">
             {filterCards.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => handleScrollTo(idx)}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  activeCardIndex === idx ? 'w-5 bg-[#A80C14]' : 'w-1.5 bg-[#FDF2F3]'
-                }`}
+                className={`h-1.5 rounded-full transition-all duration-300 ${activeCardIndex === idx ? 'w-5 bg-[#A80C14]' : 'w-1.5 bg-[#FDF2F3]'
+                  }`}
                 aria-label={`Go to slide ${idx + 1}`}
               />
             ))}

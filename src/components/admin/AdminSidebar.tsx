@@ -16,11 +16,12 @@ import {
   Megaphone,
   Images,
   Star,
-  LogOut
+  LogOut,
+  Wallet
 } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 
-export type AdminTabType = 'overview' | 'orders' | 'products' | 'categories' | 'promotions' | 'customers' | 'analytics' | 'security' | 'settings' | 'delivery' | 'banners' | 'hero' | 'reviews';
+export type AdminTabType = 'overview' | 'orders' | 'products' | 'categories' | 'promotions' | 'customers' | 'analytics' | 'finances' | 'security' | 'settings' | 'delivery' | 'banners' | 'hero' | 'reviews';
 
 interface AdminSidebarProps {
   pendingOrdersCount: number;
@@ -36,7 +37,7 @@ export function activeTabFromPathname(pathname: string): AdminTabType {
   const segment = pathname.replace(/^\/admin\/?/, '').split('/')[0];
   const tabs: AdminTabType[] = [
     'overview', 'orders', 'products', 'categories', 'promotions', 'customers',
-    'security', 'analytics', 'settings', 'delivery', 'banners', 'hero', 'reviews'
+    'finances', 'security', 'analytics', 'settings', 'delivery', 'banners', 'hero', 'reviews'
   ];
   return (tabs.find((t) => t === segment) || 'overview') as AdminTabType;
 }
@@ -95,13 +96,7 @@ export function AdminSidebar({
       icon: FolderTree,
       badge: null
     },
-    {
-      id: 'delivery' as AdminTabType,
-      href: '/admin/delivery',
-      label: 'Delivery Zones & Charges',
-      icon: Truck,
-      badge: null
-    },
+
     {
       id: 'promotions' as AdminTabType,
       href: '/admin/promotions',
@@ -139,6 +134,13 @@ export function AdminSidebar({
       href: '/admin/security',
       label: 'IP Security & Bans',
       icon: ShieldAlert,
+      badge: null
+    },
+    {
+      id: 'finances' as AdminTabType,
+      href: '/admin/finances',
+      label: 'Accounts & Finances',
+      icon: Wallet,
       badge: null
     },
     {

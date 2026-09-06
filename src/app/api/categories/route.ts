@@ -44,7 +44,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { action, name, slug, parentCategoryId, description, icon, isFeatured, sortOrder } = body;
+    const { action, name, slug, parentCategoryId, description, icon, image, type, isFeatured, sortOrder } = body;
 
     if (!name?.trim()) {
       return NextResponse.json({ success: false, error: 'Name is required' }, { status: 400 });
@@ -90,8 +90,10 @@ export async function POST(req: Request) {
       data: {
         name: name.trim(),
         slug: generatedSlug,
+        type: type || 'category',
         icon: icon ?? 'Tag',
         description: description ?? '',
+        image: image ?? '',
         isFeatured: Boolean(isFeatured),
         sortOrder: sortOrder ?? 0,
         subCategories: [],
@@ -107,11 +109,11 @@ export async function POST(req: Request) {
 }
 
 // ─── PUT /api/categories ─────────────────────────────────────────────────────
-// body: { id, isSubcategory?, parentCategoryId?, name?, slug?, icon?, description?, isFeatured?, sortOrder? }
+// body: { id, isSubcategory?, parentCategoryId?, name?, slug?, icon?, image?, type?, description?, isFeatured?, sortOrder? }
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
-    const { id, isSubcategory, parentCategoryId, name, slug, description, icon, isFeatured, sortOrder } = body;
+    const { id, isSubcategory, parentCategoryId, name, slug, description, icon, image, type, isFeatured, sortOrder } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: 'ID is required' }, { status: 400 });
@@ -168,7 +170,9 @@ export async function PUT(req: Request) {
       data: {
         ...(name ? { name: name.trim() } : {}),
         ...(updatedSlug ? { slug: updatedSlug } : {}),
+        ...(type !== undefined ? { type } : {}),
         ...(icon !== undefined ? { icon } : {}),
+        ...(image !== undefined ? { image } : {}),
         ...(description !== undefined ? { description } : {}),
         ...(isFeatured !== undefined ? { isFeatured: Boolean(isFeatured) } : {}),
         ...(sortOrder !== undefined ? { sortOrder } : {}),

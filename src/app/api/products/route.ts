@@ -3,10 +3,12 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { PRODUCTS_TAG } from '@/lib/fetcher';
+import { isAdminAuthenticated } from '@/lib/session';
 import {
   buildProductData,
   queryProducts,
   serializeProduct,
+  sanitizeProductForPublic,
   ProductValidationError,
   type ProductSort,
 } from '@/lib/products';
@@ -43,6 +45,7 @@ const PRODUCT_SORTS = ['newest', 'name', 'price', 'stock', 'rating'] as const;
 
 export async function GET(req: Request) {
   try {
+    const isAdmin = await isAdminAuthenticated();
     const { searchParams } = new URL(req.url);
 
     // Legacy mode: unchanged queryProducts behaviour for full-catalog callers.
@@ -58,7 +61,8 @@ export async function GET(req: Request) {
         limit: Number.isFinite(limitParam) && limitParam > 0 ? limitParam : undefined,
       });
 
-      return NextResponse.json({ success: true, products });
+      const result = isAdmin ? products : products.map(sanitizeProductForPublic);
+      return NextResponse.json({ success: true, products: result });
     }
 
     const rows = await prisma.product.findMany({
@@ -170,7 +174,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       success: true,
-      products: pageRows,
+      products: isAdmin ? pageRows : pageRows.map(sanitizeProductForPublic),
       pagination: { page: safePage, pageSize, totalItems, totalPages },
       counts: { categories: categoryCounts, subCategories: subCategoryCounts },
       stats: {

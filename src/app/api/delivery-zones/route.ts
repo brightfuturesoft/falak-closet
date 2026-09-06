@@ -38,7 +38,9 @@ const DEFAULT_ZONES = [
       { id: 'sub-gazipur', name: 'Gazipur', charge: null },
       { id: 'sub-narayanganj', name: 'Narayanganj', charge: null },
       { id: 'sub-tongi', name: 'Tongi', charge: null },
-      { id: 'sub-keraniganj', name: 'Keraniganj', charge: null }
+      { id: 'sub-keraniganj', name: 'Keraniganj', charge: null },
+      { id: 'sub-ashulia', name: 'Ashulia', charge: null },
+      { id: 'sub-dhamrai', name: 'Dhamrai', charge: null }
     ]
   },
   {

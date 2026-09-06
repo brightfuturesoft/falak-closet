@@ -76,6 +76,10 @@ export function AdminHeader({
       title: 'Sales & Business Intelligence',
       subtitle: 'Division-wise logistics analytics, payment method breakdown, and performance.'
     },
+    finances: {
+      title: 'Accounts & Platform Finances',
+      subtitle: 'Dynamic Profit & Loss statements, COGS analysis, and operational expense management.'
+    },
     security: {
       title: 'IP Security & Ban Management',
       subtitle: 'Block malicious IP addresses, manage ban rules, and review client activity logs.'

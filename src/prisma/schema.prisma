@@ -69,6 +69,7 @@ model Category {
 
   name          String
   slug          String        @unique
+  type          String?       @default("category") // "category" (Shop by Category) or "occasion" (Shop by Occasion)
   icon          String        @default("Tag")
   description   String        @default("")
   image         String        @default("")
@@ -134,6 +135,7 @@ type ProductVariation {
   size          String
   stock         Int
   price         Float?
+  buyingPrice   Float?
   priceOverride Float?
   imageUrl      String?
   shortDetails  String?
@@ -162,6 +164,7 @@ model Product {
   subCategory        String?
 
   price              Float
+  buyingPrice        Float?             @default(0)
   originalPrice      Float
 
   rating             Float              @default(4.8)
@@ -342,3 +345,25 @@ model HeroSlide {
   @@index([isActive])
 }
 
+// ─── Finance / Accounts ──────────────────────────────────────────────────────
+
+enum FinanceTransactionType {
+  INCOME
+  EXPENSE
+}
+
+model FinanceTransaction {
+  id          String                 @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  type        FinanceTransactionType @default(EXPENSE)
+  category    String                 @default("Operational") // e.g. Marketing, Office Rent, Logistics, Packaging, Supplier, Salary, Utilities, Custom
+  amount      Float
+  date        DateTime               @default(now())
+  notes       String?                @default("")
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  @@index([type])
+  @@index([date])
+  @@index([category])
+}

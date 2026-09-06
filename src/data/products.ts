@@ -13,6 +13,7 @@ export interface ProductVariation {
   size: string;
   stock: number;
   price?: number;
+  buyingPrice?: number;
   priceOverride?: number;
   imageUrl?: string;
   shortDetails?: string;
@@ -42,6 +43,7 @@ export interface Product {
   category: CategoryType | string;
   subCategory?: string;
   price: number;
+  buyingPrice?: number;
   originalPrice: number;
   rating: number;
   reviewCount: number;

@@ -4,6 +4,7 @@ import { buildOrderData, serializeOrder, OrderValidationError, adjustStockForOrd
 import { evaluatePromotion } from '@/lib/promotions';
 import { getPathaoDeliveryFee, calculateOrderWeight } from '@/lib/shipping/pathao';
 import { getStoreSettingsSafe } from '@/lib/siteSettings';
+import { checkIsFreeDelivery } from '@/lib/shipping/locationBilingual';
 
 function errorMessage(err: unknown) {
   return err instanceof Error ? err.message : 'Server error';
@@ -170,7 +171,11 @@ export async function POST(req: Request) {
         });
 
         const storeSettings = await getStoreSettingsSafe();
-        const isFreeShipping = subtotal > 0 && subtotal >= storeSettings.freeShippingThreshold;
+        const isFreeShipping = checkIsFreeDelivery(
+          data.items as any,
+          subtotal,
+          storeSettings.freeShippingThreshold
+        );
 
         data.courierDeliveryFee = quote.final_price;
         data.shippingFee = isFreeShipping ? 0 : quote.final_price;

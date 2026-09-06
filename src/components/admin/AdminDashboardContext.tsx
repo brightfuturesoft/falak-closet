@@ -8,6 +8,7 @@ import { getSocket, isSocketEnabled } from '@/lib/socketClient';
 import { cloudinaryPublicIdFromUrl, deleteCloudinaryImage } from '@/lib/cloudinary';
 import { PromoVoucherData } from '@/components/admin/PromoFormModal';
 import { ToastMessage } from '@/components/admin/ToastNotification';
+import { ADMIN_SESSION_COOKIE } from '@/lib/sessionToken';
 
 /**
  * Every admin write goes through this. The handlers below used to be
@@ -187,29 +188,68 @@ export function AdminDashboardProvider({ children }: { children: React.ReactNode
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
+function cleanReasonQueryParam() {
+  if (typeof window !== 'undefined' && window.location.search.includes('reason=')) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('reason');
+    const newSearch = url.searchParams.toString();
+    const newPath = url.pathname + (newSearch ? `?${newSearch}` : '');
+    window.history.replaceState({}, '', newPath);
+  }
+}
+
   // Session Authentication Check
   useEffect(() => {
+    let isMounted = true;
+    cleanReasonQueryParam();
+
     try {
-      const savedSession = typeof window !== 'undefined' ? localStorage.getItem('falak_admin_session') : null;
-      const hasCookieSession = typeof document !== 'undefined' ? document.cookie.includes('falak_admin_session=true') : false;
-      if (savedSession === 'true' || hasCookieSession) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+      const savedSession = typeof window !== 'undefined'
+        ? localStorage.getItem('falak_admin_logged_in') || localStorage.getItem(ADMIN_SESSION_COOKIE) || localStorage.getItem('falak_admin_session')
+        : null;
+
+      if (savedSession === 'true') {
         setIsAdminLoggedIn(true);
-      } else {
-        setIsAdminLoggedIn(false);
       }
+
+      // Verify and refresh session with server
+      fetch('/api/admin/session')
+        .then((res) => res.json())
+        .then((data) => {
+          if (!isMounted) return;
+          if (data?.authenticated) {
+            setIsAdminLoggedIn(true);
+            try {
+              localStorage.setItem('falak_admin_logged_in', 'true');
+            } catch { }
+            cleanReasonQueryParam();
+          } else {
+            setIsAdminLoggedIn(false);
+            try {
+              localStorage.removeItem('falak_admin_logged_in');
+              localStorage.removeItem(ADMIN_SESSION_COOKIE);
+              localStorage.removeItem('falak_admin_session');
+            } catch { }
+          }
+        })
+        .catch(() => { });
     } catch {
       setIsAdminLoggedIn(false);
     }
+    return () => { isMounted = false; };
   }, []);
 
   const handleAdminLogout = async () => {
     setIsAdminLoggedIn(false);
     try {
+      localStorage.removeItem('falak_admin_logged_in');
+      localStorage.removeItem(ADMIN_SESSION_COOKIE);
       localStorage.removeItem('falak_admin_session');
+      // Delete any non-httpOnly legacy client cookie if left behind
       document.cookie = 'falak_admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       await fetch('/api/admin/logout', { method: 'POST' });
     } catch { }
+    cleanReasonQueryParam();
     addToast('info', 'Logged out from Falak Closet Admin Panel.');
   };
 

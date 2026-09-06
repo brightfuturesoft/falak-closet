@@ -63,6 +63,20 @@ export function proxy(req: NextRequest) {
 
   // ── API routes ─────────────────────────────────────────────────────────────
   if (pathname.startsWith('/api/')) {
+    // Prevent direct browser window navigation to API endpoints by redirecting to homepage
+    const acceptHeader = req.headers.get('accept') || '';
+    const fetchDest = req.headers.get('sec-fetch-dest') || '';
+    const fetchMode = req.headers.get('sec-fetch-mode') || '';
+
+    const isDirectBrowserNavigation =
+      fetchDest === 'document' ||
+      fetchMode === 'navigate' ||
+      (acceptHeader.includes('text/html') && !acceptHeader.includes('application/json'));
+
+    if (isDirectBrowserNavigation) {
+      return NextResponse.redirect(new URL('/', req.url));
+    }
+
     // Admin API surface — the auth endpoints themselves stay reachable.
     if (pathname.startsWith('/api/admin')) {
       const isAuthSurface =
@@ -127,19 +141,6 @@ export function proxy(req: NextRequest) {
 export const config = {
   matcher: [
     '/admin/:path*',
-    '/api/admin/:path*',
-    '/api/user/:path*',
-    '/api/customers/:path*',
-    '/api/orders/:path*',
-    '/api/products/:path*',
-    '/api/categories/:path*',
-    '/api/promotions/:path*',
-    '/api/hero-slides/:path*',
-    '/api/delivery-zones/:path*',
-    '/api/security/:path*',
-    '/api/settings',
-    '/api/upload',
-    '/api/seed',
-    '/api/revalidate',
+    '/api/:path*',
   ],
 };

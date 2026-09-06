@@ -58,12 +58,12 @@ export async function apiFetch<T>(
       ...init,
       ...(isCached
         ? {
-            cache: 'force-cache' as const,
-            next: {
-              ...(revalidate !== undefined ? { revalidate } : {}),
-              ...(tags?.length ? { tags } : {}),
-            },
-          }
+          cache: 'force-cache' as const,
+          next: {
+            ...(revalidate !== undefined ? { revalidate } : {}),
+            ...(tags?.length ? { tags } : {}),
+          },
+        }
         : {}),
     });
 

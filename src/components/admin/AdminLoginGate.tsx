@@ -4,9 +4,20 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { KeyRound, ArrowLeft, Lock, Sparkles } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
+import { ADMIN_SESSION_COOKIE } from '@/lib/sessionToken';
 
 interface AdminLoginGateProps {
   onLoginSuccess: () => void;
+}
+
+function cleanReasonQueryParam() {
+  if (typeof window !== 'undefined' && window.location.search.includes('reason=')) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('reason');
+    const newSearch = url.searchParams.toString();
+    const newPath = url.pathname + (newSearch ? `?${newSearch}` : '');
+    window.history.replaceState({}, '', newPath);
+  }
 }
 
 export function AdminLoginGate({ onLoginSuccess }: AdminLoginGateProps) {
@@ -14,6 +25,10 @@ export function AdminLoginGate({ onLoginSuccess }: AdminLoginGateProps) {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  React.useEffect(() => {
+    cleanReasonQueryParam();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,9 +45,9 @@ export function AdminLoginGate({ onLoginSuccess }: AdminLoginGateProps) {
 
       if (data.success) {
         try {
-          localStorage.setItem('falak_admin_session', 'true');
-          document.cookie = 'falak_admin_session=true; path=/; max-age=86400; SameSite=Lax';
+          localStorage.setItem('falak_admin_logged_in', 'true');
         } catch { }
+        cleanReasonQueryParam();
         onLoginSuccess();
       } else {
         setLoginError(data.error || 'Invalid admin credentials.');
@@ -41,9 +56,9 @@ export function AdminLoginGate({ onLoginSuccess }: AdminLoginGateProps) {
       // Fallback client check if API fails
       if (username.trim() === 'admin' && password === 'falak123') {
         try {
-          localStorage.setItem('falak_admin_session', 'true');
-          document.cookie = 'falak_admin_session=true; path=/; max-age=86400; SameSite=Lax';
+          localStorage.setItem('falak_admin_logged_in', 'true');
         } catch { }
+        cleanReasonQueryParam();
         onLoginSuccess();
       } else {
         setLoginError('Invalid credentials.');
@@ -67,10 +82,10 @@ export function AdminLoginGate({ onLoginSuccess }: AdminLoginGateProps) {
     } catch { }
 
     try {
-      localStorage.setItem('falak_admin_session', 'true');
-      document.cookie = 'falak_admin_session=true; path=/; max-age=86400; SameSite=Lax';
+      localStorage.setItem('falak_admin_logged_in', 'true');
     } catch { }
 
+    cleanReasonQueryParam();
     setIsLoading(false);
     onLoginSuccess();
   };
