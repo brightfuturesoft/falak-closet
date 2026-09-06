@@ -51,6 +51,17 @@ export async function GET(req: NextRequest) {
 
     const sp = req.nextUrl.searchParams;
     if (!sp.has('page') && !sp.has('pageSize')) {
+      if (sp.has('query')) {
+        const query = (sp.get('query') || '').trim().replace(/^#/, '').toLowerCase();
+        const searched = query
+          ? serialized.filter((o) => {
+              const oId = o.id.toLowerCase();
+              const track = (o.trackingNumber || '').toLowerCase();
+              return oId === query || oId === `flk-${query}` || (track && track === query);
+            })
+          : [];
+        return NextResponse.json({ success: true, orders: searched });
+      }
       return NextResponse.json({ success: true, orders: serialized });
     }
 

@@ -109,38 +109,50 @@ function TrackContent() {
   const [showReceipt, setShowReceipt] = useState(false);
 
   useEffect(() => {
-    if (idParam || phoneParam) {
-      const found = getOrderById(idParam) || getOrdersByPhone(phoneParam)[0];
+    const qId = (idParam || phoneParam || '').trim();
+
+    if (qId) {
+      const found = getOrderById(qId);
+
       if (found) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setActiveOrder(found);
+        setSearched(true);
       } else {
-        // Fallback search in orders array
-        const directMatch = orders.find(
-          (o) =>
-            o.id.toLowerCase() === idParam.toLowerCase() ||
-            (o.shippingAddress?.phone && o.shippingAddress.phone === phoneParam)
-        );
-        setActiveOrder(directMatch);
+        // Fetch from API strictly by Order ID / Tracking Number
+        fetch(`/api/orders?query=${encodeURIComponent(qId)}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success && Array.isArray(data.orders) && data.orders.length > 0) {
+              setActiveOrder(data.orders[0]);
+            } else {
+              setActiveOrder(undefined);
+            }
+            setSearched(true);
+          })
+          .catch(() => {
+            setActiveOrder(undefined);
+            setSearched(true);
+          });
       }
-      setSearched(true);
     } else {
       setActiveOrder(undefined);
       setSearched(false);
     }
-  }, [idParam, phoneParam, orders, getOrderById, getOrdersByPhone]);
+  }, [idParam, phoneParam, orders, getOrderById]);
 
   const [isSearchingApi, setIsSearchingApi] = useState(false);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputQuery.trim()) return;
-
     const query = inputQuery.trim();
-    const localFound =
-      getOrderById(query) ||
-      getOrdersByPhone(query)[0] ||
-      orders.find((o) => o.id.toLowerCase() === query.toLowerCase());
+    if (!query) {
+      setActiveOrder(undefined);
+      setSearched(false);
+      return;
+    }
+
+    const localFound = getOrderById(query);
 
     if (localFound) {
       setActiveOrder(localFound);
@@ -148,7 +160,7 @@ function TrackContent() {
       return;
     }
 
-    // Remote search via API for orders not in local storage
+    // Remote search via API strictly by Order ID / Tracking Number
     setIsSearchingApi(true);
     try {
       const res = await fetch(`/api/orders?query=${encodeURIComponent(query)}`);

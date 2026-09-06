@@ -767,13 +767,22 @@ export function CartProvider({
   };
 
   const getOrderById = (orderId: string) => {
-    const clean = orderId.trim().toUpperCase();
-    return orders.find((o) => o.id.toUpperCase() === clean || (o.trackingNumber || '').toUpperCase() === clean);
+    if (!orderId || !orderId.trim()) return undefined;
+    const clean = orderId.trim().replace(/^#/, '').toUpperCase();
+    return orders.find((o) => {
+      const oId = o.id.toUpperCase();
+      const track = (o.trackingNumber || '').toUpperCase();
+      return oId === clean || oId === `FLK-${clean}` || (track && track === clean);
+    });
   };
 
   const getOrdersByPhone = (phone: string) => {
     const clean = phone.replace(/\D/g, '');
-    return orders.filter((o) => o.shippingAddress.phone.replace(/\D/g, '').includes(clean));
+    if (!clean || clean.length < 3) return [];
+    return orders.filter((o) => {
+      const pClean = (o.shippingAddress?.phone || '').replace(/\D/g, '');
+      return pClean.length > 0 && pClean.includes(clean);
+    });
   };
 
   return (
