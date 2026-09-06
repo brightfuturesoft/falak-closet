@@ -21,7 +21,9 @@ import {
   ChevronRight,
   ChevronLeft,
   Pipette,
-  Palette
+  Palette,
+  Search,
+  Heart
 } from 'lucide-react';
 import { Product, WORK_TYPES, OCCASIONS, MATERIALS, WEATHER_TYPES, ProductVariation, ProductColor } from '@/data/products';
 import { useCategories } from '@/lib/useCategories';
@@ -55,6 +57,132 @@ function suggestionsFor(products: Product[], key: 'material' | 'workType' | 'occ
   return Array.from(new Set([...seeds, ...fromDb])).sort();
 }
 
+interface SearchableAttributeSelectProps {
+  label: string;
+  badge?: string;
+  value: string;
+  onChange: (val: string) => void;
+  options: string[];
+  placeholder?: string;
+  dynamicOptions?: string[];
+}
+
+function SearchableAttributeSelect({
+  label,
+  badge = '',
+  value,
+  onChange,
+  options,
+  placeholder = 'Select or search…',
+  dynamicOptions = []
+}: SearchableAttributeSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredOptions = options.filter((o) =>
+    o.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-1.5 relative" ref={dropdownRef}>
+      <label className="font-bold text-stone-700 flex items-center justify-between">
+        <span>{label}</span>
+        {badge && (
+          <span className="text-[10px] font-mono text-amber-800 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+            {badge}
+          </span>
+        )}
+      </label>
+
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 font-bold text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-stone-900 cursor-pointer"
+        >
+          <span className={value ? 'text-stone-900' : 'text-stone-400 font-normal'}>
+            {value || placeholder}
+          </span>
+          <Search className="w-4 h-4 text-stone-400" />
+        </button>
+
+        {isOpen && (
+          <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-stone-200 rounded-2xl shadow-xl z-50 p-2 space-y-2 animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-2.5" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={`Search or type ${label.toLowerCase()}...`}
+                autoFocus
+                className="w-full pl-9 pr-3 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-900"
+              />
+            </div>
+
+            <div className="max-h-48 overflow-y-auto space-y-0.5">
+              {filteredOptions.map((o) => {
+                const isDynamic = dynamicOptions.some((d) => d.toLowerCase() === o.toLowerCase());
+                const isSelected = value.toLowerCase() === o.toLowerCase();
+                return (
+                  <button
+                    key={o}
+                    type="button"
+                    onClick={() => {
+                      onChange(o);
+                      setIsOpen(false);
+                      setSearchQuery('');
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${isSelected ? 'bg-[#9B050B] text-white' : 'text-stone-800 hover:bg-stone-100'
+                      }`}
+                  >
+                    <span>{o}</span>
+                    {isDynamic && (
+                      <span
+                        className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold ${isSelected ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800'
+                          }`}
+                      >
+                        Dynamic
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+
+              {searchQuery.trim() &&
+                !options.some((o) => o.toLowerCase() === searchQuery.trim().toLowerCase()) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange(searchQuery.trim());
+                      setIsOpen(false);
+                      setSearchQuery('');
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-stone-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 flex items-center justify-between cursor-pointer"
+                  >
+                    <span>Use custom: "{searchQuery.trim()}"</span>
+                    <Plus className="w-3.5 h-3.5 text-amber-700" />
+                  </button>
+                )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function ProductFormModal({
   isOpen,
   onClose,
@@ -62,12 +190,10 @@ export function ProductFormModal({
   editingProduct,
   existingProducts = []
 }: ProductFormModalProps) {
-  // Active Wizard Tab (1: Basic, 2: Pricing, 3: Color Variations & Photos, 4: Features & Care)
-  const [wizardStep, setWizardStep] = useState<1 | 2 | 3 | 4>(1);
+  // Active Wizard Tab (1: Basic, 2: Attributes & Occasion, 3: Pricing & Stock, 4: Colors & Photos, 5: Features & Care)
+  const [wizardStep, setWizardStep] = useState<1 | 2 | 3 | 4 | 5>(1);
 
-  // Form Fields State. workType/occasion/material/weather are free-text with
-  // datalist hints, not selects: the frozen seed arrays were never meant to cap
-  // what a merchandiser can type.
+  // Form Fields State.
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -91,12 +217,35 @@ export function ProductFormModal({
   // Save failure message, shown inline so it cannot be missed behind the overlay.
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Dynamic Managed Categories & Subcategories — admin must see the DB truth, no seed fallback
+  // Searchable Occasion Dropdown State
+  const [occasionSearchOpen, setOccasionSearchOpen] = useState(false);
+  const [occasionSearchQuery, setOccasionSearchQuery] = useState('');
+  const occasionDropdownRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (occasionDropdownRef.current && !occasionDropdownRef.current.contains(event.target as Node)) {
+        setOccasionSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Dynamic Managed Categories & Occasions
   const { categories: availableCategories, isLoading: categoriesLoading, error: categoriesError } = useCategories();
+
+  const mainCategories = availableCategories.filter((c) => !c.type || c.type === 'category');
+  const dynamicOccasionCategories = availableCategories.filter((c) => c.type === 'occasion');
+  const allOccasionOptions = Array.from(
+    new Set([
+      ...dynamicOccasionCategories.map((c) => c.name),
+      ...suggestionsFor(existingProducts, 'occasion', OCCASIONS)
+    ])
+  ).filter(Boolean).sort();
 
   const materialOptions = suggestionsFor(existingProducts, 'material', MATERIALS);
   const workTypeOptions = suggestionsFor(existingProducts, 'workType', WORK_TYPES);
-  const occasionOptions = suggestionsFor(existingProducts, 'occasion', OCCASIONS);
   const weatherOptions = suggestionsFor(existingProducts, 'weather', WEATHER_TYPES);
 
 
@@ -262,7 +411,7 @@ export function ProductFormModal({
     setFormData((prev) => ({
       ...prev,
       category: first.name,
-      subCategory: first.subCategories[0]?.name || ''
+      subCategory: first.subCategories?.[0]?.name || ''
     }));
   }, [availableCategories, formData.category]);
 
@@ -499,13 +648,23 @@ export function ProductFormModal({
     );
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleFinalSubmit = async (e?: React.SyntheticEvent) => {
+    if (e) e.preventDefault();
+
+    if (isSubmitting) return;
+
     setIsSubmitting(true);
     setSaveError(null);
 
     if (!formData.category) {
       setSaveError('Pick a category first — none are loaded yet.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!formData.name?.trim()) {
+      setSaveError('Please enter a product title / name in Step 1.');
+      setWizardStep(1);
       setIsSubmitting(false);
       return;
     }
@@ -633,15 +792,17 @@ export function ProductFormModal({
           <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-stone-200 text-xs font-bold scrollbar-none">
             {[
               { step: 1, label: '1. Basic Info', icon: Package },
-              { step: 2, label: '2. Pricing & Stock', icon: DollarSign },
-              { step: 3, label: '3. Color Variations & Photos', icon: ImageIcon },
-              { step: 4, label: '4. Features & Care', icon: Sparkles }
+              { step: 2, label: '2. Attributes & Occasion', icon: Tag },
+              { step: 3, label: '3. Pricing & Stock', icon: DollarSign },
+              { step: 4, label: '4. Colors & Photos', icon: Palette },
+              { step: 5, label: '5. Features & Care', icon: Sparkles }
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = wizardStep === tab.step;
               return (
                 <button
                   key={tab.step}
+                  type="button"
                   onClick={() => setWizardStep(tab.step as any)}
                   className={`px-3.5 py-2.5 rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${isActive
                     ? 'bg-stone-900 text-white shadow-sm font-bold'
@@ -660,7 +821,7 @@ export function ProductFormModal({
 
             {/* Left Column (7 cols): Step Form Controls */}
             <div className="lg:col-span-7 space-y-6">
-              <form onSubmit={handleSubmit} className="space-y-6 text-xs font-sans">
+              <div className="space-y-6 text-xs font-sans">
 
                 {/* STEP 1: BASIC INFO */}
                 {wizardStep === 1 && (
@@ -696,119 +857,25 @@ export function ProductFormModal({
                       </div>
                     )}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="font-bold text-stone-700">Main Category *</label>
-                        <select
-                          value={formData.category}
-                          disabled={categoriesLoading || availableCategories.length === 0}
-                          onChange={(e) => {
-                            const newCatName = e.target.value;
-                            const matchedCat = availableCategories.find(c => c.name.toLowerCase() === newCatName.toLowerCase() || c.slug.toLowerCase() === newCatName.toLowerCase());
-                            const defaultSub = matchedCat?.subCategories[0]?.name || '';
-                            setFormData({ ...formData, category: newCatName, subCategory: defaultSub });
-                          }}
-                          className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 font-bold focus:outline-none focus:ring-2 focus:ring-stone-900 disabled:opacity-60"
-                        >
-                          {availableCategories.length === 0 ? (
-                            <option value="">
-                              {categoriesLoading ? 'Loading categories…' : 'No categories — create one in the Categories tab'}
-                            </option>
-                          ) : (
-                            availableCategories.map((c) => (
-                              <option key={c.id} value={c.name}>{c.name}</option>
-                            ))
-                          )}
-                        </select>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <label className="font-bold text-stone-700">Subcategory</label>
-                        <select
-                          value={formData.subCategory}
-                          onChange={(e) => setFormData({ ...formData, subCategory: e.target.value })}
-                          className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 font-bold focus:outline-none focus:ring-2 focus:ring-stone-900"
-                        >
-                          <option value="">-- Select Subcategory (Optional) --</option>
-                          {(() => {
-                            const currentCatObj = availableCategories.find(
-                              (c) => c.name.toLowerCase() === formData.category.toLowerCase() || c.slug.toLowerCase() === formData.category.toLowerCase()
-                            );
-                            return (currentCatObj?.subCategories || []).map((sub) => (
-                              <option key={sub.id} value={sub.name}>{sub.name}</option>
-                            ));
-                          })()}
-                        </select>
-                      </div>
+                    <div className="space-y-1.5">
+                      <label className="font-bold text-stone-700">Main Category *</label>
+                      <select
+                        value={formData.category}
+                        disabled={categoriesLoading || mainCategories.length === 0}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 font-bold focus:outline-none focus:ring-2 focus:ring-stone-900 disabled:opacity-60"
+                      >
+                        {mainCategories.length === 0 ? (
+                          <option value="">
+                            {categoriesLoading ? 'Loading categories…' : 'No categories — create one in the Categories tab'}
+                          </option>
+                        ) : (
+                          mainCategories.map((c) => (
+                            <option key={c.id} value={c.name}>{c.name}</option>
+                          ))
+                        )}
+                      </select>
                     </div>
-
-                    {/* Free text + datalist: suggestions come from the seed vocabulary
-                      merged with whatever the live catalog already uses. */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="font-bold text-stone-700">Material Fabric</label>
-                        <input
-                          type="text"
-                          list="flk-materials"
-                          value={formData.material}
-                          onChange={(e) => setFormData({ ...formData, material: e.target.value })}
-                          placeholder="e.g. Nida Silk"
-                          className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900"
-                        />
-                        <datalist id="flk-materials">
-                          {materialOptions.map((m) => <option key={m} value={m} />)}
-                        </datalist>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <label className="font-bold text-stone-700">Season / Weather</label>
-                        <input
-                          type="text"
-                          list="flk-weather"
-                          value={formData.weather}
-                          onChange={(e) => setFormData({ ...formData, weather: e.target.value })}
-                          placeholder="e.g. Summer"
-                          className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900"
-                        />
-                        <datalist id="flk-weather">
-                          {weatherOptions.map((w) => <option key={w} value={w} />)}
-                        </datalist>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="font-bold text-stone-700">Work Type & Detailing</label>
-                        <input
-                          type="text"
-                          list="flk-work-types"
-                          value={formData.workType}
-                          onChange={(e) => setFormData({ ...formData, workType: e.target.value })}
-                          placeholder="e.g. Embroidery"
-                          className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900"
-                        />
-                        <datalist id="flk-work-types">
-                          {workTypeOptions.map((w) => <option key={w} value={w} />)}
-                        </datalist>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <label className="font-bold text-stone-700">Target Occasion</label>
-                        <input
-                          type="text"
-                          list="flk-occasions"
-                          value={formData.occasion}
-                          onChange={(e) => setFormData({ ...formData, occasion: e.target.value })}
-                          placeholder="e.g. Festive & Eid"
-                          className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900"
-                        />
-                        <datalist id="flk-occasions">
-                          {occasionOptions.map((o) => <option key={o} value={o} />)}
-                        </datalist>
-                      </div>
-                    </div>
-
-
 
                     <label className="flex items-center gap-3 px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl cursor-pointer">
                       <input
@@ -834,8 +901,59 @@ export function ProductFormModal({
                   </div>
                 )}
 
-                {/* STEP 2: PRICING & INVENTORY */}
+                {/* STEP 2: ATTRIBUTES & OCCASION */}
                 {wizardStep === 2 && (
+                  <div className="space-y-4 animate-in fade-in">
+                    {/* <div className="p-4 bg-amber-50/60 border border-amber-200 rounded-2xl space-y-1">
+                      <h4 className="font-bold text-amber-900 text-xs flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-amber-700" /> Dynamic Attributes & Occasion Selection
+                      </h4>
+                      <p className="text-[11px] text-amber-800">
+                        Search or pick attributes dynamically. Click any field to search existing values or type a custom entry.
+                      </p>
+                    </div> */}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <SearchableAttributeSelect
+                        label="Target Occasion"
+                        value={formData.occasion}
+                        onChange={(val) => setFormData({ ...formData, occasion: val })}
+                        options={allOccasionOptions}
+                        dynamicOptions={dynamicOccasionCategories.map((c) => c.name)}
+                        placeholder="Select or type occasion..."
+                      />
+
+                      <SearchableAttributeSelect
+                        label="Material Fabric"
+                        value={formData.material}
+                        onChange={(val) => setFormData({ ...formData, material: val })}
+                        options={materialOptions}
+                        placeholder="Select or type fabric..."
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <SearchableAttributeSelect
+                        label="Season / Weather"
+                        value={formData.weather}
+                        onChange={(val) => setFormData({ ...formData, weather: val })}
+                        options={weatherOptions}
+                        placeholder="Select or type season..."
+                      />
+
+                      <SearchableAttributeSelect
+                        label="Work Type & Detailing"
+                        value={formData.workType}
+                        onChange={(val) => setFormData({ ...formData, workType: val })}
+                        options={workTypeOptions}
+                        placeholder="Select or type detailing..."
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 3: PRICING & INVENTORY */}
+                {wizardStep === 3 && (
                   <div className="space-y-4 animate-in fade-in">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="space-y-1.5">
@@ -931,8 +1049,8 @@ export function ProductFormModal({
                   </div>
                 )}
 
-                {/* STEP 3: COLOR-WISE VARIATION & IMAGE UPLOAD */}
-                {wizardStep === 3 && (
+                {/* STEP 4: COLOR-WISE VARIATION & IMAGE UPLOAD */}
+                {wizardStep === 4 && (
                   <div className="space-y-6 animate-in fade-in">
 
 
@@ -1147,141 +1265,56 @@ export function ProductFormModal({
                                     </div>
                                   )}
                                 </div>
+                              </div>
 
-                                {/* Add Custom Size Input */}
-                                <div className="flex items-center gap-2 pt-1">
-                                  <input
-                                    type="text"
-                                    value={variationSizeInputs[colorVar.name] || ''}
-                                    onChange={(e) =>
-                                      setVariationSizeInputs((prev) => ({
-                                        ...prev,
-                                        [colorVar.name]: e.target.value
-                                      }))
-                                    }
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        handleAddSizeToVariation(
-                                          colorVar.name,
-                                          colorVar.hex,
-                                          variationSizeInputs[colorVar.name] || ''
-                                        );
-                                      }
-                                    }}
-                                    placeholder="Add size (e.g. 52, 54, S, M, XL, Free Size)..."
-                                    className="flex-1 px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs font-medium text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() =>
+                              {/* Add Custom Size Input */}
+                              <div className="flex items-center gap-2 pt-1">
+                                <input
+                                  type="text"
+                                  value={variationSizeInputs[colorVar.name] || ''}
+                                  onChange={(e) =>
+                                    setVariationSizeInputs((prev) => ({
+                                      ...prev,
+                                      [colorVar.name]: e.target.value
+                                    }))
+                                  }
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
                                       handleAddSizeToVariation(
                                         colorVar.name,
                                         colorVar.hex,
                                         variationSizeInputs[colorVar.name] || ''
-                                      )
+                                      );
                                     }
-                                    className="px-3.5 py-2 bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
-                                  >
-                                    + Add Size
-                                  </button>
-                                </div>
-
-                                {/* Quick Suggestion Chips */}
-                                <div className="space-y-1 pt-1">
-                                  <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider font-mono">Quick Add Size:</span>
-                                  <div className="flex flex-wrap gap-1.5">
-                                    {['52', '54', '56', '58', '60', 'Free Size', 'S', 'M', 'L', 'XL', 'XXL'].map((chip) => {
-                                      const isAdded = variationsMatrix.some(
-                                        (v) => v.colorName === colorVar.name && v.size === chip
-                                      );
-                                      return (
-                                        <button
-                                          key={chip}
-                                          type="button"
-                                          onClick={() => {
-                                            if (isAdded) {
-                                              handleRemoveSizeFromVariation(colorVar.name, chip);
-                                            } else {
-                                              handleAddSizeToVariation(colorVar.name, colorVar.hex, chip);
-                                            }
-                                          }}
-                                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer font-mono ${isAdded
-                                              ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-                                              : 'bg-white border-stone-200 text-stone-600 hover:border-stone-400'
-                                            }`}
-                                        >
-                                          {chip} {isAdded ? '✓' : '+'}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
+                                  }}
+                                  placeholder="Add size (e.g. 52, 54, S, M, XL, Free Size)..."
+                                  className="flex-1 px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs font-medium text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleAddSizeToVariation(
+                                      colorVar.name,
+                                      colorVar.hex,
+                                      variationSizeInputs[colorVar.name] || ''
+                                    )
+                                  }
+                                  className="px-3.5 py-2 bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+                                >
+                                  + Add Size
+                                </button>
                               </div>
                             </div>
                           </div>
-
-                          {/* Extra Photo Thumbnails Row */}
-                          {colorVar.images.length > 1 && (
-                            <div className="pt-3 border-t border-stone-200 space-y-1.5">
-                              <span className="text-[10px] font-bold text-stone-500 font-mono">
-                                Gallery Photos ({colorVar.images.length} photos uploaded)
-                              </span>
-                              <div className="flex gap-2 overflow-x-auto pb-1">
-                                {colorVar.images.map((img, imgIdx) => {
-                                  const isMain = colorVar.mainImageIndex === imgIdx;
-                                  return (
-                                    <div
-                                      key={imgIdx}
-                                      className={`relative w-14 h-16 rounded-xl overflow-hidden border-2 transition-all shrink-0 group ${isMain ? 'border-amber-500 ring-2 ring-amber-400/40' : 'border-stone-300'
-                                        }`}
-                                    >
-                                      <Image src={img} alt={`${colorVar.name} ${imgIdx}`} fill className="object-cover" />
-                                      {isMain ? (
-                                        <div className="absolute top-0.5 left-0.5 px-1 bg-amber-400 text-stone-950 font-black text-[7px] rounded">
-                                          Cover
-                                        </div>
-                                      ) : (
-                                        <button
-                                          type="button"
-                                          onClick={() => handleSetColorMainImage(colorVar.id, imgIdx)}
-                                          className="absolute inset-0 bg-stone-900/60 text-white font-bold text-[8px] opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-                                        >
-                                          Cover
-                                        </button>
-                                      )}
-                                      <button
-                                        type="button"
-                                        onClick={() => handleRemoveColorImage(colorVar.id, imgIdx)}
-                                        className="absolute top-0.5 right-0.5 p-0.5 bg-rose-600 text-white rounded z-10"
-                                      >
-                                        <Trash2 className="w-2.5 h-2.5" />
-                                      </button>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
                         </div>
                       ))}
-
-                      {/* Bottom Button matching user wireframe: [ Add More ] */}
-                      <button
-                        type="button"
-                        onClick={handleAddNewColorRow}
-                        className="px-6 py-3 bg-white hover:bg-stone-50 text-stone-900 border-2 border-stone-900 font-black text-xs sm:text-sm rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 hover:shadow-md"
-                      >
-                        <Plus className="w-4 h-4 text-[#9B050B]" />
-                        <span>Add More</span>
-                      </button>
                     </div>
-
                   </div>
                 )}
 
-                {/* STEP 4: FEATURES & CARE */}
-                {wizardStep === 4 && (
+                {/* STEP 5: FEATURES & CARE */}
+                {wizardStep === 5 && (
                   <div className="space-y-4 animate-in fade-in">
                     <div className="space-y-1.5">
                       <label className="font-bold text-stone-700">Key Features (One per line)</label>
@@ -1326,7 +1359,7 @@ export function ProductFormModal({
                     </button>
                   ) : <div />}
 
-                  {wizardStep < 4 ? (
+                  {wizardStep < 5 ? (
                     <button
                       type="button"
                       onClick={() => setWizardStep((wizardStep + 1) as any)}
@@ -1336,7 +1369,8 @@ export function ProductFormModal({
                     </button>
                   ) : (
                     <button
-                      type="submit"
+                      type="button"
+                      onClick={handleFinalSubmit}
                       disabled={isSubmitting}
                       className="px-6 py-2.5 bg-gradient-to-r from-[#9B050B] to-[#C71B20] text-white font-black rounded-xl shadow-lg hover:from-[#B8000A] hover:to-[#E0242A] cursor-pointer disabled:opacity-50"
                     >
@@ -1344,7 +1378,7 @@ export function ProductFormModal({
                     </button>
                   )}
                 </div>
-              </form>
+              </div>
             </div>
 
             {/* Right Column (5 cols): Real-Time Live Product Storefront Preview */}

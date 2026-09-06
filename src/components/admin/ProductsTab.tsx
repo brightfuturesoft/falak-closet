@@ -314,7 +314,7 @@ export function ProductsTab({
   const subCategoryPills = React.useMemo(() => {
     if (selectedCategory === 'All') return [];
     const managed =
-      managedCategories.find((c) => c.name === selectedCategory)?.subCategories.map((s) => s.name) ?? [];
+      managedCategories.find((c) => c.name === selectedCategory)?.subCategories?.map((s) => s.name) ?? [];
     const fromCounts = Object.keys(counts?.subCategories?.[selectedCategory] || {});
     return Array.from(new Set([...managed, ...fromCounts]));
   }, [managedCategories, counts, selectedCategory]);

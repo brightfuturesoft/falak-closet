@@ -23,7 +23,7 @@ export interface Category {
   icon?: string;
   description?: string;
   image?: string;
-  subCategories: SubCategory[];
+  subCategories?: SubCategory[];
   isFeatured?: boolean;
   productCount?: number;
 }

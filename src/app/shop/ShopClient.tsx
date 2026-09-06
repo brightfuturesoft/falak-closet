@@ -279,7 +279,8 @@ interface ManagedCategory {
   id: string;
   name: string;
   slug: string;
-  subCategories: { id: string; name: string; slug: string }[];
+  type?: string;
+  subCategories?: { id: string; name: string; slug: string }[];
 }
 
 function FilterPanel({
@@ -302,11 +303,13 @@ function FilterPanel({
   // stack filters without reopening the panel each time.
   const pick = (key: string) => (value: string) => setParam(key, value);
 
+  const mainManagedCategories = React.useMemo(() => {
+    return managedCategories.filter((c) => !c.type || c.type === 'category');
+  }, [managedCategories]);
+
   // Categories the catalog actually uses but the Categories tab does not manage
-  // — a renamed or deleted category would otherwise strand its products with no
-  // way to filter to them.
   const unmanagedCategories = React.useMemo(() => {
-    const managed = new Set(managedCategories.flatMap((c) => [norm(c.name), norm(c.slug)]));
+    const managed = new Set(mainManagedCategories.flatMap((c) => [norm(c.name), norm(c.slug)]));
     const extras = new Map<string, Facet>();
 
     catalog.forEach((p) => {
@@ -318,35 +321,27 @@ function FilterPanel({
     });
 
     return Array.from(extras.values()).sort((a, b) => b.count - a.count);
-  }, [managedCategories, catalog]);
+  }, [mainManagedCategories, catalog]);
 
   const countForCategory = (cat: ManagedCategory) =>
     catalog.filter((p) => norm(p.category) === norm(cat.name) || norm(p.category) === norm(cat.slug)).length;
-
-  const countForSub = (sub: { name: string; slug: string }) =>
-    catalog.filter((p) => norm(p.subCategory) === norm(sub.name) || norm(p.subCategory) === norm(sub.slug)).length;
 
   const catActive = (cat: ManagedCategory) =>
     norm(params.category) === norm(cat.name) || norm(params.category) === norm(cat.slug);
 
   return (
     <div className="space-y-6">
-      {/* Category & Subcategory */}
+      {/* Category Filter */}
       <div className="p-4 bg-white rounded-2xl border border-[#F8D2D5] shadow-xs space-y-3 font-sans">
         <h4 className="font-bold text-xs uppercase tracking-wider text-stone-700 flex items-center justify-between gap-2">
           <span className="flex items-center gap-1.5">
             <Grid2X2 className="w-3.5 h-3.5 text-[#A80C14]" /> Category
           </span>
-          {params.subCategory !== 'All' && (
-            <span className="text-[10px] font-mono text-[#A80C14] font-bold bg-[#FDF2F3] px-2 py-0.5 rounded-full truncate max-w-[45%] border border-[#F8D2D5]">
-              {params.subCategory}
-            </span>
-          )}
         </h4>
 
         <div className="space-y-1.5 text-xs">
           <button
-            onClick={() => setParams({ category: 'All', subCategory: 'All' })}
+            onClick={() => setParam('category', 'All')}
             className={`w-full text-left px-3 py-2 rounded-xl transition-all flex items-center justify-between font-bold cursor-pointer ${
               params.category === 'All' ? 'bg-[#A80C14] text-white shadow-xs' : 'text-stone-700 hover:bg-[#FDF2F3]'
             }`}
@@ -361,15 +356,13 @@ function FilterPanel({
             </span>
           </button>
 
-          {managedCategories.map((cat) => {
+          {mainManagedCategories.map((cat) => {
             const selected = catActive(cat);
 
             return (
               <div key={cat.id} className="space-y-1">
                 <button
-                  onClick={() => {
-                    setParams({ category: selected ? 'All' : cat.name, subCategory: 'All' });
-                  }}
+                  onClick={() => setParam('category', selected ? 'All' : cat.name)}
                   className={`w-full text-left px-3 py-2 rounded-xl transition-all flex items-center justify-between font-bold cursor-pointer ${
                     selected ? 'bg-[#A80C14] text-white shadow-xs' : 'text-stone-700 hover:bg-[#FDF2F3]'
                   }`}
@@ -383,35 +376,6 @@ function FilterPanel({
                     {countForCategory(cat)}
                   </span>
                 </button>
-
-                {/* Subcategory tree — expanded only for the selected category */}
-                {selected && cat.subCategories.length > 0 && (
-                  <div className="pl-3 space-y-1 py-1 border-l-2 border-[#A80C14]/40 ml-3">
-                    {cat.subCategories.map((sub) => {
-                      const subSelected =
-                        norm(params.subCategory) === norm(sub.name) || norm(params.subCategory) === norm(sub.slug);
-
-                      return (
-                        <button
-                          key={sub.id}
-                          onClick={() => setParam('subCategory', subSelected ? 'All' : sub.name)}
-                          className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center justify-between gap-2 cursor-pointer ${
-                            subSelected ? 'bg-[#A80C14] text-white' : 'text-stone-600 hover:bg-stone-100'
-                          }`}
-                        >
-                          <span className="truncate">• {sub.name}</span>
-                          <span
-                            className={`text-[9px] px-1.5 py-0.5 rounded-full shrink-0 ${
-                              subSelected ? 'bg-white/20 text-white' : 'bg-stone-200 text-stone-700 font-mono'
-                            }`}
-                          >
-                            {countForSub(sub)}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
             );
           })}
@@ -424,7 +388,7 @@ function FilterPanel({
                 return (
                   <button
                     key={extra.value}
-                    onClick={() => setParams({ category: selected ? 'All' : extra.value, subCategory: 'All' })}
+                    onClick={() => setParam('category', selected ? 'All' : extra.value)}
                     className={`w-full text-left px-3 py-2 rounded-xl transition-all flex items-center justify-between font-bold cursor-pointer ${
                       selected ? 'bg-[#A80C14] text-white shadow-xs' : 'text-stone-600 hover:bg-[#FDF2F3]'
                     }`}

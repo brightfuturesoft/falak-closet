@@ -73,13 +73,22 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
       (a, b) => Number(Boolean(b.isFeatured)) - Number(Boolean(a.isFeatured))
     );
 
-    const categoryTags: FilterTag[] = sortedCategories.map((cat) => ({
+    const categoryItems = sortedCategories.filter((cat) => !cat.type || cat.type === 'category');
+    const occasionCategories = sortedCategories.filter((cat) => cat.type === 'occasion');
+
+    const categoryTags: FilterTag[] = categoryItems.map((cat) => ({
       label: cat.name,
       filterType: 'category',
       filterVal: cat.name,
     }));
 
-    const occasionTags = valuesOf(products, 'occasion');
+    const dynamicOccasionTags: FilterTag[] = occasionCategories.map((cat) => ({
+      label: cat.name,
+      filterType: 'occasion',
+      filterVal: cat.name,
+    }));
+
+    const occasionTags = dynamicOccasionTags.length > 0 ? dynamicOccasionTags : valuesOf(products, 'occasion');
 
     const cards = [];
 
