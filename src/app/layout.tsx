@@ -14,6 +14,7 @@ import { getOrganizationSchema, getWebSiteSchema } from '@/lib/schema';
 import { getSiteIdentitySafe, getAnnouncementSafe } from '@/lib/siteSettings';
 import { AnnouncementBar } from '@/components/header/AnnouncementBar';
 import { FacebookPixel } from '@/components/analytics/FacebookPixel';
+import { GoogleTagManager } from '@/components/analytics/GoogleTagManager';
 import { getProductsSafe } from '@/lib/products';
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/next"
@@ -141,6 +142,7 @@ export default async function RootLayout({
           <TopProgressBar />
         </Suspense>
         <FacebookPixel />
+        <GoogleTagManager />
         <AnalyticsProvider>
           <ToastProvider>
             <CartProvider initialProducts={products} initialProductsError={productsError}>

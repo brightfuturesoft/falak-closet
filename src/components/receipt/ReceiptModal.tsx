@@ -14,7 +14,8 @@
 
 import React, { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { Printer, X, Info } from 'lucide-react';
+import { Printer, X, Info, ExternalLink, QrCode } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import type { OrderRecord } from '@/context/CartContext';
 import { formatCurrency } from '@/lib/utils';
 
@@ -128,6 +129,9 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
     district: '',
     country: 'Bangladesh',
   };
+
+  const origin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://falakcloset.com';
+  const trackingUrl = `${origin}/track?id=${encodeURIComponent(order.id)}`;
 
   return createPortal(
     <div id="receipt-portal">
@@ -355,26 +359,60 @@ export function ReceiptModal({ order, onClose }: ReceiptModalProps) {
 
             {/* Signature + footer */}
             <div className="px-8 sm:px-10 pb-6">
-              {/* <div className="grid grid-cols-2 gap-8 text-[10px] text-stone-500 pt-2"> */}
-              {/* <div>
-                  <div className="border-t border-stone-300 w-40 mt-10 pt-1">Customer Signature</div>
-                </div> */}
-              {/* <div className="text-right">
-                  <div className="border-t border-stone-300 w-40 mt-10 pt-1 ml-auto">Authorized Signature</div>
-                </div> */}
-              {/* </div> */}
+              <div className="mt-5 border-t border-stone-200 pt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+                  {/* Left / Center Info & Return Policy */}
+                  <div className="sm:col-span-2 text-left space-y-1.5">
+                    <p className="text-[11px] font-bold text-[#0D153A]">
+                      Thank you for shopping with Falak Closet!
+                    </p>
+                    <p className="text-[9.5px] text-stone-600 leading-relaxed">
+                      Exchange accepted within 7 days with this invoice and unworn items in original condition.
+                      {identity.contactPhone && ` Questions? Hotline: ${identity.contactPhone}.`}
+                    </p>
 
-              <div className="mt-5 border-t border-dashed border-stone-300 pt-3 text-center">
-                <p className="text-[11px] font-bold text-[#0D153A]">
-                  Thank you for shopping with Falak Closet!
-                </p>
-                <p className="text-[9px] text-stone-400 leading-relaxed mt-1">
-                  Exchange accepted within 7 days with this receipt and unworn items.
-                  {identity.contactPhone && ` Questions? Hotline ${identity.contactPhone}.`}
-                </p>
-                <p className="text-[8px] text-stone-300 mt-2 font-mono">
-                  Generated {new Date().toLocaleString('en-US')} · Falak Closet · falakcloset.com
-                </p>
+                    {/* Return Policy Link */}
+                    <div className="pt-1 flex flex-wrap items-center gap-1.5 text-[9.5px]">
+                      <span className="text-stone-500 font-medium">Need returns or exchange?</span>
+                      <a
+                        href="/returns"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#A80C14] hover:text-[#8C0A10] font-bold underline inline-flex items-center gap-1 transition-colors"
+                      >
+                        <span>Return & Exchange Policy</span>
+                        <ExternalLink className="w-3 h-3 no-print" />
+                      </a>
+                      <span className="text-stone-400 font-mono text-[9px]">(falakcloset.com/returns)</span>
+                    </div>
+                  </div>
+
+                  {/* Right: Scan to Track Order QR Code */}
+                  <div className="sm:col-span-1 flex flex-col items-center sm:items-end text-center sm:text-right border-t sm:border-t-0 sm:border-l border-stone-200 pt-3 sm:pt-0 sm:pl-4">
+                    <div className="bg-white p-1.5 border border-stone-200 rounded-md shadow-xs inline-block">
+                      <QRCodeSVG
+                        value={trackingUrl}
+                        size={72}
+                        level="M"
+                        includeMargin={false}
+                        className="w-18 h-18 text-[#0D153A]"
+                      />
+                    </div>
+                    <p className="text-[9.5px] font-bold text-[#0D153A] mt-1 flex items-center justify-center sm:justify-end gap-1">
+                      <QrCode className="w-3 h-3 text-[#A80C14]" />
+                      Scan to Track Order
+                    </p>
+                    <p className="text-[8px] text-stone-400 font-mono mt-0.5">
+                      falakcloset.com/track?id={order.id}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bottom Receipt Metadata */}
+                <div className="mt-4 pt-2.5 border-t border-dashed border-stone-200 flex flex-col sm:flex-row items-center justify-between text-[8px] text-stone-400 font-mono gap-1">
+                  <span>Generated {new Date().toLocaleString('en-US')} · Official Invoice</span>
+                  <span>Falak Closet · falakcloset.com</span>
+                </div>
               </div>
             </div>
           </div>

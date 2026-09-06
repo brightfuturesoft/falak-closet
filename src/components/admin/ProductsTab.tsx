@@ -412,13 +412,18 @@ export function ProductsTab({
           )}
         </td>
 
-        {/* Price */}
+        {/* Price & Buying Price */}
         <td className="py-3 pr-4 font-mono font-bold text-stone-900 whitespace-nowrap tabular-nums text-right">
-          {formatCurrency(p.price)}
-          {p.originalPrice && p.originalPrice > p.price && (
-            <span className="block text-[10px] text-stone-400 line-through font-normal">
-              {formatCurrency(p.originalPrice)}
-            </span>
+          <div>{formatCurrency(p.price)}</div>
+          {typeof p.buyingPrice === 'number' && p.buyingPrice > 0 ? (
+            <div className="text-[10px] text-amber-700 font-medium">
+              Cost: {formatCurrency(p.buyingPrice)}
+              <span className="ml-1 font-bold text-emerald-700">
+                (+{formatCurrency(p.price - p.buyingPrice)})
+              </span>
+            </div>
+          ) : (
+            <div className="text-[10px] text-stone-400 font-normal italic">Cost: unset</div>
           )}
         </td>
 

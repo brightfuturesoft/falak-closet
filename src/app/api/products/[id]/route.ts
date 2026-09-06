@@ -3,10 +3,12 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { PRODUCTS_TAG } from '@/lib/fetcher';
+import { isAdminAuthenticated } from '@/lib/session';
 import {
   buildProductData,
   isObjectId,
   serializeProduct,
+  sanitizeProductForPublic,
   ProductValidationError,
 } from '@/lib/products';
 
@@ -43,11 +45,15 @@ const notFound = () =>
 // ─── GET /api/products/[id] ──────────────────────────────────────────────────
 export async function GET(_req: Request, { params }: RouteContext) {
   try {
+    const isAdmin = await isAdminAuthenticated();
     const { id } = await params;
     const product = await findProduct(id);
     if (!product) return notFound();
 
-    return NextResponse.json({ success: true, product: serializeProduct(product) });
+    const serialized = serializeProduct(product);
+    const finalProduct = isAdmin ? serialized : sanitizeProductForPublic(serialized);
+
+    return NextResponse.json({ success: true, product: finalProduct });
   } catch (err) {
     console.error('[GET /api/products/[id]]', err);
     return NextResponse.json({ success: false, error: errorMessage(err) }, { status: 500 });

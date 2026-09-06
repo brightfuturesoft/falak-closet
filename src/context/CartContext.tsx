@@ -357,19 +357,13 @@ export function CartProvider({
   };
 
   // Load orders from API & localStorage
+  // Load user's own order history from localStorage
   const refreshOrdersFromApi = async () => {
     try {
-      const res = await fetch('/api/orders');
-      const data = await res.json();
-      if (data.orders) {
-        setOrders(data.orders);
-        localStorage.setItem('falak_orders', JSON.stringify(data.orders));
-        return;
-      }
-    } catch { }
+      // Clean up legacy all-orders storage key if present
+      localStorage.removeItem('falak_orders');
 
-    try {
-      const savedOrders = localStorage.getItem('falak_orders');
+      const savedOrders = localStorage.getItem('falak_my_orders');
       if (savedOrders) {
         setOrders(JSON.parse(savedOrders));
       } else {
@@ -757,7 +751,13 @@ export function CartProvider({
       console.warn('API post fallback to local state:', e);
     }
 
-    setOrders((prev) => [finalOrder, ...prev]);
+    setOrders((prev) => {
+      const updated = [finalOrder, ...prev.filter((o) => o.id !== finalOrder.id)];
+      try {
+        localStorage.setItem('falak_my_orders', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
     clearCart();
 
     // Real-Time Socket Notification to Admin

@@ -44,6 +44,7 @@ export function serializeProduct(row: ProductRow): Product {
     category: row.category,
     subCategory: opt(row.subCategory),
     price: row.price,
+    buyingPrice: opt(row.buyingPrice),
     originalPrice: row.originalPrice,
     rating: row.rating,
     reviewCount: row.reviewCount,
@@ -70,6 +71,7 @@ export function serializeProduct(row: ProductRow): Product {
       size: v.size,
       stock: v.stock,
       price: opt(v.price),
+      buyingPrice: opt(v.buyingPrice),
       priceOverride: opt(v.priceOverride),
       imageUrl: opt(v.imageUrl),
       shortDetails: opt(v.shortDetails),
@@ -92,6 +94,23 @@ export function serializeProduct(row: ProductRow): Product {
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+/**
+ * Remove sensitive financial fields (such as `buyingPrice`) from products
+ * before returning them to public unauthenticated API endpoints.
+ */
+export function sanitizeProductForPublic<T extends Product>(product: T): T {
+  const sanitized = { ...product };
+  delete sanitized.buyingPrice;
+  if (Array.isArray(sanitized.variations)) {
+    sanitized.variations = sanitized.variations.map((v) => {
+      const vCopy = { ...v };
+      delete vCopy.buyingPrice;
+      return vCopy;
+    });
+  }
+  return sanitized;
 }
 
 /**
@@ -332,6 +351,7 @@ function toVariations(value: unknown) {
       size: toStr(v.size),
       stock: toInt(v.stock),
       ...(v.price === undefined || v.price === null ? {} : { price: toNum(v.price) }),
+      ...(v.buyingPrice === undefined || v.buyingPrice === null ? {} : { buyingPrice: toNum(v.buyingPrice) }),
       ...(v.priceOverride === undefined || v.priceOverride === null
         ? {}
         : { priceOverride: toNum(v.priceOverride) }),
@@ -394,6 +414,12 @@ export function buildProductData(body: Raw, options: { partial?: boolean } = {})
     const price = toNum(body.price, -1);
     if (price < 0) throw new ProductValidationError('A non-negative price is required');
     data.price = price;
+  }
+
+  if (sent('buyingPrice')) {
+    data.buyingPrice = Math.max(0, toNum(body.buyingPrice, 0));
+  } else if (!partial) {
+    data.buyingPrice = Math.max(0, toNum(body.buyingPrice, 0));
   }
 
   if (sent('originalPrice') || !partial) {

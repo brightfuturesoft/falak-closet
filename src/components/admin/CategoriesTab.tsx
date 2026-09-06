@@ -24,6 +24,7 @@ import {
 import { Category, SubCategory } from '@/data/categories';
 import { useCategories, notifyCategoriesUpdated } from '@/lib/useCategories';
 import { Product } from '@/data/products';
+import { ImageUploader } from '@/components/ui/ImageUploader';
 
 interface CategoriesTabProps {
   products?: Product[];
@@ -57,6 +58,7 @@ export function CategoriesTab({ products = [], onRefreshProducts }: CategoriesTa
     slug: '',
     icon: 'Tag',
     description: '',
+    image: '',
     isFeatured: true
   });
 
@@ -133,6 +135,7 @@ export function CategoriesTab({ products = [], onRefreshProducts }: CategoriesTa
         slug: cat.slug,
         icon: cat.icon || 'Tag',
         description: cat.description || '',
+        image: cat.image || '',
         isFeatured: Boolean(cat.isFeatured)
       });
     } else {
@@ -142,6 +145,7 @@ export function CategoriesTab({ products = [], onRefreshProducts }: CategoriesTa
         slug: '',
         icon: 'Tag',
         description: '',
+        image: '',
         isFeatured: true
       });
     }
@@ -184,6 +188,7 @@ export function CategoriesTab({ products = [], onRefreshProducts }: CategoriesTa
       slug: catFormData.slug.trim() || catFormData.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       icon: catFormData.icon,
       description: catFormData.description.trim(),
+      image: catFormData.image.trim(),
       isFeatured: catFormData.isFeatured
     };
 
@@ -251,7 +256,7 @@ export function CategoriesTab({ products = [], onRefreshProducts }: CategoriesTa
 
   return (
     <div className="space-y-6 text-stone-900 font-sans">
-      
+
       {/* Top Banner & Control Bar */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-stone-200 shadow-xs">
         <div className="space-y-1">
@@ -383,6 +388,12 @@ export function CategoriesTab({ products = [], onRefreshProducts }: CategoriesTa
             >
               {/* Category Card Header */}
               <div className="space-y-3">
+                {cat.image ? (
+                  <div className="relative w-full h-32 rounded-2xl overflow-hidden bg-stone-100 border border-stone-200/60">
+                    <img src={cat.image} alt={cat.name} className="object-cover w-full h-full" />
+                  </div>
+                ) : null}
+
                 <div className="flex items-center justify-between gap-2 border-b border-stone-100 pb-3">
                   <div className="flex items-center gap-3">
                     <div className="p-2.5 bg-[#FFFBF0] border border-[#F2C76E]/60 text-[#9B050B] rounded-2xl">
@@ -576,9 +587,29 @@ export function CategoriesTab({ products = [], onRefreshProducts }: CategoriesTa
               </div>
 
               <div className="space-y-1.5">
+                <label className="font-bold text-stone-700">Category Image</label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    value={catFormData.image}
+                    onChange={(e) => setCatFormData({ ...catFormData, image: e.target.value })}
+                    placeholder="https://... or /images/..."
+                    className="flex-1 px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-900"
+                  />
+                  <ImageUploader
+                    folder="categories"
+                    label="Upload"
+                    onUploaded={(res) => {
+                      if (res[0]?.url) setCatFormData((prev) => ({ ...prev, image: res[0].url }));
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
                 <label className="font-bold text-stone-700">Description</label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={catFormData.description}
                   onChange={(e) => setCatFormData({ ...catFormData, description: e.target.value })}
                   placeholder="Short description for storefront category cards..."

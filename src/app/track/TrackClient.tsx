@@ -124,23 +124,46 @@ function TrackContent() {
         setActiveOrder(directMatch);
       }
       setSearched(true);
-    } else if (orders.length > 0) {
-      setActiveOrder(orders[0]);
+    } else {
+      setActiveOrder(undefined);
+      setSearched(false);
     }
   }, [idParam, phoneParam, orders, getOrderById, getOrdersByPhone]);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const [isSearchingApi, setIsSearchingApi] = useState(false);
+
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputQuery.trim()) return;
 
     const query = inputQuery.trim();
-    const found =
+    const localFound =
       getOrderById(query) ||
       getOrdersByPhone(query)[0] ||
       orders.find((o) => o.id.toLowerCase() === query.toLowerCase());
 
-    setActiveOrder(found);
-    setSearched(true);
+    if (localFound) {
+      setActiveOrder(localFound);
+      setSearched(true);
+      return;
+    }
+
+    // Remote search via API for orders not in local storage
+    setIsSearchingApi(true);
+    try {
+      const res = await fetch(`/api/orders?query=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.orders) && data.orders.length > 0) {
+        setActiveOrder(data.orders[0]);
+      } else {
+        setActiveOrder(undefined);
+      }
+    } catch {
+      setActiveOrder(undefined);
+    } finally {
+      setIsSearchingApi(false);
+      setSearched(true);
+    }
   };
 
   const handlePrintInvoice = () => {
@@ -264,24 +287,20 @@ function TrackContent() {
           </div>
           <button
             type="submit"
-            className="min-h-[48px] px-8 bg-[#A80C14] text-white font-bold text-xs uppercase tracking-wider rounded-full hover:bg-[#8C0A10] transition-all shadow-md shadow-[#A80C14]/25 flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+            disabled={isSearchingApi}
+            className="min-h-[48px] px-8 bg-[#A80C14] text-white font-bold text-xs uppercase tracking-wider rounded-full hover:bg-[#8C0A10] transition-all shadow-md shadow-[#A80C14]/25 flex items-center justify-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-60"
           >
-            <Search className="w-4 h-4" />
-            <span>Track</span>
+            {isSearchingApi ? (
+              <span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+            ) : (
+              <Search className="w-4 h-4" />
+            )}
+            <span>{isSearchingApi ? 'Searching...' : 'Track'}</span>
           </button>
         </form>
 
-        <div className="flex flex-wrap items-center justify-center gap-2 text-[11px]">
-          <span className="text-stone-400">Try:</span>
-          <button
-            type="button"
-            onClick={() => setInputQuery('FLK-POS-56598')}
-            className="px-3 py-1.5 bg-white border border-stone-200 hover:border-[#F8D2D5] hover:text-[#A80C14] rounded-full font-mono font-bold text-stone-600 transition-colors cursor-pointer"
-          >
-            FLK-POS-56598
-          </button>
-          <span className="text-stone-300">·</span>
-          <span className="text-stone-400">or the phone used at checkout</span>
+        <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] text-stone-500 font-medium">
+          <span>Enter your Order ID (e.g. FLK-1024) or the 11-digit phone number used at checkout</span>
         </div>
       </div>
 
@@ -658,28 +677,70 @@ function TrackContent() {
           </div>
         </div>
       ) : (
-        orders.length > 0 && (
-          /* No search yet — quick pick from recent local orders */
-          <div className="bg-white rounded-3xl border border-stone-200/80 p-5 sm:p-6 space-y-4 shadow-sm">
-            <h3 className="font-serif font-bold text-sm text-[#0D153A] flex items-center gap-2">
-              <Clock className="w-4 h-4 text-[#A80C14]" /> Your Recent Orders
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {orders.slice(0, 4).map((o) => (
-                <button
-                  key={o.id}
-                  type="button"
-                  onClick={() => setActiveOrder(o)}
-                  className="px-4 py-2 bg-stone-50 hover:bg-[#FDF2F3] border border-stone-200 hover:border-[#F8D2D5] rounded-full text-[11px] font-mono font-bold text-stone-600 hover:text-[#A80C14] transition-all cursor-pointer inline-flex items-center gap-1.5"
-                >
-                  #{o.id}
-                  <span className="text-stone-400 font-sans">·</span>
-                  <span className="font-sans">{formatCurrency(o.total)}</span>
-                </button>
-              ))}
+        <div className="space-y-6">
+          {orders.length > 0 && (
+            /* Recent local orders quick pick */
+            <div className="bg-white rounded-3xl border border-stone-200/80 p-5 sm:p-6 space-y-4 shadow-sm">
+              <h3 className="font-serif font-bold text-sm text-[#0D153A] flex items-center gap-2">
+                <Clock className="w-4 h-4 text-[#A80C14]" /> Your Recent Orders
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {orders.slice(0, 4).map((o) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    onClick={() => {
+                      setInputQuery(o.id);
+                      setActiveOrder(o);
+                      setSearched(true);
+                    }}
+                    className="px-4 py-2 bg-stone-50 hover:bg-[#FDF2F3] border border-stone-200 hover:border-[#F8D2D5] rounded-full text-[11px] font-mono font-bold text-stone-600 hover:text-[#A80C14] transition-all cursor-pointer inline-flex items-center gap-1.5"
+                  >
+                    #{o.id}
+                    <span className="text-stone-400 font-sans">·</span>
+                    <span className="font-sans">{formatCurrency(o.total)}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Clean Guidance Hero when no order is searched */}
+          <div className="p-6 sm:p-8 bg-white rounded-3xl border border-stone-200/80 shadow-xs text-center space-y-6">
+            <div className="w-14 h-14 rounded-2xl bg-[#FDF2F3] border border-[#F8D2D5] text-[#A80C14] flex items-center justify-center mx-auto">
+              <Truck className="w-7 h-7" />
+            </div>
+            <div className="max-w-md mx-auto space-y-2">
+              <h3 className="font-serif font-bold text-lg text-[#0D153A]">
+                Track Your Shipment & Order Status
+              </h3>
+              <p className="text-xs text-stone-500 leading-relaxed">
+                Enter your Order ID (from SMS confirmation) or your contact phone number in the search box above to view real-time delivery progress.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left max-w-2xl mx-auto pt-2">
+              <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200/60 space-y-1">
+                <span className="text-xs font-bold text-[#0D153A] flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Real-time Tracking
+                </span>
+                <p className="text-[11px] text-stone-500">Live courier tracking from confirmation to doorstep delivery.</p>
+              </div>
+              <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200/60 space-y-1">
+                <span className="text-xs font-bold text-[#0D153A] flex items-center gap-1.5">
+                  <Printer className="w-4 h-4 text-[#A80C14]" /> Digital Invoice
+                </span>
+                <p className="text-[11px] text-stone-500">View and print official invoice receipt with QR verification.</p>
+              </div>
+              <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200/60 space-y-1">
+                <span className="text-xs font-bold text-[#0D153A] flex items-center gap-1.5">
+                  <PackageCheck className="w-4 h-4 text-amber-600" /> Parcel Inspection
+                </span>
+                <p className="text-[11px] text-stone-500">Inspect parcel at delivery before paying Cash on Delivery.</p>
+              </div>
             </div>
           </div>
-        )
+        </div>
       )}
 
       {/* Support Section */}

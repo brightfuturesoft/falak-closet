@@ -13,12 +13,12 @@ import crypto from 'crypto';
 
 /** httpOnly cookie carrying the signed customer session token. */
 export const USER_SESSION_COOKIE = 'falak_session';
-/** httpOnly cookie carrying the signed admin session token. */
-export const ADMIN_SESSION_COOKIE = 'falak_admin_session';
+/** httpOnly cookie carrying the signed admin session token (obfuscated token name). */
+export const ADMIN_SESSION_COOKIE = '__flk_sys_auth_v3';
 
-/** Customer sessions last 30 days; admin sessions 24 hours. */
+/** Customer sessions last 30 days; admin sessions last 365 days (1 year). */
 export const USER_SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30;
-export const ADMIN_SESSION_TTL_MS = 1000 * 60 * 60 * 24;
+export const ADMIN_SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 365;
 
 interface TokenPayload {
   /** Subject — user id (customer token) or admin username (admin token). */
