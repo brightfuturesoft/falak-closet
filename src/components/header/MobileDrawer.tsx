@@ -71,7 +71,7 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
                 <span>All Products</span>
                 <span className="text-xs text-stone-400">Shop All</span>
               </Link>
-              {categoriesList.map((cat) => (
+              {categoriesList.filter((cat) => !cat.type || cat.type === 'category').map((cat) => (
                 <div key={cat.id} className="space-y-1">
                   <Link
                     href={`/shop?category=${encodeURIComponent(cat.name)}`}
@@ -79,26 +79,7 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
                     className="flex items-center justify-between px-3 py-2 text-sm font-bold text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors"
                   >
                     <span>{cat.name}</span>
-                    {cat.subCategories.length > 0 && (
-                      <span className="text-[10px] font-mono font-bold text-[#A80C14] px-2 py-0.5 bg-[#FDF2F3] rounded-full">
-                        {cat.subCategories.length} sub
-                      </span>
-                    )}
                   </Link>
-                  {cat.subCategories.length > 0 && (
-                    <div className="pl-4 space-y-0.5 border-l-2 border-[#F8D2D5] dark:border-stone-700 ml-3">
-                      {cat.subCategories.map((sub) => (
-                        <Link
-                          key={sub.id}
-                          href={`/shop?category=${encodeURIComponent(cat.name)}&subCategory=${encodeURIComponent(sub.name)}`}
-                          onClick={onClose}
-                          className="block px-3 py-1 text-xs text-stone-600 dark:text-stone-400 hover:text-[#A80C14] dark:hover:text-[#A80C14] hover:bg-stone-50 rounded-md transition-colors font-medium"
-                        >
-                          • {sub.name}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>

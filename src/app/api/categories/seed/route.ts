@@ -27,7 +27,7 @@ export async function POST() {
             image: cat.image ?? '',
             isFeatured: cat.isFeatured ?? false,
             sortOrder: idx,
-            subCategories: cat.subCategories.map((s) => ({
+            subCategories: (cat.subCategories || []).map((s) => ({
               id: s.id,
               name: s.name,
               slug: s.slug,

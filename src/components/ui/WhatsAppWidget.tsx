@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { X, Send, GripVertical } from 'lucide-react';
+import { X, Send } from 'lucide-react';
 
 interface WhatsAppWidgetProps {
   whatsappNumber?: string;
@@ -17,17 +17,6 @@ export function WhatsAppWidget({ whatsappNumber, contactPhone }: WhatsAppWidgetP
   const [hasOpened, setHasOpened] = useState(false);
   const [unreadCount, setUnreadCount] = useState(1);
   const chatBottomRef = useRef<HTMLDivElement>(null);
-
-  // Dragging State
-  const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStartRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number }>({
-    startX: 0,
-    startY: 0,
-    initialX: 0,
-    initialY: 0,
-  });
-  const hasMovedRef = useRef(false);
 
   // Clean WhatsApp number from Site Identity or contactPhone
   const rawTarget = whatsappNumber || contactPhone || '01799775487';
@@ -56,73 +45,6 @@ export function WhatsAppWidget({ whatsappNumber, contactPhone }: WhatsAppWidgetP
     }
   };
 
-  // Drag Event Handlers
-  const handleDragStart = (clientX: number, clientY: number) => {
-    setIsDragging(true);
-    hasMovedRef.current = false;
-    dragStartRef.current = {
-      startX: clientX,
-      startY: clientY,
-      initialX: position.x,
-      initialY: position.y,
-    };
-  };
-
-  const handleDragMove = (clientX: number, clientY: number) => {
-    if (!isDragging) return;
-    const deltaX = clientX - dragStartRef.current.startX;
-    const deltaY = clientY - dragStartRef.current.startY;
-
-    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
-      hasMovedRef.current = true;
-    }
-
-    setPosition({
-      x: dragStartRef.current.initialX + deltaX,
-      y: dragStartRef.current.initialY + deltaY,
-    });
-  };
-
-  const handleDragEnd = () => {
-    setIsDragging(false);
-  };
-
-  useEffect(() => {
-    const onMouseMove = (e: MouseEvent) => {
-      if (isDragging) {
-        handleDragMove(e.clientX, e.clientY);
-      }
-    };
-    const onMouseUp = () => {
-      if (isDragging) {
-        handleDragEnd();
-      }
-    };
-    const onTouchMove = (e: TouchEvent) => {
-      if (isDragging && e.touches[0]) {
-        handleDragMove(e.touches[0].clientX, e.touches[0].clientY);
-      }
-    };
-    const onTouchEnd = () => {
-      if (isDragging) {
-        handleDragEnd();
-      }
-    };
-
-    if (isDragging) {
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mouseup', onMouseUp);
-      window.addEventListener('touchmove', onTouchMove);
-      window.addEventListener('touchend', onTouchEnd);
-    }
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('touchend', onTouchEnd);
-    };
-  }, [isDragging]);
-
   // Do not render on admin pages
   if (pathname?.startsWith('/admin')) {
     return null;
@@ -145,11 +67,10 @@ export function WhatsAppWidget({ whatsappNumber, contactPhone }: WhatsAppWidgetP
 
   return (
     <div
-      className="hidden lg:block fixed z-[998] transition-transform duration-75"
+      className="hidden lg:block fixed z-[998]"
       style={{
         bottom: '80px',
         right: '24px',
-        transform: `translate(${position.x}px, ${position.y}px)`,
       }}
     >
       {/* WhatsApp Chat Popup Box */}
@@ -158,12 +79,8 @@ export function WhatsAppWidget({ whatsappNumber, contactPhone }: WhatsAppWidgetP
           className="absolute bottom-16 right-0 w-[calc(100vw-2rem)] max-w-[340px] sm:max-w-[360px] bg-white rounded-3xl shadow-2xl overflow-hidden border border-stone-200/80 animate-in fade-in slide-in-from-bottom-5 duration-200 font-sans z-[999]"
           style={{ boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.25)' }}
         >
-          {/* Header (also acts as drag handle) */}
-          <div
-            onMouseDown={(e) => handleDragStart(e.clientX, e.clientY)}
-            onTouchStart={(e) => e.touches[0] && handleDragStart(e.touches[0].clientX, e.touches[0].clientY)}
-            className="bg-[#075E54] text-white p-4 flex items-center justify-between relative overflow-hidden select-none cursor-grab active:cursor-grabbing"
-          >
+          {/* Header */}
+          <div className="bg-[#075E54] text-white p-4 flex items-center justify-between relative overflow-hidden select-none">
             <div className="flex items-center gap-3 relative z-10">
               <div className="relative">
                 <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center p-2 border border-white/20">
@@ -176,9 +93,8 @@ export function WhatsAppWidget({ whatsappNumber, contactPhone }: WhatsAppWidgetP
               <div>
                 <h4 className="font-bold text-sm tracking-wide leading-none flex items-center gap-1">
                   <span>WhatsApp Chat</span>
-                  <GripVertical className="w-3.5 h-3.5 opacity-60 ml-0.5" />
                 </h4>
-                <span className="text-[11px] text-emerald-100 font-medium tracking-wide">Online • Drag to move</span>
+                <span className="text-[11px] text-emerald-100 font-medium tracking-wide">Online</span>
               </div>
             </div>
             <button
@@ -252,16 +168,10 @@ export function WhatsAppWidget({ whatsappNumber, contactPhone }: WhatsAppWidgetP
       {/* Floating Toggle Button */}
       <button
         type="button"
-        onMouseDown={(e) => handleDragStart(e.clientX, e.clientY)}
-        onTouchStart={(e) => e.touches[0] && handleDragStart(e.touches[0].clientX, e.touches[0].clientY)}
-        onClick={() => {
-          if (!hasMovedRef.current) {
-            handleToggle();
-          }
-        }}
-        className={`w-13 h-13 rounded-full bg-[#25D366] hover:bg-[#20ba5a] active:scale-95 text-white flex items-center justify-center shadow-xl transition-all duration-150 select-none ${
-          isDragging ? 'cursor-grabbing scale-105' : 'cursor-grab hover:scale-105'
-        } ${isOpen ? 'scale-90 opacity-90' : ''}`}
+        onClick={handleToggle}
+        className={`w-13 h-13 rounded-full bg-[#25D366] hover:bg-[#20ba5a] active:scale-95 text-white flex items-center justify-center shadow-xl transition-all duration-150 select-none cursor-pointer hover:scale-105 ${
+          isOpen ? 'scale-90 opacity-90' : ''
+        }`}
         aria-label="Open WhatsApp chat"
       >
         {/* Unread Badge */}
