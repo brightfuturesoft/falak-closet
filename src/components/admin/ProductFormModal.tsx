@@ -1021,7 +1021,7 @@ export function ProductFormModal({
                       </div>
                     </div>
 
-                    <div className="max-w-xs space-y-1.5">
+                    {/* <div className="max-w-xs space-y-1.5">
                       <label className="font-bold text-stone-700">Original Strikethrough Price (৳ BDT)</label>
                       <input
                         type="number"
@@ -1031,7 +1031,7 @@ export function ProductFormModal({
                         placeholder="Optional MSRP / Strikethrough price"
                         className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 font-mono text-base focus:outline-none focus:ring-2 focus:ring-stone-900"
                       />
-                    </div>
+                    </div> */}
 
                     <div className="space-y-1.5">
                       <label className="font-bold text-stone-700">Default Total Stock Quantity</label>
