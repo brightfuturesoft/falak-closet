@@ -24,7 +24,7 @@ import {
 import Image from 'next/image';
 import { Product } from '@/data/products';
 import { CartItem, OrderRecord } from '@/context/CartContext';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getProductVariationPrice } from '@/lib/utils';
 
 interface AdminCreateOrderModalProps {
   isOpen: boolean;
@@ -157,7 +157,10 @@ export function AdminCreateOrderModal({
     setOrderItems((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const subtotal = orderItems.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0);
+  const subtotal = orderItems.reduce(
+    (sum, item) => sum + getProductVariationPrice(item.product, item.selectedColor, item.selectedSize) * item.quantity,
+    0
+  );
   const totalAmount = Math.max(0, subtotal - discountAmount + shippingFee);
 
   const handleSubmitPOSOrder = async (e: React.FormEvent) => {
@@ -428,7 +431,7 @@ export function AdminCreateOrderModal({
                           {item.selectedColor} | {item.selectedSize}
                         </p>
                         <span className="text-xs font-bold text-amber-400 font-mono block mt-0.5">
-                          {formatCurrency((item.product?.price || 0) * item.quantity)}
+                          {formatCurrency(getProductVariationPrice(item.product, item.selectedColor, item.selectedSize) * item.quantity)}
                         </span>
                       </div>
 

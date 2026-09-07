@@ -137,8 +137,10 @@ type ProductVariation {
   price         Float?
   buyingPrice   Float?
   priceOverride Float?
+  originalPrice Float?
   imageUrl      String?
   shortDetails  String?
+  isHidden      Boolean?           @default(false)
 }
 
 type ProductReview {

@@ -6,6 +6,7 @@ import { PRODUCTS_TAG } from '@/lib/fetcher';
 import { isAdminAuthenticated } from '@/lib/session';
 import {
   buildProductData,
+  resolveUniqueSlug,
   isObjectId,
   serializeProduct,
   sanitizeProductForPublic,
@@ -72,15 +73,9 @@ async function update(req: Request, { params }: RouteContext) {
     const body = await req.json();
     const data = buildProductData(body, { partial: true });
 
-    // slug is @unique — a rename must not collide with another product.
-    if (typeof data.slug === 'string' && data.slug !== existing.slug) {
-      const clash = await prisma.product.findUnique({ where: { slug: data.slug } });
-      if (clash && clash.id !== existing.id) {
-        return NextResponse.json(
-          { success: false, error: 'Another product already uses this slug' },
-          { status: 409 }
-        );
-      }
+    // Ensure slug is uniquely resolved if updated or clashing
+    if (typeof data.slug === 'string') {
+      data.slug = await resolveUniqueSlug(data.slug, existing.id);
     }
 
     const updated = await prisma.product.update({

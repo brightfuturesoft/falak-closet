@@ -47,12 +47,25 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   // The server resolved this product (and 404'd if it did not exist), so it is
   // always the FULL document — description, features, reviews. Context copies
   // come from the slim card list (see serializeProductCard) and would lose the
-  // prose, so the server doc is used as-is.
-  const product: Product = initialProduct;
+  // Merge client context updates (e.g. admin toggling hidden/prices in real time) with initial product
+  const product: Product = useMemo(() => {
+    const found = products?.find((p) => p.id === initialProduct?.id || p.slug === initialProduct?.slug);
+    return found ? { ...initialProduct, ...found } : initialProduct;
+  }, [products, initialProduct]);
 
-  const colorsList = product?.colors && product.colors.length > 0
-    ? product.colors
-    : [{ name: 'Standard', hex: '#000000' }];
+  const colorsList = useMemo(() => {
+    if (!product?.colors || product.colors.length === 0) {
+      return [{ name: 'Standard', hex: '#000000' }];
+    }
+    if (product.variations && product.variations.length > 0) {
+      const visibleColorNames = new Set(
+        product.variations.filter((v) => !v.isHidden).map((v) => v.colorName.toLowerCase())
+      );
+      const filtered = product.colors.filter((c) => visibleColorNames.has(c.name.toLowerCase()));
+      return filtered.length > 0 ? filtered : product.colors;
+    }
+    return product.colors;
+  }, [product?.colors, product?.variations]);
 
   const imagesList = product?.images && product.images.length > 0
     ? product.images
@@ -62,7 +75,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
     if (colorQueryParam && colorsList) {
       const colorObj = colorsList.find((c) => c.name.toLowerCase() === colorQueryParam.toLowerCase());
       if (colorObj) return colorObj.name;
-      const matchedVar = product?.variations?.find((v) => v.colorName.toLowerCase() === colorQueryParam.toLowerCase());
+      const matchedVar = product?.variations?.find((v) => !v.isHidden && v.colorName.toLowerCase() === colorQueryParam.toLowerCase());
       if (matchedVar) return matchedVar.colorName;
     }
     return colorsList[0]?.name || 'Standard';
@@ -71,12 +84,10 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   const sizesList = useMemo(() => {
     if (product?.variations && product.variations.length > 0) {
       const varSizes = product.variations
-        .filter((v) => v.colorName.toLowerCase() === selectedColor.toLowerCase())
+        .filter((v) => !v.isHidden && v.colorName.toLowerCase() === selectedColor.toLowerCase())
         .map((v) => v.size)
         .filter(Boolean);
-      if (varSizes.length > 0) {
-        return Array.from(new Set(varSizes));
-      }
+      return Array.from(new Set(varSizes));
     }
     return product?.sizes && product.sizes.length > 0 ? product.sizes : ['Free Size'];
   }, [product?.variations, product?.sizes, selectedColor]);
@@ -104,7 +115,9 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
   // Active Variation Price & Stock Lookup
   const activeVariation = product?.variations?.find(
-    (v) => v.colorName === selectedColor && v.size === selectedSize
+    (v) => !v.isHidden && v.colorName.toLowerCase() === selectedColor.toLowerCase() && v.size === selectedSize
+  ) || product?.variations?.find(
+    (v) => v.colorName.toLowerCase() === selectedColor.toLowerCase() && v.size === selectedSize
   );
 
   const currentPrice = activeVariation?.price ?? activeVariation?.priceOverride ?? product?.price ?? 0;
@@ -114,8 +127,16 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   // Per-size stock for the selected color (only when a variation matrix exists)
   const stockForSize = (colorName: string, size: string): number | undefined =>
     product?.variations?.find(
-      (v) => v.colorName.toLowerCase() === colorName.toLowerCase() && v.size === size
+      (v) => !v.isHidden && v.colorName.toLowerCase() === colorName.toLowerCase() && v.size === size
     )?.stock;
+
+  // Per-size price for the selected color
+  const priceForSize = (colorName: string, size: string): number => {
+    const v = product?.variations?.find(
+      (varObj) => !varObj.isHidden && varObj.colorName.toLowerCase() === colorName.toLowerCase() && varObj.size === size
+    );
+    return v?.price ?? v?.priceOverride ?? product?.price ?? 0;
+  };
 
   const ratingValue = product?.rating || 0;
 
@@ -160,7 +181,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
 
     // Compute available sizes for the new color synchronously
     const newColorSizes = product?.variations && product.variations.length > 0
-      ? Array.from(new Set(product.variations.filter((v) => v.colorName.toLowerCase() === colorName.toLowerCase()).map((v) => v.size).filter(Boolean)))
+      ? Array.from(new Set(product.variations.filter((v) => !v.isHidden && v.colorName.toLowerCase() === colorName.toLowerCase()).map((v) => v.size).filter(Boolean)))
       : (product?.sizes && product.sizes.length > 0 ? product.sizes : ['Free Size']);
 
     let nextSize = selectedSize;
@@ -359,7 +380,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
     trackEvent('add_to_cart', {
       productId: product.id,
       productName: product.name,
-      price: product.price,
+      price: currentPrice,
       color: selectedColor,
       size: selectedSize,
       quantity
@@ -370,7 +391,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
       title: 'Added to Cart',
       subtitle: `${product.name} (Code: ${product.code})`,
       image: imagesList[selectedImageIndex] || imagesList[0],
-      price: product.price * quantity,
+      price: currentPrice * quantity,
       actionLink: '/cart',
       actionText: 'Checkout'
     });
@@ -381,7 +402,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
     trackEvent('begin_checkout', {
       source: 'buy_now_button',
       productId: product.id,
-      price: product.price * quantity
+      price: currentPrice * quantity
     });
     // Navigate with buyNow params — checkout uses ONLY this item, cart untouched.
     const params = new URLSearchParams({
@@ -668,16 +689,9 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {product?.freeDeliveryQuantity && product.freeDeliveryQuantity > 0 && (
-                <span className="bg-[#A80C14]/10 text-[#A80C14] border border-[#A80C14]/20 px-2.5 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1 shrink-0">
-                  <Truck className="w-3.5 h-3.5 shrink-0" />
-                  <span>Free Delivery @ {product.freeDeliveryQuantity}+ pcs</span>
-                </span>
-              )}
-
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl shrink-0 ${isOutOfStock ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}`}>
                 <span className={`w-2 h-2 rounded-full ${isOutOfStock ? 'bg-rose-500' : 'bg-emerald-500 animate-pulse'}`} />
-                {isOutOfStock ? 'Out of Stock' : `In Stock (${currentStock} left)`}
+                {isOutOfStock ? 'Not Available' : `Available`}
               </span>
             </div>
           </div>
@@ -688,7 +702,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               <label className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-700">
                 Color: <span className="text-[#A80C14] normal-case tracking-normal">{selectedColor}</span>
               </label>
-              <span className="text-[11px] text-stone-400 font-medium">{colorsList.length} available</span>
+              <span className="text-[11px] text-stone-400 font-medium">{colorsList.length > 0 ? "Available" : 'Not Available'}</span>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -726,24 +740,29 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
             <div className="flex flex-wrap gap-2">
               {sizesList.map((sz) => {
                 const sizeStock = stockForSize(selectedColor, sz);
+                const sizePrice = priceForSize(selectedColor, sz);
                 const isSoldOut = sizeStock !== undefined && sizeStock <= 0;
                 const isSelected = selectedSize === sz;
                 return (
                   <button
                     key={sz}
-                    title={`${sz} (Stock: ${sizeStock})`}
                     type="button"
                     onClick={() => handleSelectSize(sz)}
                     disabled={isSoldOut}
                     aria-pressed={isSelected}
-                    className={`min-w-[52px] h-11 px-3 text-xs font-bold rounded-xl border transition-all flex items-center justify-center cursor-pointer ${isSelected
+                    className={`min-w-[64px] h-12 px-3 py-1 text-xs font-bold rounded-xl border transition-all flex flex-col items-center justify-center cursor-pointer ${isSelected
                       ? 'border-[#A80C14] bg-[#A80C14] text-white shadow-xs scale-[1.03]'
                       : isSoldOut
                         ? 'border-stone-200 text-stone-300 line-through cursor-not-allowed bg-stone-50'
                         : 'border-stone-200 text-stone-800 hover:bg-[#FDF2F3] active:scale-95'
                       }`}
                   >
-                    {sz}
+                    <span className="leading-tight">{sz}</span>
+                    {sizePrice > 0 && (
+                      <span className={`text-[10px] font-mono leading-tight ${isSelected ? 'text-white/90 font-bold' : isSoldOut ? 'text-stone-300' : 'text-stone-500 font-semibold'}`}>
+                        ৳{sizePrice}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -756,7 +775,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
               <label className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-700">
                 Quantity
               </label>
-              <span className="text-[11px] text-stone-400 font-medium">Available: {currentStock}</span>
+              <span className="text-[11px] text-stone-400 font-medium">{currentStock > 0 ? 'Available' : 'Not Available'}</span>
             </div>
 
             <div className="flex items-center justify-between p-2.5 bg-stone-50 border border-stone-200 rounded-2xl">

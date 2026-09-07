@@ -79,7 +79,7 @@ export function filterProducts(products: Product[], filters: ProductFilters): Pr
     result = result.filter(
       (p) =>
         p.colors?.some((c) => c.name.toLowerCase().includes(qColor)) ||
-        p.variations?.some((v) => v.colorName.toLowerCase().includes(qColor))
+        p.variations?.some((v) => !v.isHidden && v.colorName.toLowerCase().includes(qColor))
     );
   }
 
@@ -88,7 +88,7 @@ export function filterProducts(products: Product[], filters: ProductFilters): Pr
     result = result.filter(
       (p) =>
         p.sizes?.some((s) => s.toLowerCase() === qSize) ||
-        p.variations?.some((v) => v.size.toLowerCase() === qSize)
+        p.variations?.some((v) => !v.isHidden && v.size.toLowerCase() === qSize)
     );
   }
 
@@ -111,7 +111,7 @@ export function filterProducts(products: Product[], filters: ProductFilters): Pr
         (p.workType || '').toLowerCase().includes(q) ||
         (p.material || '').toLowerCase().includes(q) ||
         p.colors?.some((c) => c.name.toLowerCase().includes(q)) ||
-        p.variations?.some((v) => v.colorName.toLowerCase().includes(q))
+        p.variations?.some((v) => !v.isHidden && v.colorName.toLowerCase().includes(q))
     );
   }
 

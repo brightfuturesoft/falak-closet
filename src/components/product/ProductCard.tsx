@@ -73,18 +73,55 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
     ? `/product/${product?.slug}?color=${encodeURIComponent(activeColor.name)}`
     : `/product/${product?.slug}`;
 
-  // Stock for the active color: variation matrix first, then the flat product stock.
+  // Stock for the active color: variation matrix first (excluding hidden), then the flat product stock.
   const activeColorStock = activeColor && product?.variations?.length
     ? product.variations
-      .filter((v) => v.colorName === activeColor.name)
+      .filter((v) => !v.isHidden && v.colorName === activeColor.name)
       .reduce((sum, v) => sum + (v.stock ?? 0), 0)
     : (product?.stock ?? 10);
   const isSoldOut = activeColorStock <= 0;
 
-  const discountPct =
-    product?.originalPrice && product.originalPrice > product.price
-      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-      : 0;
+  // Active variation resolution (first non-hidden variation for active color)
+  const activeVariation = React.useMemo(() => {
+    if (!product) return null;
+    const visibleVars = (product.variations || []).filter((v) => !v.isHidden);
+    if (visibleVars.length === 0) return null;
+
+    if (activeColor) {
+      const match = visibleVars.find(
+        (v) => v.colorName.toLowerCase() === activeColor.name.toLowerCase()
+      );
+      if (match) return match;
+    }
+    return visibleVars[0];
+  }, [product, activeColor]);
+
+  // Derived price, original price, and discount percentage based on active variation
+  const { currentPrice, currentOriginalPrice, discountPct } = React.useMemo(() => {
+    if (!product) return { currentPrice: 0, currentOriginalPrice: 0, discountPct: 0 };
+
+    const basePrice = product.price || 0;
+    const baseOriginalPrice = product.originalPrice || 0;
+
+    const price = activeVariation
+      ? (activeVariation.price ?? activeVariation.priceOverride ?? basePrice)
+      : basePrice;
+
+    const originalPrice = activeVariation
+      ? (activeVariation.originalPrice ?? baseOriginalPrice)
+      : baseOriginalPrice;
+
+    const pct =
+      originalPrice > price && price > 0
+        ? Math.round(((originalPrice - price) / originalPrice) * 100)
+        : 0;
+
+    return {
+      currentPrice: price,
+      currentOriginalPrice: originalPrice,
+      discountPct: pct,
+    };
+  }, [product, activeVariation]);
 
   // Local state for Wishlist Toast, Auth Modal, and login forms
   const [showWishlistToast, setShowWishlistToast] = React.useState(false);
@@ -171,13 +208,13 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
       return;
     }
 
-    const defaultSize = sizesList[0] || 'Free Size';
-    addToCart(product, activeColor?.name || '', defaultSize, 1);
+    const defaultSize = activeVariation?.size || sizesList[0] || 'Free Size';
+    addToCart(product, activeColor?.name || activeVariation?.colorName || '', defaultSize, 1);
 
     trackEvent('add_to_cart', {
       content_ids: [product.id],
       content_name: product.name,
-      value: product.price,
+      value: currentPrice,
       currency: 'BDT'
     });
 
@@ -186,7 +223,7 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
       title: 'Added to Cart',
       subtitle: `${product.name} (${activeColor?.name || 'Standard'})`,
       image: currentImage,
-      price: product.price,
+      price: currentPrice,
       actionLink: "/checkout",
       actionText: "Order Now"
     });
@@ -202,8 +239,8 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
       return;
     }
 
-    const color = activeColor?.name || '';
-    const size = sizesList[0] || 'Free Size';
+    const color = activeColor?.name || activeVariation?.colorName || '';
+    const size = activeVariation?.size || sizesList[0] || 'Free Size';
     const params = new URLSearchParams({
       buyNow: product.id,
       color,
@@ -301,13 +338,13 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
           )}
 
           {/* Price Row */}
-          <div className="flex items-center gap-2 mt-auto pt-0.5">
-            <span className="font-extrabold text-stone-900 text-sm sm:text-base">
-              ৳ {product?.price}
+          <div className="flex items-center gap-2 mt-auto pt-0.5 flex-wrap">
+            <span className="font-extrabold text-stone-900 text-sm sm:text-base font-mono">
+              ৳ {currentPrice}
             </span>
-            {product?.originalPrice > product?.price && (
+            {currentOriginalPrice > currentPrice && (
               <span className="px-2 py-0.5 bg-[#FDF2F3] text-[#A80C14] text-[10px] font-bold rounded-full line-through font-mono">
-                ৳ {product?.originalPrice}
+                ৳ {currentOriginalPrice}
               </span>
             )}
           </div>

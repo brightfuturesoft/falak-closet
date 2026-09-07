@@ -15,8 +15,10 @@ export interface ProductVariation {
   price?: number;
   buyingPrice?: number;
   priceOverride?: number;
+  originalPrice?: number;
   imageUrl?: string;
   shortDetails?: string;
+  isHidden?: boolean;
 }
 
 export interface Review {
