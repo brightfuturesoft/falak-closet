@@ -422,6 +422,7 @@ function cleanReasonQueryParam() {
     // discount, and the variation-summed stock, so its copy is the real one.
     setEditingProduct(null);
     await fetchAllData();
+    refreshProductsFromApi();
     setCatalogVersion((v) => v + 1);
     addToast(
       'success',

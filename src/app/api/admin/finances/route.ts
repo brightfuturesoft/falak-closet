@@ -158,21 +158,19 @@ export async function GET(req: NextRequest) {
             const qty = Math.max(1, Number(item.quantity) || 1);
 
             let buyingPrice = 0;
-            if (rawProd && typeof rawProd.buyingPrice === 'number' && rawProd.buyingPrice > 0) {
+            const itemColor = (item.selectedColor || '').toLowerCase();
+            const itemSize = (item.selectedSize || '').toLowerCase();
+            const vars = (Array.isArray(rawProd?.variations) ? rawProd.variations : []) || (pId && productMap.get(pId)?.variations) || [];
+            const matchedVar = vars.find((v: any) =>
+              (v.colorName || '').toLowerCase() === itemColor && (v.size || '').toLowerCase() === itemSize
+            );
+
+            if (matchedVar && typeof matchedVar.buyingPrice === 'number' && matchedVar.buyingPrice > 0) {
+              buyingPrice = matchedVar.buyingPrice;
+            } else if (rawProd && typeof rawProd.buyingPrice === 'number' && rawProd.buyingPrice > 0) {
               buyingPrice = rawProd.buyingPrice;
             } else if (pId && productMap.has(pId)) {
-              const pInfo = productMap.get(pId)!;
-              // Check variation buying price if available
-              const itemColor = (item.selectedColor || '').toLowerCase();
-              const itemSize = (item.selectedSize || '').toLowerCase();
-              const matchedVar = pInfo.variations.find(v =>
-                (v.colorName || '').toLowerCase() === itemColor && (v.size || '').toLowerCase() === itemSize
-              );
-              if (matchedVar && typeof matchedVar.buyingPrice === 'number' && matchedVar.buyingPrice > 0) {
-                buyingPrice = matchedVar.buyingPrice;
-              } else {
-                buyingPrice = pInfo.buyingPrice || 0;
-              }
+              buyingPrice = productMap.get(pId)!.buyingPrice || 0;
             }
 
             orderItemCOGS += buyingPrice * qty;

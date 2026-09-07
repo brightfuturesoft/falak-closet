@@ -32,7 +32,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { OrderRecord } from '@/context/CartContext';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getProductVariationPrice } from '@/lib/utils';
 import { ORDER_STATUSES } from '@/lib/orders';
 import { getSearchableTerms, calculateShippingFee } from '@/lib/shipping/locationBilingual';
 
@@ -949,7 +949,7 @@ export function OrderDetailsModal({
               {order.items?.map((item: any, idx: number) => {
                 const prod = item.product || {};
                 const name = prod.name || 'Product';
-                const price = typeof prod.price === 'number' ? prod.price : 0;
+                const price = getProductVariationPrice(prod, item.selectedColor, item.selectedSize);
                 const lineTotal = price * (item.quantity || 1);
                 return (
                   <div key={idx} className="p-4 flex items-center justify-between gap-4 text-xs">

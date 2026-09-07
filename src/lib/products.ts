@@ -73,8 +73,10 @@ export function serializeProduct(row: ProductRow): Product {
       price: opt(v.price),
       buyingPrice: opt(v.buyingPrice),
       priceOverride: opt(v.priceOverride),
+      originalPrice: opt(v.originalPrice),
       imageUrl: opt(v.imageUrl),
       shortDetails: opt(v.shortDetails),
+      isHidden: opt(v.isHidden),
     })),
     stock: row.stock,
     images: row.images,
@@ -355,8 +357,12 @@ function toVariations(value: unknown) {
       ...(v.priceOverride === undefined || v.priceOverride === null
         ? {}
         : { priceOverride: toNum(v.priceOverride) }),
+      ...(v.originalPrice === undefined || v.originalPrice === null
+        ? {}
+        : { originalPrice: toNum(v.originalPrice) }),
       ...(v.imageUrl === undefined || v.imageUrl === null ? {} : { imageUrl: toStr(v.imageUrl) }),
       ...(v.shortDetails === undefined || v.shortDetails === null ? {} : { shortDetails: toStr(v.shortDetails) }),
+      isHidden: toBool(v.isHidden),
     }));
 }
 
@@ -491,8 +497,22 @@ export function buildProductData(body: Raw, options: { partial?: boolean } = {})
 
   // Stock is the sum of the variation matrix whenever the admin form supplied one.
   if (Array.isArray(data.variations) && data.variations.length > 0) {
-    const total = (data.variations as { stock: number }[]).reduce((sum, v) => sum + v.stock, 0);
+    const total = (data.variations as { stock: number }[]).reduce((sum, v) => sum + (v.stock || 0), 0);
     if (total > 0) data.stock = total;
+
+    const validPrices = (data.variations as { price?: number; isHidden?: boolean }[])
+      .filter((v) => !v.isHidden && typeof v.price === 'number' && v.price > 0)
+      .map((v) => v.price!);
+    if (validPrices.length > 0) {
+      data.price = Math.min(...validPrices);
+    }
+
+    const validBuyingPrices = (data.variations as { buyingPrice?: number; isHidden?: boolean }[])
+      .filter((v) => !v.isHidden && typeof v.buyingPrice === 'number' && v.buyingPrice > 0)
+      .map((v) => v.buyingPrice!);
+    if (validBuyingPrices.length > 0) {
+      data.buyingPrice = Math.min(...validBuyingPrices);
+    }
   }
 
   return data;

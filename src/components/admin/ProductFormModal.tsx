@@ -10,6 +10,7 @@ import {
   Check,
   Wand2,
   Eye,
+  EyeOff,
   Sparkles,
   Layers,
   DollarSign,
@@ -619,6 +620,9 @@ export function ProductFormModal({
           colorHex,
           size: sz,
           stock: 10,
+          price: formData.price || undefined,
+          buyingPrice: formData.buyingPrice || undefined,
+          isHidden: false,
           imageUrl: img
         }
       ];
@@ -636,6 +640,44 @@ export function ProductFormModal({
     setVariationsMatrix((prev) =>
       prev.map((v) =>
         v.colorName === colorName && v.size === sizeName ? { ...v, stock: Math.max(0, stock) } : v
+      )
+    );
+  };
+
+  const handleUpdateSizePrice = (colorName: string, sizeName: string, price: number | undefined) => {
+    setVariationsMatrix((prev) =>
+      prev.map((v) =>
+        v.colorName === colorName && v.size === sizeName
+          ? { ...v, price: price !== undefined && !isNaN(price) ? Math.max(0, price) : undefined }
+          : v
+      )
+    );
+  };
+
+  const handleUpdateSizeBuyingPrice = (colorName: string, sizeName: string, buyingPrice: number | undefined) => {
+    setVariationsMatrix((prev) =>
+      prev.map((v) =>
+        v.colorName === colorName && v.size === sizeName
+          ? { ...v, buyingPrice: buyingPrice !== undefined && !isNaN(buyingPrice) ? Math.max(0, buyingPrice) : undefined }
+          : v
+      )
+    );
+  };
+
+  const handleUpdateSizeOriginalPrice = (colorName: string, sizeName: string, originalPrice: number | undefined) => {
+    setVariationsMatrix((prev) =>
+      prev.map((v) =>
+        v.colorName === colorName && v.size === sizeName
+          ? { ...v, originalPrice: originalPrice !== undefined && !isNaN(originalPrice) ? Math.max(0, originalPrice) : undefined }
+          : v
+      )
+    );
+  };
+
+  const handleToggleVariationVisibility = (colorName: string, sizeName: string) => {
+    setVariationsMatrix((prev) =>
+      prev.map((v) =>
+        v.colorName === colorName && v.size === sizeName ? { ...v, isHidden: !v.isHidden } : v
       )
     );
   };
@@ -709,6 +751,18 @@ export function ProductFormModal({
       );
       const totalStockFromMatrix = variationsMatrix.reduce((sum, v) => sum + v.stock, 0);
 
+      const varPrices = variationsMatrix
+        .filter((v) => !v.isHidden)
+        .map((v) => v.price)
+        .filter((p): p is number => typeof p === 'number' && p > 0);
+      const derivedPrice = varPrices.length > 0 ? Math.min(...varPrices) : (formData.price || 0);
+
+      const varBuyingPrices = variationsMatrix
+        .filter((v) => !v.isHidden)
+        .map((v) => v.buyingPrice)
+        .filter((bp): bp is number => typeof bp === 'number' && bp > 0);
+      const derivedBuyingPrice = varBuyingPrices.length > 0 ? Math.min(...varBuyingPrices) : (formData.buyingPrice || 0);
+
       // Field-by-field, not `...formData`: the spread also carried `featuresText`
       // and `careText`, which are textarea scratch state with no column behind
       // them — Prisma rejects unknown fields, so the whole save 500'd.
@@ -717,8 +771,8 @@ export function ProductFormModal({
         code: formData.code || undefined,
         category: formData.category,
         subCategory: formData.subCategory || undefined,
-        price: formData.price,
-        buyingPrice: formData.buyingPrice,
+        price: derivedPrice,
+        buyingPrice: derivedBuyingPrice,
         originalPrice: formData.originalPrice,
         workType: formData.workType,
         occasion: formData.occasion,
@@ -817,7 +871,7 @@ export function ProductFormModal({
           </div>
 
           {/* Split Screen Layout: Form Controls (Left) + Live Storefront Preview (Right) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="grid grid-cols-1 gap-8 items-start">
 
             {/* Left Column (7 cols): Step Form Controls */}
             <div className="lg:col-span-7 space-y-6">
@@ -955,67 +1009,28 @@ export function ProductFormModal({
                 {/* STEP 3: PRICING & INVENTORY */}
                 {wizardStep === 3 && (
                   <div className="space-y-4 animate-in fade-in">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="font-bold text-stone-700">Regular Sale Price (৳ BDT)</label>
-                        <input
-                          type="number"
-                          required
-                          min={1}
-                          value={formData.price}
-                          onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                          className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-[#9B050B] font-mono text-base font-bold focus:outline-none focus:ring-2 focus:ring-stone-900"
-                        />
+                    <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-2xl text-emerald-900 text-xs flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 text-emerald-700 font-bold">
+                        ৳
                       </div>
-
-                      <div className="space-y-1.5">
-                        <label className="font-bold text-stone-700 flex items-center justify-between">
-                          <span>Buying Price (৳ BDT)</span>
-                          <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">Admin Only</span>
-                        </label>
-                        <input
-                          type="number"
-                          min={0}
-                          value={formData.buyingPrice}
-                          onChange={(e) => setFormData({ ...formData, buyingPrice: Number(e.target.value) })}
-                          placeholder="Actual buying/cost price"
-                          className="w-full px-4 py-3 bg-amber-50/50 border border-amber-200 rounded-xl text-stone-900 font-mono text-base font-bold focus:outline-none focus:ring-2 focus:ring-amber-500"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <label className="font-bold text-stone-700">Original Price (৳ BDT)</label>
-                        <input
-                          type="number"
-                          value={formData.originalPrice}
-                          onChange={(e) => setFormData({ ...formData, originalPrice: Number(e.target.value) })}
-                          className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 font-mono text-base focus:outline-none focus:ring-2 focus:ring-stone-900"
-                        />
+                      <div>
+                        <p className="font-extrabold text-stone-900 text-xs">Variation-Based Pricing Active</p>
+                        <p className="text-stone-600 text-[11px] mt-0.5">
+                          Sale prices and buying costs are now set per color & size variation in <strong>Step 4 (Variations & Sizes)</strong>. The product base display price will automatically be calculated from your variation prices.
+                        </p>
                       </div>
                     </div>
 
-                    {/* Financial & Discount Metrics Summary Bar */}
-                    <div className="p-4 bg-gradient-to-r from-stone-50 to-amber-50/30 rounded-2xl border border-stone-200 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-stone-500 text-[10px] uppercase tracking-wider font-bold">Est. Profit / Unit</span>
-                        <span className={`font-mono font-bold text-sm ${formData.price - formData.buyingPrice >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
-                          ৳ {formatCurrency(formData.price - formData.buyingPrice)}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-stone-500 text-[10px] uppercase tracking-wider font-bold">Profit Margin</span>
-                        <span className={`font-mono font-bold text-sm ${formData.price > 0 && ((formData.price - formData.buyingPrice) / formData.price) >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
-                          {formData.price > 0 ? (((formData.price - formData.buyingPrice) / formData.price) * 100).toFixed(1) : 0}%
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col gap-0.5 sm:items-end">
-                        <span className="text-stone-500 text-[10px] uppercase tracking-wider font-bold">Customer Discount</span>
-                        <span className="px-2.5 py-0.5 bg-[#9B050B] text-white rounded-full font-bold font-mono text-xs w-fit">
-                          {discountPercentage > 0 ? `${discountPercentage}% OFF` : 'No Discount'}
-                        </span>
-                      </div>
+                    <div className="max-w-xs space-y-1.5">
+                      <label className="font-bold text-stone-700">Original Strikethrough Price (৳ BDT)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={formData.originalPrice}
+                        onChange={(e) => setFormData({ ...formData, originalPrice: Number(e.target.value) })}
+                        placeholder="Optional MSRP / Strikethrough price"
+                        className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 font-mono text-base focus:outline-none focus:ring-2 focus:ring-stone-900"
+                      />
                     </div>
 
                     <div className="space-y-1.5">
@@ -1218,25 +1233,39 @@ export function ProductFormModal({
                                         .map((v) => (
                                           <div
                                             key={v.id || `${v.colorName}-${v.size}`}
-                                            className="p-3 bg-stone-50 border border-stone-200 rounded-xl space-y-2 shadow-2xs"
+                                            className={`p-3 border rounded-xl space-y-2.5 shadow-2xs transition-all ${v.isHidden
+                                              ? 'bg-amber-50/70 border-amber-300 opacity-85'
+                                              : 'bg-stone-50 border-stone-200'
+                                              }`}
                                           >
-                                            <div className="flex items-center justify-between gap-2">
-                                              <span className="text-xs font-black font-mono text-stone-900 uppercase truncate">
-                                                Size: {v.size}
-                                              </span>
-                                              <div className="flex items-center gap-2 shrink-0">
-                                                <div className="flex items-center gap-1">
-                                                  <span className="text-[10px] text-stone-500 font-mono font-bold">Stock:</span>
-                                                  <input
-                                                    type="number"
-                                                    min={0}
-                                                    value={v.stock}
-                                                    onChange={(e) =>
-                                                      handleUpdateSizeStock(colorVar.name, v.size, Number(e.target.value))
-                                                    }
-                                                    className="w-16 px-2 py-1 bg-white border border-stone-300 rounded-lg text-xs font-mono font-bold text-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900"
-                                                  />
-                                                </div>
+                                            {/* Header Row: Size Name, Status Pill, and Actions */}
+                                            <div className="flex items-center justify-between gap-2 border-b border-stone-200/60 pb-1.5">
+                                              <div className="flex items-center gap-1.5 min-w-0">
+                                                <span className="text-xs font-black font-mono text-stone-900 uppercase truncate">
+                                                  Size: {v.size}
+                                                </span>
+                                                {v.isHidden ? (
+                                                  <span className="px-1.5 py-0.5 rounded bg-amber-200 text-amber-900 text-[9px] font-extrabold uppercase tracking-wide shrink-0">
+                                                    Hidden
+                                                  </span>
+                                                ) : (
+                                                  <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[9px] font-extrabold uppercase tracking-wide shrink-0">
+                                                    Visible
+                                                  </span>
+                                                )}
+                                              </div>
+                                              <div className="flex items-center gap-1.5 shrink-0">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleToggleVariationVisibility(colorVar.name, v.size)}
+                                                  className={`p-1 rounded-lg transition-colors cursor-pointer ${v.isHidden
+                                                    ? 'bg-amber-200 text-amber-900 hover:bg-amber-300'
+                                                    : 'bg-stone-200 text-stone-700 hover:bg-stone-300 hover:text-stone-900'
+                                                    }`}
+                                                  title={v.isHidden ? 'Click to Show Variation on Storefront' : 'Click to Hide Variation from Storefront'}
+                                                >
+                                                  {v.isHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                                </button>
                                                 <button
                                                   type="button"
                                                   onClick={() => handleRemoveSizeFromVariation(colorVar.name, v.size)}
@@ -1248,17 +1277,79 @@ export function ProductFormModal({
                                               </div>
                                             </div>
 
-                                            {/* Short Details Note Input */}
-                                            <div>
-                                              <input
-                                                type="text"
-                                                value={v.shortDetails || ''}
-                                                onChange={(e) =>
-                                                  handleUpdateSizeShortDetails(colorVar.name, v.size, e.target.value)
-                                                }
-                                                placeholder="Short details (e.g. Bust 38-40, Length 52)"
-                                                className="w-full px-2.5 py-1 bg-white border border-stone-300 rounded-lg text-[11px] font-medium text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-900"
-                                              />
+                                            {/* 4-Column Inputs Row: Stock, Price, Cost, Original Price */}
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                              <div>
+                                                <label className="block text-[9px] font-black text-stone-600 mb-0.5 uppercase tracking-wider truncate">
+                                                  Stock
+                                                </label>
+                                                <input
+                                                  type="number"
+                                                  min={0}
+                                                  value={v.stock}
+                                                  onChange={(e) =>
+                                                    handleUpdateSizeStock(colorVar.name, v.size, Number(e.target.value))
+                                                  }
+                                                  className="w-full px-2 py-1 bg-white border border-stone-300 rounded-lg text-xs font-mono font-bold text-stone-900 focus:outline-none focus:ring-1 focus:ring-stone-900"
+                                                />
+                                              </div>
+                                              <div>
+                                                <label className="block text-[9px] font-black text-stone-600 mb-0.5 uppercase tracking-wider truncate">
+                                                  Price (৳)
+                                                </label>
+                                                <input
+                                                  type="number"
+                                                  min={0}
+                                                  value={v.price !== undefined ? v.price : ''}
+                                                  onChange={(e) =>
+                                                    handleUpdateSizePrice(
+                                                      colorVar.name,
+                                                      v.size,
+                                                      e.target.value === '' ? undefined : Number(e.target.value)
+                                                    )
+                                                  }
+                                                  placeholder="0"
+                                                  className="w-full px-2 py-1 bg-white border border-stone-300 rounded-lg text-xs font-mono font-bold text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-900"
+                                                />
+                                              </div>
+                                              <div>
+                                                <label className="block text-[9px] font-black text-stone-600 mb-0.5 uppercase tracking-wider truncate">
+                                                  Cost (৳)
+                                                </label>
+                                                <input
+                                                  type="number"
+                                                  min={0}
+                                                  value={v.buyingPrice !== undefined ? v.buyingPrice : ''}
+                                                  onChange={(e) =>
+                                                    handleUpdateSizeBuyingPrice(
+                                                      colorVar.name,
+                                                      v.size,
+                                                      e.target.value === '' ? undefined : Number(e.target.value)
+                                                    )
+                                                  }
+                                                  placeholder="0"
+                                                  className="w-full px-2 py-1 bg-white border border-stone-300 rounded-lg text-xs font-mono font-bold text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-900"
+                                                />
+                                              </div>
+                                              <div>
+                                                <label className="block text-[9px] font-black text-stone-600 mb-0.5 uppercase tracking-wider truncate">
+                                                  Original (৳)
+                                                </label>
+                                                <input
+                                                  type="number"
+                                                  min={0}
+                                                  value={v.originalPrice !== undefined ? v.originalPrice : ''}
+                                                  onChange={(e) =>
+                                                    handleUpdateSizeOriginalPrice(
+                                                      colorVar.name,
+                                                      v.size,
+                                                      e.target.value === '' ? undefined : Number(e.target.value)
+                                                    )
+                                                  }
+                                                  placeholder="0"
+                                                  className="w-full px-2 py-1 bg-white border border-stone-300 rounded-lg text-xs font-mono font-bold text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-stone-900"
+                                                />
+                                              </div>
                                             </div>
                                           </div>
                                         ))}
@@ -1381,94 +1472,7 @@ export function ProductFormModal({
               </div>
             </div>
 
-            {/* Right Column (5 cols): Real-Time Live Product Storefront Preview */}
-            <div className="lg:col-span-5 space-y-4 bg-stone-50 p-5 rounded-3xl border border-stone-200 shadow-xs">
-              <div className="flex items-center justify-between pb-2 border-b border-stone-200">
-                <span className="text-xs font-bold text-stone-900 flex items-center gap-1.5">
-                  <Eye className="w-4 h-4 text-stone-900" /> Live Storefront Card Preview
-                </span>
-                <span className="text-[10px] font-mono text-emerald-700 font-bold">Real-Time Sync</span>
-              </div>
 
-              {/* Rendered Live Card */}
-              <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm space-y-3">
-                <div className="relative aspect-[3/4] bg-stone-100">
-                  <Image
-                    src={livePreviewImage}
-                    alt={formData.name || 'Product Cover'}
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute top-3 left-3 px-2.5 py-1 bg-white/90 border border-stone-200 rounded-full text-[10px] font-bold text-stone-900">
-                    {formData.category}
-                  </div>
-                  {discountPercentage > 0 && (
-                    <div className="absolute top-3 right-3 px-2.5 py-1 bg-[#9B050B] text-white font-bold text-[10px] rounded-full font-mono">
-                      {discountPercentage}% OFF
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-4 space-y-3 text-xs">
-                  <div>
-                    <h4 className="font-bold text-stone-900 text-sm line-clamp-1">
-                      {formData.name || 'Sample Product Title'}
-                    </h4>
-                    <p className="text-[11px] text-stone-500 mt-0.5">
-                      {formData.material} • {formData.workType}
-                    </p>
-                  </div>
-
-                  {/* Color Swatches with Interactive Click to Switch Preview Photo */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-stone-500 font-bold uppercase">Color Swatches:</span>
-                      <span className="text-[10px] text-stone-700 font-bold">{currentPreviewColor?.name}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      {colorVariations.map((c, idx) => (
-                        <button
-                          key={c.id}
-                          type="button"
-                          onClick={() => setPreviewColorIndex(idx)}
-                          className={`w-4 h-4 rounded-full border transition-all cursor-pointer ${previewColorIndex === idx ? 'ring-2 ring-stone-900 scale-110 border-white' : 'border-stone-300'
-                            }`}
-                          style={{ backgroundColor: c.hex }}
-                          title={c.name}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Size Pills */}
-                  <div className="flex items-center gap-1 flex-wrap">
-                    <span className="text-[10px] text-stone-500 font-bold uppercase">Sizes:</span>
-                    {Array.from(new Set(variationsMatrix.map((v) => v.size).filter(Boolean))).map((s) => (
-                      <span key={s} className="px-1.5 py-0.5 bg-stone-100 border border-stone-200 text-[10px] rounded font-mono font-bold text-stone-800">
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Price & Stock */}
-                  <div className="pt-2 border-t border-stone-100 flex items-center justify-between font-mono">
-                    <div>
-                      <span className="text-base font-black text-stone-900">
-                        {formatCurrency(formData.price)}
-                      </span>
-                      {formData.originalPrice > formData.price && (
-                        <span className="ml-2 text-xs text-stone-400 line-through">
-                          {formatCurrency(formData.originalPrice)}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-[10px] text-emerald-700 font-bold">
-                      In Stock ({variationsMatrix.reduce((sum, v) => sum + v.stock, 0) || formData.stock})
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

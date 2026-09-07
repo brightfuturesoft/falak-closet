@@ -6,6 +6,7 @@ import { PRODUCTS_TAG } from '@/lib/fetcher';
 import { isAdminAuthenticated } from '@/lib/session';
 import {
   buildProductData,
+  resolveUniqueSlug,
   queryProducts,
   serializeProduct,
   sanitizeProductForPublic,
@@ -203,13 +204,8 @@ export async function POST(req: Request) {
     const body = await req.json();
     const data = buildProductData(body);
 
-    const existing = await prisma.product.findUnique({ where: { slug: data.slug as string } });
-    if (existing) {
-      return NextResponse.json(
-        { success: false, error: `A product with the slug "${data.slug}" already exists` },
-        { status: 409 }
-      );
-    }
+    // Automatically ensure slug is unique across catalog
+    data.slug = await resolveUniqueSlug(data.slug as string);
 
     const created = await prisma.product.create({
       data: data as unknown as Prisma.ProductCreateInput,
