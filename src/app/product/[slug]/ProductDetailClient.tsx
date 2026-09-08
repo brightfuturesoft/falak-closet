@@ -22,7 +22,13 @@ import {
   Banknote,
   RefreshCcw,
   Shirt,
-  Droplets
+  Droplets,
+  PhoneCall,
+  AlertCircle,
+  MapPin,
+  Tag,
+  PackageCheck,
+  Info
 } from 'lucide-react';
 import { Product } from '@/data/products';
 import { formatCurrency } from '@/lib/utils';
@@ -486,7 +492,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         <div className="lg:col-span-7 flex flex-col-reverse lg:flex-row gap-3 lg:gap-4">
           {/* Thumbnail Strip */}
           {imagesList.length > 1 && (
-            <div className="flex lg:flex-col gap-2.5 overflow-x-auto lg:overflow-y-auto lg:max-h-[520px] xl:max-h-[620px] pb-2 lg:pb-0 no-scrollbar flex-shrink-0 w-full lg:w-20 snap-x snap-mandatory lg:snap-none">
+            <div className="flex lg:flex-col gap-2.5 overflow-x-auto lg:overflow-y-auto lg:h-[580px] lg:max-h-[580px] xl:h-[620px] xl:max-h-[620px] pb-2 lg:pb-0 no-scrollbar flex-shrink-0 w-full lg:w-20 snap-x snap-mandatory lg:snap-none">
               {imagesList.map((img, idx) => {
                 const mappedColor = colorsList.find(
                   (c) => c.imageIndex === idx || ((c as { images?: string[] }).images && (c as { images?: string[] }).images?.includes(img))
@@ -531,7 +537,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                 handleMouseMove(e);
               }
             }}
-            className="relative aspect-[4/5] w-full sm:aspect-[3/4] rounded-3xl overflow-hidden bg-stone-100 border border-[#F8D2D5] shadow-md group cursor-pointer flex-grow"
+            className="relative h-[480px] sm:h-[560px] lg:h-[580px] xl:h-[620px] w-full rounded-3xl overflow-hidden bg-stone-100 border border-[#F8D2D5] shadow-md group cursor-pointer flex-grow"
           >
             <SmartImage
               src={imagesList[selectedImageIndex] || imagesList[0]}
@@ -840,25 +846,25 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
             </div>
           )}
 
-          {/* Action Buttons — hidden on mobile (sticky purchase bar handles it) */}
-          <div className="hidden md:block space-y-3 pt-1">
-            <div className="flex gap-3">
+          {/* Action Buttons (Visible on mobile & desktop with pixel-perfect responsive layout) */}
+          <div className="hidden sm:block space-y-3 pt-2">
+            <div className="flex gap-2.5 sm:gap-3">
               <button
                 onClick={handleAddToCart}
                 disabled={isOutOfStock}
-                className="flex-1 py-3.5 px-6 bg-stone-900 hover:bg-stone-700 disabled:bg-stone-400 disabled:cursor-not-allowed text-white text-xs lg:text-sm font-bold rounded-full transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                className="flex-1 min-h-[48px] sm:min-h-[50px] py-2.5 px-3 sm:px-5 bg-stone-900 hover:bg-stone-800 active:bg-stone-950 disabled:bg-stone-300 disabled:text-stone-500 disabled:cursor-not-allowed text-white text-xs sm:text-sm font-bold rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] whitespace-nowrap"
               >
-                <ShoppingBag className="w-4 h-4" />
+                <ShoppingBag className="w-4 h-4 shrink-0" />
                 <span>{isOutOfStock ? 'Out of Stock' : 'Add to Cart'}</span>
               </button>
 
               <button
                 onClick={handleBuyNow}
                 disabled={isOutOfStock}
-                className="flex-1 py-3.5 px-6 bg-[#A80C14] hover:bg-[#8C0A10] disabled:bg-stone-300 disabled:cursor-not-allowed disabled:text-stone-500 text-white text-xs lg:text-sm font-extrabold rounded-full transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                className="flex-1 min-h-[48px] sm:min-h-[50px] py-2.5 px-3 sm:px-5 bg-[#A80C14] hover:bg-[#8C0A10] active:bg-[#72070C] disabled:bg-stone-200 disabled:text-stone-400 disabled:cursor-not-allowed text-white text-xs sm:text-sm font-extrabold rounded-2xl transition-all shadow-md shadow-[#A80C14]/20 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] whitespace-nowrap"
               >
-                <Zap className="w-4 h-4 fill-white" />
-                <span>Buy Now</span>
+                <Zap className="w-4 h-4 fill-white shrink-0" />
+                <span>{isOutOfStock ? 'Out of Stock' : 'Buy Now'}</span>
               </button>
             </div>
           </div>
@@ -945,33 +951,131 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         )}
 
         {activeTab === 'shipping' && (
-          <div role="tabpanel" className="p-4 sm:p-6 bg-white rounded-3xl border border-[#F8D2D5] space-y-4 text-xs sm:text-sm text-stone-600">
-            <div className="flex items-center gap-2">
-              <Truck className="w-4 h-4 text-[#A80C14]" />
-              <h3 className="font-bold text-base sm:text-lg text-[#A80C14]">Express Logistics</h3>
+          <div role="tabpanel" className="p-4 sm:p-6 bg-white rounded-3xl border border-[#F8D2D5] space-y-6 text-xs sm:text-sm text-stone-700">
+            {/* Header */}
+            <div className="flex items-center gap-2 border-b border-[#F8D2D5] pb-3">
+              <Truck className="w-5 h-5 text-[#A80C14]" />
+              <div>
+                <h3 className="font-bold text-base sm:text-lg text-[#A80C14]">শিপিং ও ডেলিভারি পলিসি (Shipping & Delivery Terms)</h3>
+                <p className="text-[11px] text-stone-500">আপনার অর্ডারটি নিরাপদে পৌঁছানোর জন্য অনুগ্রহ করে নিয়মগুলো একনজরে দেখে নিন</p>
+              </div>
             </div>
-            <p>Fast delivery across Bangladesh. Easy returns and exchanges within 30 days.</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <div className="flex items-start gap-2 bg-stone-50 border border-stone-100 rounded-2xl p-3">
-                <Truck className="w-4 h-4 text-[#A80C14] shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold text-stone-800 text-xs">Inside Dhaka</p>
-                  <p className="text-[11px] text-stone-500">1–2 business days</p>
+
+            {/* Delivery Rates Grid */}
+            <div>
+              <h4 className="font-bold text-stone-900 mb-2.5 flex items-center gap-1.5 text-xs sm:text-sm">
+                <MapPin className="w-4 h-4 text-[#A80C14]" />
+                <span>ডেলিভারি চার্জ (Delivery Charges)</span>
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-[#FFF0F6] border border-[#F8D2D5] rounded-2xl p-3.5 flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-stone-800 text-xs sm:text-sm">ঢাকা শহর</p>
+                    <p className="text-[11px] text-stone-500">সময়: ২-৩ দিন</p>
+                  </div>
+                  <span className="font-extrabold text-[#A80C14] text-base font-mono bg-white px-2.5 py-1 rounded-xl border border-[#F8D2D5]">৳৮০</span>
+                </div>
+                <div className="bg-[#FFF0F6] border border-[#F8D2D5] rounded-2xl p-3.5 flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-stone-800 text-xs sm:text-sm">ঢাকার পার্শ্ববর্তী এলাকা</p>
+                    <p className="text-[11px] text-stone-500">সময়: ২-৩ দিন</p>
+                  </div>
+                  <span className="font-extrabold text-[#A80C14] text-base font-mono bg-white px-2.5 py-1 rounded-xl border border-[#F8D2D5]">৳১০০</span>
+                </div>
+                <div className="bg-[#FFF0F6] border border-[#F8D2D5] rounded-2xl p-3.5 flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-stone-800 text-xs sm:text-sm">ঢাকার বাহিরে</p>
+                    <p className="text-[11px] text-stone-500">সময়: ২-৩ দিন</p>
+                  </div>
+                  <span className="font-extrabold text-[#A80C14] text-base font-mono bg-white px-2.5 py-1 rounded-xl border border-[#F8D2D5]">৳১৫০</span>
                 </div>
               </div>
-              <div className="flex items-start gap-2 bg-stone-50 border border-stone-100 rounded-2xl p-3">
-                <Truck className="w-4 h-4 text-[#A80C14] shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold text-stone-800 text-xs">Outside Dhaka</p>
-                  <p className="text-[11px] text-stone-500">2–4 business days</p>
+            </div>
+
+            {/* Policy Sections Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Order & Confirmation */}
+              <div className="bg-stone-50 border border-stone-200/80 rounded-2xl p-4 space-y-2.5">
+                <div className="flex items-center gap-2 text-stone-900 font-bold text-xs sm:text-sm">
+                  <PhoneCall className="w-4 h-4 text-[#A80C14]" />
+                  <span>অর্ডার কনফার্মেশন প্রক্রিয়া</span>
                 </div>
+                <ul className="space-y-2 text-stone-600 text-xs leading-relaxed">
+                  <li className="flex items-start gap-2">
+                    <Check className="w-3.5 h-3.5 text-[#A80C14] shrink-0 mt-0.5" />
+                    <span>নাম, ফোন নম্বর ও পূর্ণাঙ্গ ঠিকানা দিয়ে অর্ডার কনফার্ম করুন।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-3.5 h-3.5 text-[#A80C14] shrink-0 mt-0.5" />
+                    <span>পেইজ থেকে কনফার্মেশন কল পাওয়ার পর পার্সেলটি পাঠানো হবে।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-3.5 h-3.5 text-[#A80C14] shrink-0 mt-0.5" />
+                    <span>কল দিয়ে কনফার্ম করার পর অর্ডার বাতিল (Cancel) বা পরিবর্তন (Change) করা যাবে না।</span>
+                  </li>
+                </ul>
               </div>
-              <div className="flex items-start gap-2 bg-stone-50 border border-stone-100 rounded-2xl p-3">
-                <RefreshCcw className="w-4 h-4 text-[#A80C14] shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold text-stone-800 text-xs">Easy Returns</p>
-                  <p className="text-[11px] text-stone-500">Within 30 days</p>
+
+              {/* COD Policy */}
+              <div className="bg-stone-50 border border-stone-200/80 rounded-2xl p-4 space-y-2.5">
+                <div className="flex items-center gap-2 text-stone-900 font-bold text-xs sm:text-sm">
+                  <Banknote className="w-4 h-4 text-[#A80C14]" />
+                  <span>ক্যাশ অন ডেলিভারি শর্তাবলী</span>
                 </div>
+                <ul className="space-y-2 text-stone-600 text-xs leading-relaxed">
+                  <li className="flex items-start gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span>পূর্ববর্তী ৮০% সফল ডেলিভারির রেকর্ড থাকলে ক্যাশ অন ডেলিভারি (COD) সুবিধা পাবেন।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <AlertCircle className="w-3.5 h-3.5 text-[#A80C14] shrink-0 mt-0.5" />
+                    <span>৮০% সফল ডেলিভারি রেকর্ড না থাকলে ডেলিভারি চার্জ অগ্রিম (Advance) প্রদান করতে হবে।</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Delivery Inspection & Return */}
+              <div className="bg-stone-50 border border-stone-200/80 rounded-2xl p-4 space-y-2.5">
+                <div className="flex items-center gap-2 text-stone-900 font-bold text-xs sm:text-sm">
+                  <PackageCheck className="w-4 h-4 text-[#A80C14]" />
+                  <span>পার্সেল চেক ও রিটার্ন নিয়মাবলী</span>
+                </div>
+                <ul className="space-y-2 text-stone-600 text-xs leading-relaxed">
+                  <li className="flex items-start gap-2">
+                    <Check className="w-3.5 h-3.5 text-[#A80C14] shrink-0 mt-0.5" />
+                    <span>ডেলিভারি ম্যানের সামনে অবশ্যই পার্সেলটি চেক করে গ্রহণ করবেন।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <RefreshCcw className="w-3.5 h-3.5 text-[#A80C14] shrink-0 mt-0.5" />
+                    <span>রিটার্ন করতে চাইলে ডেলিভারি খরচ প্রদান করে সম্পূর্ণ পার্সেল রিটার্ন করতে হবে।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <X className="w-3.5 h-3.5 text-[#A80C14] shrink-0 mt-0.5" />
+                    <span>আমাদের পেইজ থেকে কোনো পার্শিয়াল (আংশিক) ডেলিভারি দেওয়া হয় না।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <X className="w-3.5 h-3.5 text-[#A80C14] shrink-0 mt-0.5" />
+                    <span>পার্সেল রিসিভ করার পর তা পুনরায় ফেরত (Return) নেওয়া হয় না।</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Pricing & Display Notes */}
+              <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 space-y-2.5">
+                <div className="flex items-center gap-2 text-amber-900 font-bold text-xs sm:text-sm">
+                  <Tag className="w-4 h-4 text-amber-700" />
+                  <span>গুরুত্বপূর্ণ তথ্য (Important Notes)</span>
+                </div>
+                <ul className="space-y-2 text-amber-900/80 text-xs leading-relaxed">
+                  <li className="flex items-start gap-2">
+                    <span className="shrink-0 font-bold text-amber-800">🍂</span>
+                    <span className="font-semibold text-amber-950">আমাদের সব পণ্যের দাম ফিক্সড (Fixed Price)।</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Info className="w-3.5 h-3.5 text-amber-700 shrink-0 mt-0.5" />
+                    <span>ক্যামেরা এবং মোবাইল/কম্পিউটার ডিসপ্লের ভিন্নতার কারণে মূল প্রোডাক্টের কালার সামান্য লাইট বা ডিপ দেখা যেতে পারে।</span>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
@@ -1253,33 +1357,32 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         title={product?.name}
       />
 
-      {/* Sticky Bottom Purchase Bar for Mobile — offset sits above MobileBottomNav,
-          including its env(safe-area-inset-bottom) padding on notched phones */}
-      <div className="md:hidden fixed bottom-[calc(62px+env(safe-area-inset-bottom))] left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#F8D2D5] px-3 py-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] flex items-center justify-between gap-3 safe-bottom animate-fade-in">
-        <div className="flex flex-col min-w-0 shrink-0">
+      {/* Sticky Bottom Purchase Bar for Mobile — pixel-perfect across all phone screen widths */}
+      <div className="md:hidden fixed bottom-[calc(60px+env(safe-area-inset-bottom))] left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#F8D2D5] px-3 py-2 shadow-[0_-8px_24px_rgba(0,0,0,0.1)] flex items-center justify-between gap-2 safe-bottom animate-fade-in">
+        <div className="flex flex-col min-w-0 shrink-0 max-w-[34%]">
           <span className="font-extrabold text-[#A80C14] font-mono text-sm leading-tight truncate">
             {formatCurrency(currentPrice * quantity)}
           </span>
-          <span className="text-[9px] text-stone-400 truncate">
-            {selectedColor} · {selectedSize} · Qty {quantity}
+          <span className="text-[10px] text-stone-500 font-medium truncate">
+            {selectedColor} · {selectedSize}
           </span>
         </div>
-        <div className="flex gap-2 flex-1 max-w-[68%]">
+        <div className="flex gap-1.5 xs:gap-2 flex-1 min-w-0 justify-end">
           <button
             onClick={handleAddToCart}
             disabled={isOutOfStock}
-            className="flex-1 py-3 px-3 min-h-[44px] bg-stone-900 disabled:bg-stone-400 text-white text-[11px] font-bold rounded-full transition-all shadow-xs flex items-center justify-center gap-1 cursor-pointer active:scale-95 disabled:cursor-not-allowed"
+            className="flex-1 min-h-[44px] px-2.5 xs:px-3 py-2 bg-stone-900 active:bg-stone-800 disabled:bg-stone-300 disabled:text-stone-500 text-white text-[11px] xs:text-xs font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap disabled:cursor-not-allowed"
           >
-            <ShoppingBag className="w-3.5 h-3.5" />
-            <span>{isOutOfStock ? 'Sold Out' : 'Add to Cart'}</span>
+            <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">{isOutOfStock ? 'Sold Out' : 'Add to Cart'}</span>
           </button>
           <button
             onClick={handleBuyNow}
             disabled={isOutOfStock}
-            className="flex-1 py-3 px-3 min-h-[44px] bg-[#A80C14] disabled:bg-stone-300 disabled:text-stone-500 hover:bg-[#8C0A10] text-white text-[11px] font-extrabold rounded-full transition-all shadow-md flex items-center justify-center gap-1 cursor-pointer active:scale-95 disabled:cursor-not-allowed"
+            className="flex-1 min-h-[44px] px-2.5 xs:px-3 py-2 bg-[#A80C14] hover:bg-[#8C0A10] active:bg-[#72070C] disabled:bg-stone-200 disabled:text-stone-400 text-white text-[11px] xs:text-xs font-extrabold rounded-xl transition-all shadow-md shadow-[#A80C14]/20 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap disabled:cursor-not-allowed"
           >
-            <Zap className="w-3.5 h-3.5 fill-white" />
-            <span>{isOutOfStock ? 'Sold Out' : 'Buy Now'}</span>
+            <Zap className="w-3.5 h-3.5 fill-white shrink-0" />
+            <span className="truncate">{isOutOfStock ? 'Sold Out' : 'Buy Now'}</span>
           </button>
         </div>
       </div>

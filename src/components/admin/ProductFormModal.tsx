@@ -819,8 +819,8 @@ export function ProductFormModal({
   const livePreviewImage = currentPreviewColor?.images[currentPreviewColor?.mainImageIndex || 0] || currentPreviewColor?.images[0] || 'https://images.unsplash.com/photo-1609357605129-26f69add5d6e?auto=format&fit=crop&w=1000&q=80';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-      <div className="bg-white border border-stone-200 rounded-3xl max-w-6xl w-full max-h-[90vh] flex flex-col shadow-2xl relative text-stone-900 overflow-hidden">
+    <div className="fixed h-full inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+      <div className="bg-white border border-stone-200 rounded-3xl max-w-6xl w-full h-full flex flex-col shadow-2xl relative text-stone-900 overflow-hidden">
 
         {/* Header Bar */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-stone-200 shrink-0 bg-white z-10">
@@ -881,7 +881,7 @@ export function ProductFormModal({
           <div className="grid grid-cols-1 gap-8 items-start">
 
             {/* Left Column (7 cols): Step Form Controls */}
-            <div className="lg:col-span-7 space-y-6">
+            <div className="h-full lg:col-span-7 space-y-6">
               <div className="space-y-6 text-xs font-sans">
 
                 {/* STEP 1: BASIC INFO */}
@@ -1259,8 +1259,8 @@ export function ProductFormModal({
                                             }
                                           }}
                                           className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer font-mono ${isAdded
-                                              ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-                                              : 'bg-white border-stone-200 text-stone-600 hover:border-stone-400'
+                                            ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
+                                            : 'bg-white border-stone-200 text-stone-600 hover:border-stone-400'
                                             }`}
                                         >
                                           {chip} {isAdded ? '✓' : '+'}
