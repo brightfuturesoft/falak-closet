@@ -25,6 +25,7 @@ import Image from 'next/image';
 import { Product } from '@/data/products';
 import { CartItem, OrderRecord } from '@/context/CartContext';
 import { formatCurrency, getProductVariationPrice } from '@/lib/utils';
+import { useToast } from '@/components/ui/Toast';
 
 interface AdminCreateOrderModalProps {
   isOpen: boolean;
@@ -41,6 +42,7 @@ export function AdminCreateOrderModal({
   // real orders for items the store does not stock.
   productsList = []
 }: AdminCreateOrderModalProps) {
+  const { showToast } = useToast();
   // POS Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -166,11 +168,19 @@ export function AdminCreateOrderModal({
   const handleSubmitPOSOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (orderItems.length === 0) {
-      alert('Please select at least one product item for the POS ticket.');
+      showToast({
+        type: 'info',
+        title: 'Selection Required',
+        subtitle: 'Please select at least one product item for the POS ticket.'
+      });
       return;
     }
     if (!customerName.trim() || !customerPhone.trim()) {
-      alert('Customer Name and Phone Number are required for POS ticket.');
+      showToast({
+        type: 'info',
+        title: 'Customer Details Required',
+        subtitle: 'Customer Name and Phone Number are required for POS ticket.'
+      });
       return;
     }
 

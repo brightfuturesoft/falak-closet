@@ -35,6 +35,7 @@ import { OrderRecord } from '@/context/CartContext';
 import { formatCurrency, getProductVariationPrice } from '@/lib/utils';
 import { ORDER_STATUSES } from '@/lib/orders';
 import { getSearchableTerms, calculateShippingFee } from '@/lib/shipping/locationBilingual';
+import { useToast } from '@/components/ui/Toast';
 
 interface OrderDetailsModalProps {
   order: OrderRecord;
@@ -762,6 +763,7 @@ export function OrderDetailsModal({
   onUpdatePaymentStatus,
   onPrintReceipt,
 }: OrderDetailsModalProps) {
+  const { showToast } = useToast();
   const [isPathaoModalOpen, setIsPathaoModalOpen] = useState(false);
 
   /* ESC to close + lock body scroll while open. */
@@ -1080,7 +1082,11 @@ export function OrderDetailsModal({
           order={order}
           onClose={() => setIsPathaoModalOpen(false)}
           onSuccess={(consignmentId) => {
-            alert(`Order successfully dispatched to Pathao Courier!\nConsignment ID: ${consignmentId}`);
+            showToast({
+              type: 'info',
+              title: 'Dispatched to Pathao',
+              subtitle: `Order successfully dispatched! Consignment ID: ${consignmentId}`
+            });
             onUpdateOrderStatus(order.id, 'Shipped');
             setIsPathaoModalOpen(false);
           }}

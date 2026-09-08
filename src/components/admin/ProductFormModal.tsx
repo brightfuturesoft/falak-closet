@@ -32,6 +32,7 @@ import { FASHION_COLORS_50, autoDetectColor, getColorNameFromHex, ColorOption } 
 import { formatCurrency } from '@/lib/utils';
 import { ImageColorPickerModal } from './ImageColorPickerModal';
 import { uploadImages, deleteCloudinaryImage, cloudinaryPublicIdFromUrl } from '@/lib/cloudinary';
+import { useToast } from '@/components/ui/Toast';
 
 export interface DetailedColorVariation {
   id: string;
@@ -191,6 +192,8 @@ export function ProductFormModal({
   editingProduct,
   existingProducts = []
 }: ProductFormModalProps) {
+  const { showToast } = useToast();
+
   // Active Wizard Tab (1: Basic, 2: Attributes & Occasion, 3: Pricing & Stock, 4: Colors & Photos, 5: Features & Care)
   const [wizardStep, setWizardStep] = useState<1 | 2 | 3 | 4 | 5>(1);
 
@@ -545,7 +548,11 @@ export function ProductFormModal({
         prev.map((c) => (c.id === colorId ? { ...c, images: [...c.images, ...urls] } : c))
       );
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Image upload failed.');
+      showToast({
+        type: 'info',
+        title: 'Upload Failed',
+        subtitle: err instanceof Error ? err.message : 'Image upload failed.'
+      });
     } finally {
       setUploadingColorId(null);
       // Reset so picking the same file again re-triggers onChange.
@@ -1072,12 +1079,22 @@ export function ProductFormModal({
                     {/* 2. Color Variations Cards matching exact wireframe sketch */}
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <label className="font-extrabold text-stone-900 text-sm">
-                          Color Variations ({colorVariations.length})
-                        </label>
-                        <span className="text-xs text-stone-500 font-mono">
-                          Fill Color Name, Code & Stock for each variant
-                        </span>
+                        <div>
+                          <label className="font-extrabold text-stone-900 text-sm block">
+                            Color Variations ({colorVariations.length})
+                          </label>
+                          <span className="text-xs text-stone-500 font-mono">
+                            Configure images, sizes, stock, & prices color-wise
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleAddNewColorRow}
+                          className="px-4 py-2 bg-[#9B050B] hover:bg-[#800409] text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>Add Color Variation</span>
+                        </button>
                       </div>
 
                       {colorVariations.map((colorVar, cIdx) => (
@@ -1085,7 +1102,7 @@ export function ProductFormModal({
                           key={colorVar.id}
                           className="p-4 sm:p-5 bg-white border-2 border-stone-800 rounded-3xl shadow-sm space-y-4 relative group"
                         >
-                          {/* Card Layout: Left Square Image Box + Right Inputs (Color Name, Color Code, Stock Quantity) */}
+                          {/* Card Layout: Left Square Image Box + Right Inputs */}
                           <div className="grid grid-cols-12 gap-4 items-start">
 
                             {/* Left: Rounded Square Image Thumbnail & Uploader */}
@@ -1141,7 +1158,7 @@ export function ProductFormModal({
 
                             </div>
 
-                            {/* Right: Color Name, Color Code, Stock Quantity */}
+                            {/* Right: Color Name, Color Code, Stock & Size Manager */}
                             <div className="col-span-12 sm:col-span-8 space-y-3">
                               <div className="flex items-center justify-between border-b border-stone-200 pb-2">
                                 <span className="text-xs font-black text-stone-900 font-mono uppercase tracking-wider">
@@ -1220,11 +1237,44 @@ export function ProductFormModal({
                                   </label>
                                 </div>
 
-                                {/* Active Sizes List with Stock Inputs */}
+                                {/* Quick Size Presets Chips */}
+                                <div className="space-y-1.5">
+                                  <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider block">
+                                    Quick Size Presets:
+                                  </span>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {['52', '54', '56', '58', '60', 'S', 'M', 'L', 'XL', 'Free Size'].map((chip) => {
+                                      const isAdded = variationsMatrix.some(
+                                        (v) => v.colorName === colorVar.name && v.size.toLowerCase() === chip.toLowerCase()
+                                      );
+                                      return (
+                                        <button
+                                          key={chip}
+                                          type="button"
+                                          onClick={() => {
+                                            if (isAdded) {
+                                              handleRemoveSizeFromVariation(colorVar.name, chip);
+                                            } else {
+                                              handleAddSizeToVariation(colorVar.name, colorVar.hex, chip);
+                                            }
+                                          }}
+                                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer font-mono ${isAdded
+                                              ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
+                                              : 'bg-white border-stone-200 text-stone-600 hover:border-stone-400'
+                                            }`}
+                                        >
+                                          {chip} {isAdded ? '✓' : '+'}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+
+                                {/* Active Sizes List with Stock & Price Inputs */}
                                 <div className="space-y-2">
                                   {variationsMatrix.filter((v) => v.colorName === colorVar.name).length === 0 ? (
                                     <p className="text-xs italic text-stone-400">
-                                      No sizes added for this color yet. Type a size below to add.
+                                      No sizes added for this color yet. Click a preset above or type a size below to add.
                                     </p>
                                   ) : (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -1379,7 +1429,7 @@ export function ProductFormModal({
                                       );
                                     }
                                   }}
-                                  placeholder="Add size (e.g. 52, 54, S, M, XL, Free Size)..."
+                                  placeholder="Add custom size (e.g. 52, 54, S, M, XL, Free Size)..."
                                   className="flex-1 px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs font-medium text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900"
                                 />
                                 <button
@@ -1398,8 +1448,65 @@ export function ProductFormModal({
                               </div>
                             </div>
                           </div>
+
+                          {/* Extra Photo Thumbnails Row */}
+                          {colorVar.images.length > 0 && (
+                            <div className="pt-3 border-t border-stone-200 space-y-1.5">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-bold text-stone-500 font-mono">
+                                  Gallery Photos ({colorVar.images.length} photo{colorVar.images.length > 1 ? 's' : ''})
+                                </span>
+                                <span className="text-[10px] text-stone-400">Click photo to set as cover image</span>
+                              </div>
+                              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+                                {colorVar.images.map((img, imgIdx) => {
+                                  const isMain = (colorVar.mainImageIndex || 0) === imgIdx;
+                                  return (
+                                    <div
+                                      key={imgIdx}
+                                      className={`relative w-16 h-20 rounded-xl overflow-hidden border-2 transition-all shrink-0 group ${isMain ? 'border-amber-500 ring-2 ring-amber-400/40' : 'border-stone-300'
+                                        }`}
+                                    >
+                                      <Image src={img} alt={`${colorVar.name} ${imgIdx}`} fill className="object-cover" />
+                                      {isMain ? (
+                                        <div className="absolute top-0.5 left-0.5 px-1 bg-amber-400 text-stone-950 font-black text-[8px] rounded shadow-xs">
+                                          Cover
+                                        </div>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleSetColorMainImage(colorVar.id, imgIdx)}
+                                          className="absolute inset-0 bg-stone-900/60 text-white font-bold text-[9px] opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
+                                        >
+                                          Set Cover
+                                        </button>
+                                      )}
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveColorImage(colorVar.id, imgIdx)}
+                                        className="absolute top-0.5 right-0.5 p-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg z-10 shadow-xs cursor-pointer"
+                                        title="Delete Photo"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
+
+                      {/* Bottom Button: [ Add More Color Variation ] */}
+                      <button
+                        type="button"
+                        onClick={handleAddNewColorRow}
+                        className="w-full py-3 bg-white hover:bg-stone-50 text-stone-900 border-2 border-dashed border-stone-300 hover:border-stone-900 font-extrabold text-xs sm:text-sm rounded-2xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                      >
+                        <Plus className="w-4 h-4 text-[#9B050B]" />
+                        <span>Add More Color Variation</span>
+                      </button>
                     </div>
                   </div>
                 )}

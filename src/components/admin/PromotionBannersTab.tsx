@@ -21,6 +21,7 @@ import {
 import { formatCurrency } from '@/lib/utils';
 import { PromotionBanner } from '@/lib/promotionBanners';
 import { ImageUploader } from '@/components/ui/ImageUploader';
+import { useToast } from '@/components/ui/Toast';
 
 function toDatetimeLocal(isoString: string | null): string {
   if (!isoString) return '';
@@ -71,6 +72,7 @@ function StatCard({
 }
 
 export function PromotionBannersTab() {
+  const { showToast } = useToast();
   const [banners, setBanners] = useState<PromotionBanner[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -271,10 +273,18 @@ export function PromotionBannersTab() {
         setBanners((prev) => prev.filter((b) => b.id !== deletingId));
         setDeletingId(null);
       } else {
-        alert(data.error || 'Failed to delete banner.');
+        showToast({
+          type: 'info',
+          title: 'Delete Failed',
+          subtitle: data.error || 'Failed to delete banner.'
+        });
       }
     } catch {
-      alert('Network error — failed to delete banner.');
+      showToast({
+        type: 'info',
+        title: 'Network Error',
+        subtitle: 'Failed to delete banner.'
+      });
     }
   };
 
