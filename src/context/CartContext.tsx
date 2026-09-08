@@ -744,7 +744,7 @@ export function CartProvider({
           items: newOrder.items // keep the client-side items structure
         };
         if (data.warning) {
-          alert(data.warning);
+          console.warn('Order submission warning:', data.warning);
         }
       }
     } catch (e) {
