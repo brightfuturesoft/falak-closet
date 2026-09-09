@@ -25,9 +25,12 @@ function norm(value: string | undefined | null): string {
     .replace(/^-|-$/g, '');
 }
 
-/** True when `value` matches `target` as either a display name or a slug. */
-function taxonomyMatches(value: string | undefined | null, target: string): boolean {
-  return norm(value) === norm(target);
+/** True when `value` (or any comma-separated token in `value`) matches `target` as either a display name or a slug. */
+export function taxonomyMatches(value: string | undefined | null, target: string): boolean {
+  if (!value) return false;
+  const targetNorm = norm(target);
+  if (!targetNorm) return false;
+  return value.split(',').some((token) => norm(token) === targetNorm);
 }
 
 export interface ProductFilters {

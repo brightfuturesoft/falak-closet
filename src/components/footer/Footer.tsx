@@ -95,7 +95,7 @@ export function Footer({ identity }: { identity: SiteIdentity }) {
   const addresses = rawAddress.split(/[|\n;]/).map(a => a.trim()).filter(Boolean);
   const phone = identity.contactPhone || '01799-775487';
   const phoneClean = phone.replace(/[^+\d]/g, '');
-  const email = identity.contactEmail || 'info@eziclick.com';
+  const email = identity.contactEmail || 'info@falakcloset.com';
 
   return (
     <footer className="bg-[#FDF2F3]/40 text-[#0D153A] border-t border-[#F8D2D5] pt-12 pb-28 sm:pb-24 lg:pb-12 font-sans">

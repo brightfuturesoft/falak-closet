@@ -54,8 +54,8 @@ interface ProductFormModalProps {
 }
 
 /** Seed values merged with whatever the live catalog already uses, de-duplicated. */
-function suggestionsFor(products: Product[], key: 'material' | 'workType' | 'occasion' | 'weather', seeds: readonly string[]) {
-  const fromDb = products.map((p) => (p[key] || '').trim()).filter(Boolean);
+function suggestionsFor(products: Product[] = [], key: 'material' | 'workType' | 'occasion' | 'weather', seeds: readonly string[]) {
+  const fromDb = (products || []).flatMap((p) => ((p[key] || '').split(',').map((s) => s.trim()))).filter(Boolean);
   return Array.from(new Set([...seeds, ...fromDb])).sort();
 }
 
@@ -82,6 +82,13 @@ function SearchableAttributeSelect({
   const [searchQuery, setSearchQuery] = useState('');
   const dropdownRef = React.useRef<HTMLDivElement>(null);
 
+  const selectedList = React.useMemo(() => {
+    return (value || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }, [value]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -92,6 +99,28 @@ function SearchableAttributeSelect({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleToggle = (option: string) => {
+    const normOpt = option.toLowerCase();
+    let updated: string[];
+    if (selectedList.some((item) => item.toLowerCase() === normOpt)) {
+      updated = selectedList.filter((item) => item.toLowerCase() !== normOpt);
+    } else {
+      updated = [...selectedList, option];
+    }
+    onChange(updated.join(', '));
+  };
+
+  const handleRemove = (e: React.MouseEvent, option: string) => {
+    e.stopPropagation();
+    const updated = selectedList.filter((item) => item.toLowerCase() !== option.toLowerCase());
+    onChange(updated.join(', '));
+  };
+
+  const handleClearAll = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange('');
+  };
+
   const filteredOptions = options.filter((o) =>
     o.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -99,7 +128,14 @@ function SearchableAttributeSelect({
   return (
     <div className="space-y-1.5 relative" ref={dropdownRef}>
       <label className="font-bold text-stone-700 flex items-center justify-between">
-        <span>{label}</span>
+        <span className="flex items-center gap-1.5">
+          {label}
+          {selectedList.length > 0 && (
+            <span className="text-[10px] font-bold bg-[#9B050B]/10 text-[#9B050B] px-1.5 py-0.5 rounded-full">
+              {selectedList.length} selected
+            </span>
+          )}
+        </span>
         {badge && (
           <span className="text-[10px] font-mono text-amber-800 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
             {badge}
@@ -108,16 +144,33 @@ function SearchableAttributeSelect({
       </label>
 
       <div className="relative">
-        <button
-          type="button"
+        <div
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 font-bold text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-stone-900 cursor-pointer"
+          className="w-full min-h-[48px] px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 font-bold flex items-center justify-between gap-2 focus-within:ring-2 focus-within:ring-stone-900 cursor-pointer"
         >
-          <span className={value ? 'text-stone-900' : 'text-stone-400 font-normal'}>
-            {value || placeholder}
-          </span>
-          <Search className="w-4 h-4 text-stone-400" />
-        </button>
+          <div className="flex flex-wrap gap-1.5 items-center flex-1">
+            {selectedList.length === 0 ? (
+              <span className="text-stone-400 font-normal text-sm px-1">{placeholder}</span>
+            ) : (
+              selectedList.map((item) => (
+                <span
+                  key={item}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-stone-900 text-white rounded-lg text-xs font-semibold animate-in fade-in"
+                >
+                  {item}
+                  <button
+                    type="button"
+                    onClick={(e) => handleRemove(e, item)}
+                    className="hover:text-amber-400 p-0.5 rounded transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))
+            )}
+          </div>
+          <Search className="w-4 h-4 text-stone-400 shrink-0" />
+        </div>
 
         {isOpen && (
           <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-stone-200 rounded-2xl shadow-xl z-50 p-2 space-y-2 animate-in fade-in slide-in-from-top-2 duration-150">
@@ -136,24 +189,35 @@ function SearchableAttributeSelect({
             <div className="max-h-48 overflow-y-auto space-y-0.5">
               {filteredOptions.map((o) => {
                 const isDynamic = dynamicOptions.some((d) => d.toLowerCase() === o.toLowerCase());
-                const isSelected = value.toLowerCase() === o.toLowerCase();
+                const isSelected = selectedList.some((item) => item.toLowerCase() === o.toLowerCase());
                 return (
                   <button
                     key={o}
                     type="button"
-                    onClick={() => {
-                      onChange(o);
-                      setIsOpen(false);
-                      setSearchQuery('');
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${isSelected ? 'bg-[#9B050B] text-white' : 'text-stone-800 hover:bg-stone-100'
-                      }`}
+                    onClick={() => handleToggle(o)}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                      isSelected
+                        ? 'bg-[#9B050B] text-white'
+                        : 'text-stone-800 hover:bg-stone-100'
+                    }`}
                   >
-                    <span>{o}</span>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                          isSelected
+                            ? 'border-white bg-white/20'
+                            : 'border-stone-300 bg-white'
+                        }`}
+                      >
+                        {isSelected && <Check className="w-3 h-3 text-white" />}
+                      </div>
+                      <span>{o}</span>
+                    </div>
                     {isDynamic && (
                       <span
-                        className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold ${isSelected ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800'
-                          }`}
+                        className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                          isSelected ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800'
+                        }`}
                       >
                         Dynamic
                       </span>
@@ -167,17 +231,34 @@ function SearchableAttributeSelect({
                   <button
                     type="button"
                     onClick={() => {
-                      onChange(searchQuery.trim());
-                      setIsOpen(false);
+                      const newCustom = searchQuery.trim();
+                      if (!selectedList.some((item) => item.toLowerCase() === newCustom.toLowerCase())) {
+                        onChange([...selectedList, newCustom].join(', '));
+                      }
                       setSearchQuery('');
                     }}
                     className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-stone-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 flex items-center justify-between cursor-pointer"
                   >
-                    <span>Use custom: "{searchQuery.trim()}"</span>
+                    <span>Add custom: "{searchQuery.trim()}"</span>
                     <Plus className="w-3.5 h-3.5 text-amber-700" />
                   </button>
                 )}
             </div>
+
+            {selectedList.length > 0 && (
+              <div className="pt-1.5 border-t border-stone-100 flex items-center justify-between px-1">
+                <span className="text-[11px] text-stone-500 font-medium">
+                  {selectedList.length} item{selectedList.length > 1 ? 's' : ''} selected
+                </span>
+                <button
+                  type="button"
+                  onClick={handleClearAll}
+                  className="text-[11px] font-bold text-red-600 hover:text-red-800 transition-colors cursor-pointer"
+                >
+                  Clear all
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
