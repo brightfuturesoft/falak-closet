@@ -13,6 +13,8 @@ import type { HeroSlideView } from '@/lib/heroSlides';
 // import { PromotionBanner } from '@prisma/client';
 // import { ValuePropItem } from '@/lib/siteSettings';
 
+import { taxonomyMatches } from '@/lib/utils';
+
 /**
  * The interactive half of the home page — everything that needs `useCart` or
  * local state. The hero slides arrive as a prop from the server component so
@@ -29,11 +31,11 @@ export default function HomeClient({
   // Filter products dynamically when user clicks a category tag
   const filteredProducts = selectedFilter
     ? products.filter((p) => {
-      if (selectedFilter.type === 'occasion') return p.occasion === selectedFilter.val;
-      if (selectedFilter.type === 'weather') return p.weather === selectedFilter.val;
-      if (selectedFilter.type === 'material') return p.material === selectedFilter.val;
-      if (selectedFilter.type === 'category') return p.category === selectedFilter.val;
-      if (selectedFilter.type === 'subCategory') return p.subCategory === selectedFilter.val;
+      if (selectedFilter.type === 'occasion') return taxonomyMatches(p.occasion, selectedFilter.val);
+      if (selectedFilter.type === 'weather') return taxonomyMatches(p.weather, selectedFilter.val);
+      if (selectedFilter.type === 'material') return taxonomyMatches(p.material, selectedFilter.val);
+      if (selectedFilter.type === 'category') return taxonomyMatches(p.category, selectedFilter.val);
+      if (selectedFilter.type === 'subCategory') return taxonomyMatches(p.subCategory, selectedFilter.val);
       return true;
     })
     : products;

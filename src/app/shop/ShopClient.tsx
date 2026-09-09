@@ -72,10 +72,14 @@ function scalarFacets(products: Product[], key: 'workType' | 'occasion' | 'mater
   products.forEach((p) => {
     const raw = (p[key] || '').trim();
     if (!raw) return;
-    const id = norm(raw);
-    const existing = map.get(id);
-    if (existing) existing.count += 1;
-    else map.set(id, { value: raw, count: 1 });
+    const items = Array.from(new Set(raw.split(',').map((s) => s.trim()).filter(Boolean)));
+    items.forEach((item) => {
+      const id = norm(item);
+      if (!id) return;
+      const existing = map.get(id);
+      if (existing) existing.count += 1;
+      else map.set(id, { value: item, count: 1 });
+    });
   });
 
   return Array.from(map.values()).sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));

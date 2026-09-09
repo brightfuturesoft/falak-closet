@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Category } from '@/data/categories';
 import { useCategories, notifyCategoriesUpdated } from '@/lib/useCategories';
+import { taxonomyMatches } from '@/lib/utils';
 import { Product } from '@/data/products';
 import { ImageUploader } from '@/components/ui/ImageUploader';
 
@@ -353,7 +354,7 @@ export function CategoriesTab({ products = [], onRefreshProducts }: CategoriesTa
           const categoryProductsCount = products.filter(
             (p) =>
               isOccasion
-                ? (p.occasion || '').toLowerCase() === cat.name.toLowerCase()
+                ? taxonomyMatches(p.occasion, cat.name)
                 : (p.category || '').toLowerCase() === cat.name.toLowerCase() || (p.category || '').toLowerCase() === cat.slug.toLowerCase()
           ).length;
 

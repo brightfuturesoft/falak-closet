@@ -35,10 +35,13 @@ function valuesOf(products: Product[], key: 'occasion' | 'weather' | 'material' 
   products.forEach((p) => {
     const raw = (p[key] || '').trim();
     if (!raw) return;
-    const id = raw.toLowerCase();
-    const existing = counts.get(id);
-    if (existing) existing.count += 1;
-    else counts.set(id, { value: raw, count: 1 });
+    const items = Array.from(new Set(raw.split(',').map((s) => s.trim()).filter(Boolean)));
+    items.forEach((item) => {
+      const id = item.toLowerCase();
+      const existing = counts.get(id);
+      if (existing) existing.count += 1;
+      else counts.set(id, { value: item, count: 1 });
+    });
   });
 
   return Array.from(counts.values())
@@ -76,7 +79,7 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
     const categoryItems = sortedCategories.filter((cat) => !cat.type || cat.type === 'category');
     const occasionCategories = sortedCategories.filter((cat) => cat.type === 'occasion');
 
-    const categoryTags: FilterTag[] = categoryItems.map((cat) => ({
+    const dynamicCategoryTags: FilterTag[] = categoryItems.map((cat) => ({
       label: cat.name,
       filterType: 'category',
       filterVal: cat.name,
@@ -88,7 +91,28 @@ export function CategoryFilterSlider({ onSelectFilter, activeFilter }: CategoryF
       filterVal: cat.name,
     }));
 
-    const occasionTags = dynamicOccasionTags.length > 0 ? dynamicOccasionTags : valuesOf(products, 'occasion');
+    const productOccasionTags = valuesOf(products, 'occasion');
+    const productCategoryTags = valuesOf(products, 'category' as any);
+
+    // Merge dynamic & product occasion tags (deduplicated)
+    const seenOccasions = new Set<string>();
+    const occasionTags: FilterTag[] = [];
+    [...dynamicOccasionTags, ...productOccasionTags].forEach((tag) => {
+      const normKey = tag.filterVal.trim().toLowerCase();
+      if (!normKey || seenOccasions.has(normKey)) return;
+      seenOccasions.add(normKey);
+      occasionTags.push(tag);
+    });
+
+    // Merge dynamic & product category tags (deduplicated)
+    const seenCategories = new Set<string>();
+    const categoryTags: FilterTag[] = [];
+    [...dynamicCategoryTags, ...productCategoryTags].forEach((tag) => {
+      const normKey = tag.filterVal.trim().toLowerCase();
+      if (!normKey || seenCategories.has(normKey)) return;
+      seenCategories.add(normKey);
+      categoryTags.push(tag);
+    });
 
     const cards = [];
 
