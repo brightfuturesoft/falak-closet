@@ -21,7 +21,9 @@ import {
   Info,
   PhoneCall,
   Palette,
-  RotateCcw
+  RotateCcw,
+  Plus,
+  Minus
 } from 'lucide-react';
 import { useCart, OrderRecord, DeliverySubArea } from '@/context/CartContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
@@ -259,6 +261,7 @@ export default function CheckoutClient() {
     products,
     freeShippingThreshold,
     quantityFreeDelivery,
+    updateQuantity,
   } = useCart();
   const { trackEvent } = useAnalytics();
 
@@ -268,7 +271,10 @@ export default function CheckoutClient() {
   const buyNowProductId = searchParams.get('buyNow');
   const buyNowColor = searchParams.get('color') ?? '';
   const buyNowSize = searchParams.get('size') ?? '';
-  const buyNowQty = Math.max(1, parseInt(searchParams.get('qty') ?? '1', 10));
+  const initialBuyNowQty = Math.max(1, parseInt(searchParams.get('qty') ?? '1', 10));
+  const [buyNowQtyOverride, setBuyNowQtyOverride] = useState<number | null>(null);
+
+  const buyNowQty = buyNowQtyOverride ?? initialBuyNowQty;
 
   const buyNowProduct = useMemo(() => {
     if (!buyNowProductId) return null;
@@ -286,6 +292,26 @@ export default function CheckoutClient() {
       quantity: buyNowQty,
     }];
   }, [buyNowProduct, buyNowColor, buyNowSize, buyNowQty]);
+
+  // Handler to adjust item quantity directly from Checkout Page order summary
+  const handleUpdateQty = (
+    item: { product: any; selectedColor: string; selectedSize: string; quantity: number },
+    delta: number
+  ) => {
+    const newQty = item.quantity + delta;
+    if (newQty < 1) return;
+
+    if (buyNowProductId) {
+      setBuyNowQtyOverride(newQty);
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.set('qty', String(newQty));
+        window.history.replaceState({}, '', url.toString());
+      }
+    } else {
+      updateQuantity(item.product.id, item.selectedColor, item.selectedSize, newQty);
+    }
+  };
 
   // Use buyNow items when in that mode, otherwise fall back to cart
   const activeItems = buyNowItems ?? cart;
@@ -955,22 +981,59 @@ export default function CheckoutClient() {
 
             {/* Collapsible body: always open on lg, toggled on mobile */}
             <div className={`${isSummaryOpen ? 'block' : 'hidden'} lg:block border-t border-[#F8D2D5] p-4 sm:p-6 space-y-4`}>
-              <div className="divide-y divide-[#FDF2F3] max-h-64 overflow-y-auto overscroll-contain pr-1 -mr-1">
+              <div className="divide-y divide-[#FDF2F3] max-h-72 overflow-y-auto overscroll-contain pr-1 -mr-1">
                 {activeItems.map((item, idx) => {
                   const itemImg = getProductVariationImage(item.product, item.selectedColor);
                   const itemPrice = getProductVariationPrice(item.product, item.selectedColor, item.selectedSize);
+                  const maxStock = item.product?.stock ?? 99;
+
                   return (
-                    <div key={idx} className="py-2.5 flex items-center justify-between text-xs gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="relative w-10 h-12 rounded-lg overflow-hidden bg-stone-100 flex-shrink-0">
-                          <Image src={itemImg} alt={item.product?.name || 'Product'} fill sizes="40px" className="object-cover" />
+                    <div key={idx} className="py-3 flex items-center justify-between text-xs gap-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className="relative w-11 h-13 rounded-xl overflow-hidden bg-stone-100 flex-shrink-0 border border-stone-200">
+                          <Image src={itemImg} alt={item.product?.name || 'Product'} fill sizes="44px" className="object-cover" />
                         </div>
-                        <div className="min-w-0">
-                          <p className="font-bold text-stone-900 line-clamp-1">{item.product?.name}</p>
-                          <p className="text-[10px] text-stone-400 truncate">{item.selectedColor} • {item.selectedSize} • Qty: {item.quantity}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bold text-stone-900 line-clamp-1 text-xs">{item.product?.name}</p>
+                          <p className="text-[10px] text-stone-500 truncate mt-0.5 font-medium">
+                            {item.selectedColor} • {item.selectedSize}
+                          </p>
+                          <p className="text-[11px] font-mono font-semibold text-[#A80C14] mt-0.5">
+                            ৳ {itemPrice}
+                          </p>
                         </div>
                       </div>
-                      <span className="font-bold text-stone-900 shrink-0">৳ {itemPrice * item.quantity}</span>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {/* Quantity Stepper Controller */}
+                        <div className="flex items-center border border-stone-200 rounded-xl overflow-hidden bg-stone-50/80 shadow-2xs">
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateQty(item, -1)}
+                            disabled={item.quantity <= 1}
+                            className="w-7 h-7 flex items-center justify-center text-stone-600 hover:bg-stone-200/80 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+                            aria-label="Decrease quantity"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="w-6 text-center font-extrabold text-xs text-stone-900 font-mono">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateQty(item, 1)}
+                            disabled={item.quantity >= maxStock}
+                            className="w-7 h-7 flex items-center justify-center text-stone-600 hover:bg-stone-200/80 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+                            aria-label="Increase quantity"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+
+                        <span className="font-extrabold text-stone-900 font-mono text-xs sm:text-sm min-w-[55px] text-right">
+                          ৳ {itemPrice * item.quantity}
+                        </span>
+                      </div>
                     </div>
                   );
                 })}
