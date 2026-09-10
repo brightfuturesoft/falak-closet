@@ -40,6 +40,7 @@ import { ProductZoomModal } from '@/components/product/ProductZoomModal';
 import { ProductVariationsGrid } from '@/components/product/ProductVariationsGrid';
 import { ProductSummarySidebar } from '@/components/product/ProductSummarySidebar';
 import { ProductGallery } from '@/components/product/ProductGallery';
+import { MobileProductBottomBar } from '@/components/product/MobileProductBottomBar';
 
 
 
@@ -995,35 +996,25 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         title={product?.name}
       />
 
-      {/* Sticky Bottom Purchase Bar for Mobile — pixel-perfect across all phone screen widths */}
-      {/* <div className="md:hidden fixed bottom-[calc(60px+env(safe-area-inset-bottom))] left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#F8D2D5] px-3 py-2 shadow-[0_-8px_24px_rgba(0,0,0,0.1)] flex items-center justify-between gap-2 safe-bottom animate-fade-in">
-        <div className="flex flex-col min-w-0 shrink-0 max-w-[34%]">
-          <span className="font-extrabold text-[#A80C14] font-mono text-sm leading-tight truncate">
-            {formatCurrency(currentPrice * quantity)}
-          </span>
-          <span className="text-[10px] text-stone-500 font-medium truncate">
-            {selectedColor} · {selectedSize}
-          </span>
-        </div>
-        <div className="flex gap-1.5 xs:gap-2 flex-1 min-w-0 justify-end">
-          <button
-            onClick={handleAddToCart}
-            disabled={isOutOfStock}
-            className="flex-1 min-h-[44px] px-2.5 xs:px-3 py-2 bg-stone-900 active:bg-stone-800 disabled:bg-stone-300 disabled:text-stone-500 text-white text-[11px] xs:text-xs font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap disabled:cursor-not-allowed"
-          >
-            <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">{isOutOfStock ? 'Sold Out' : 'Add to Cart'}</span>
-          </button>
-          <button
-            onClick={handleBuyNow}
-            disabled={isOutOfStock}
-            className="flex-1 min-h-[44px] px-2.5 xs:px-3 py-2 bg-[#A80C14] hover:bg-[#8C0A10] active:bg-[#72070C] disabled:bg-stone-200 disabled:text-stone-400 text-white text-[11px] xs:text-xs font-extrabold rounded-xl transition-all shadow-md shadow-[#A80C14]/20 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap disabled:cursor-not-allowed"
-          >
-            <Zap className="w-3.5 h-3.5 fill-white shrink-0" />
-            <span className="truncate">{isOutOfStock ? 'Sold Out' : 'Buy Now'}</span>
-          </button>
-        </div>
-      </div> */}
+      {/* Sticky Bottom Purchase Bar for Mobile */}
+      <MobileProductBottomBar
+        product={product}
+        colorsList={colorsList}
+        selectedColor={selectedColor}
+        onSelectColor={handleSelectColor}
+        sizesList={sizesList}
+        selectedSize={selectedSize}
+        onSelectSize={handleSelectSize}
+        quantity={quantity}
+        onQuantityChange={setQuantity}
+        currentPrice={currentPrice}
+        currentStock={currentStock}
+        isOutOfStock={isOutOfStock}
+        activeImage={imagesList[selectedImageIndex] || imagesList[0]}
+        onAddToCart={handleAddToCart}
+        onBuyNow={handleBuyNow}
+        stockForSize={stockForSize}
+      />
     </div>
   );
 }
