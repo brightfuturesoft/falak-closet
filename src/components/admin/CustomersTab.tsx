@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Users, MapPin, Search, MessageSquare, ShieldCheck, Ban, Globe,
   ShieldAlert, ShoppingCart, X, Package, Tag, Palette, Ruler,
@@ -108,9 +109,8 @@ function avatarGradient(name: string): string {
 function CustomerAvatar({ name, blocked }: { name: string; blocked?: boolean }) {
   return (
     <div
-      className={`w-9 h-9 rounded-full flex items-center justify-center font-serif text-[11px] font-bold text-white shadow-xs flex-shrink-0 ${
-        blocked ? 'bg-stone-400 dark:bg-stone-600' : `bg-gradient-to-br ${avatarGradient(name)}`
-      }`}
+      className={`w-9 h-9 rounded-full flex items-center justify-center font-serif text-[11px] font-bold text-white shadow-xs flex-shrink-0 ${blocked ? 'bg-stone-400 dark:bg-stone-600' : `bg-gradient-to-br ${avatarGradient(name)}`
+        }`}
       aria-hidden
     >
       {name.substring(0, 2).toUpperCase()}
@@ -199,9 +199,8 @@ function SortableHeader({
       <button
         type="button"
         onClick={() => onSort(sortKey)}
-        className={`inline-flex items-center gap-1 hover:text-stone-900 transition-colors cursor-pointer ${
-          isActive ? 'text-stone-900' : ''
-        }`}
+        className={`inline-flex items-center gap-1 hover:text-stone-900 transition-colors cursor-pointer ${isActive ? 'text-stone-900' : ''
+          }`}
         title={`Sort by ${label.toLowerCase()}`}
       >
         <span>{label}</span>
@@ -404,6 +403,7 @@ function CartDetailModal({
 export function CustomersTab({ orders, products }: CustomersTabProps) {
   const { addToast } = useAdminDashboard();
 
+
   // The provider recreates `addToast` on every render (toasts, socket state,
   // 30s order syncs). A ref keeps it out of `fetchCustomers`'s dependencies so
   // those re-renders never trigger a spurious customers refetch.
@@ -412,14 +412,26 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
     addToastRef.current = addToast;
   }, [addToast]);
 
+  const searchParams = useSearchParams();
+  const urlQuery = searchParams ? searchParams.get('query') || '' : '';
+
   // Server-side pagination state — every change below refetches /api/customers.
-  const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [query, setQuery] = useState(urlQuery);
+  const [debouncedQuery, setDebouncedQuery] = useState(urlQuery);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [sortKey, setSortKey] = useState<SortKey>('spent');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
+
+  // Sync search state if URL query parameter is provided or updated
+  useEffect(() => {
+    if (urlQuery) {
+      setQuery(urlQuery);
+      setDebouncedQuery(urlQuery);
+      setPage(1);
+    }
+  }, [urlQuery]);
 
   // API response state
   const [customers, setCustomers] = useState<ApiCustomer[]>([]);
@@ -555,14 +567,14 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
       const res = wasBlocked
         ? await fetch(`/api/security/block-ip?ip=${encodeURIComponent(targetIp)}`, { method: 'DELETE' })
         : await fetch('/api/security/block-ip', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              ip: targetIp,
-              reason: `Blocked for customer ${customer.name}`,
-              blockedBy: 'Admin',
-            }),
-          });
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ip: targetIp,
+            reason: `Blocked for customer ${customer.name}`,
+            blockedBy: 'Admin',
+          }),
+        });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) throw new Error(body?.error || `HTTP ${res.status}`);
 
@@ -770,11 +782,10 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
             <button
               type="button"
               onClick={() => handleToggleBlockIp(c)}
-              className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors cursor-pointer ${
-                c.isBlocked
-                  ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
-                  : 'bg-red-50 hover:bg-[#9B050B] text-[#9B050B] hover:text-white border-red-200 hover:border-[#9B050B]'
-              }`}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors cursor-pointer ${c.isBlocked
+                ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
+                : 'bg-red-50 hover:bg-[#9B050B] text-[#9B050B] hover:text-white border-red-200 hover:border-[#9B050B]'
+                }`}
               title={c.isBlocked ? `Unblock IP ${c.ip}` : `Block IP ${c.ip} for ${c.name}`}
             >
               {c.isBlocked ? <ShieldCheck className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
@@ -799,9 +810,8 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
     return (
       <div
         key={c.id}
-        className={`p-4 rounded-2xl border space-y-3 ${
-          tier === 'blocked' ? 'bg-red-50/40 border-red-200' : 'bg-stone-50 border-stone-200'
-        }`}
+        className={`p-4 rounded-2xl border space-y-3 ${tier === 'blocked' ? 'bg-red-50/40 border-red-200' : 'bg-stone-50 border-stone-200'
+          }`}
       >
         {/* Header: avatar, name, tier */}
         <div className="flex items-start justify-between gap-3">
@@ -882,11 +892,10 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
           <button
             type="button"
             onClick={() => handleToggleBlockIp(c)}
-            className={`flex-1 py-2 flex items-center justify-center gap-1.5 rounded-xl border text-[11px] font-bold transition-colors cursor-pointer ${
-              c.isBlocked
-                ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
-                : 'bg-red-50 hover:bg-[#9B050B] text-[#9B050B] hover:text-white border-red-200'
-            }`}
+            className={`flex-1 py-2 flex items-center justify-center gap-1.5 rounded-xl border text-[11px] font-bold transition-colors cursor-pointer ${c.isBlocked
+              ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
+              : 'bg-red-50 hover:bg-[#9B050B] text-[#9B050B] hover:text-white border-red-200'
+              }`}
           >
             {c.isBlocked ? <ShieldCheck className="w-3.5 h-3.5" /> : <Ban className="w-3.5 h-3.5" />}
             {c.isBlocked ? 'Unblock IP' : 'Block IP'}
@@ -908,7 +917,7 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
       )}
 
       {/* KPI Summary Cards (server-aggregated over ALL customers) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           icon={Users}
           label="Customers"
@@ -947,11 +956,10 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
               <button
                 key={f.id}
                 onClick={() => applyStatusFilter(f.id)}
-                className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                  statusFilter === f.id
-                    ? 'bg-stone-900 text-white shadow-sm font-bold'
-                    : 'bg-stone-100 text-stone-700 hover:bg-stone-200 border border-stone-200'
-                }`}
+                className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${statusFilter === f.id
+                  ? 'bg-stone-900 text-white shadow-sm font-bold'
+                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200 border border-stone-200'
+                  }`}
               >
                 <span>{f.label}</span>
                 <span className="text-[10px] font-mono opacity-80">({f.count})</span>
@@ -1138,11 +1146,10 @@ export function CustomersTab({ orders, products }: CustomersTabProps) {
                         key={p}
                         type="button"
                         onClick={() => setPage(p)}
-                        className={`min-w-8 h-8 px-2 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
-                          p === pagination.page
-                            ? 'bg-stone-900 text-white shadow-sm'
-                            : 'bg-stone-100 text-stone-700 hover:bg-stone-200 border border-stone-200'
-                        }`}
+                        className={`min-w-8 h-8 px-2 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${p === pagination.page
+                          ? 'bg-stone-900 text-white shadow-sm'
+                          : 'bg-stone-100 text-stone-700 hover:bg-stone-200 border border-stone-200'
+                          }`}
                         aria-current={p === pagination.page ? 'page' : undefined}
                       >
                         {p}

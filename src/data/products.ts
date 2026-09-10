@@ -58,6 +58,7 @@ export interface Product {
   occasion: OccasionType | string;
   material: MaterialType | string;
   weather?: 'Summer' | 'Winter' | 'Festive' | 'Wedding' | string;
+  weight?: number;
   colors: ProductColor[];
   sizes: ('S' | 'M' | 'L' | 'XL' | 'XXL' | 'Free Size' | string)[];
   stock: number;
