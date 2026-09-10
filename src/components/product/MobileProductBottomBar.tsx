@@ -150,7 +150,7 @@ export function MobileProductBottomBar({
           className="lg:hidden fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-xs flex items-end justify-center animate-fade-in"
           onClick={(e) => e.target === e.currentTarget && setIsDrawerOpen(false)}
         >
-          <div className="bg-white w-full rounded-t-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in slide-in-from-bottom duration-250 mb-[calc(60px+env(safe-area-inset-bottom))] border-t border-[#F8D2D5]">
+          <div className="bg-white w-full rounded-t-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in slide-in-from-bottom duration-250 mb-[calc(66px+env(safe-area-inset-bottom))] border-t border-[#F8D2D5]">
             {/* Drawer Header */}
             <div className="shrink-0 bg-stone-50/80 border-b border-stone-100 px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3 min-w-0">
@@ -312,7 +312,7 @@ export function MobileProductBottomBar({
             </div>
 
             {/* Drawer Actions */}
-            <div className="p-3 bg-white border-t border-stone-100 flex gap-2">
+            <div className="p-2 px-3 bg-white border-t border-stone-100 flex gap-2">
               <button
                 type="button"
                 onClick={() => {
@@ -320,9 +320,9 @@ export function MobileProductBottomBar({
                   onAddToCart();
                 }}
                 disabled={isOutOfStock}
-                className="flex-1 min-h-[44px] bg-stone-900 hover:bg-stone-800 disabled:bg-stone-300 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+                className="flex-1 min-h-[38px] px-3 py-1 bg-stone-900 hover:bg-stone-800 active:bg-stone-950 disabled:bg-stone-200 disabled:text-stone-400 text-white text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.97] whitespace-nowrap disabled:cursor-not-allowed border border-stone-800"
               >
-                <ShoppingBag className="w-3.5 h-3.5" />
+                <ShoppingBag className="w-3.5 h-3.5 text-stone-200 shrink-0" />
                 <span>{isOutOfStock ? 'Sold Out' : 'Add to Cart'}</span>
               </button>
               <button
@@ -332,9 +332,9 @@ export function MobileProductBottomBar({
                   onBuyNow();
                 }}
                 disabled={isOutOfStock}
-                className="flex-1 min-h-[44px] bg-[#A80C14] hover:bg-[#8C0A10] disabled:bg-stone-300 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-all shadow-md shadow-[#A80C14]/20"
+                className="flex-1 min-h-[38px] px-3 py-1 bg-gradient-to-r from-[#9B050B] via-[#B50B12] to-[#800409] hover:brightness-110 active:scale-[0.97] disabled:bg-stone-200 disabled:from-stone-200 disabled:to-stone-200 disabled:text-stone-400 text-white text-[11px] font-black uppercase tracking-wider rounded-lg transition-all shadow-md shadow-[#9B050B]/25 border border-[#D11A22]/40 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap disabled:cursor-not-allowed"
               >
-                <Zap className="w-3.5 h-3.5 fill-white" />
+                <Zap className="w-3.5 h-3.5 fill-white text-white shrink-0" />
                 <span>{isOutOfStock ? 'Sold Out' : 'Buy Now'}</span>
               </button>
             </div>
@@ -344,50 +344,54 @@ export function MobileProductBottomBar({
 
       {/* Main Sticky Bottom Navigation Bar for Mobile */}
       {/* Positioned at fixed bottom-[calc(58px+env(safe-area-inset-bottom))] left-0 right-0 z-40 so it sits right above MobileBottomNav cleanly */}
-      <div className="lg:hidden fixed bottom-[calc(58px+env(safe-area-inset-bottom))] left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#F8D2D5] px-3 py-2 shadow-[0_-8px_24px_rgba(0,0,0,0.12)] flex items-center justify-between gap-2.5 animate-fade-in">
-        {/* Left: Product Price & Clickable Selected Color/Variation Pill */}
+      <div className="lg:hidden fixed bottom-[calc(64px+env(safe-area-inset-bottom))] left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#F8D2D5] shadow-[0_-8px_24px_rgba(0,0,0,0.12)] flex flex-col animate-fade-in">
+        {/* Top Tier: Price & Selected Variant Summary Bar (Compact) */}
         <button
           type="button"
           onClick={() => setIsDrawerOpen((prev) => !prev)}
-          className="flex flex-col min-w-0 shrink-0 max-w-[38%] text-left cursor-pointer group/mobilebar p-1 -ml-1 rounded-lg hover:bg-stone-100/60 transition-colors"
+          className="px-3 py-0.5 bg-stone-50/90 border-b border-stone-100 flex items-center justify-between gap-2 text-left cursor-pointer hover:bg-stone-100/80 transition-colors group/mobiletopbar"
           title="Tap to change color, size or quantity"
         >
-          <div className="flex items-baseline gap-1 min-w-0">
-            <span className="font-extrabold text-[#A80C14] font-mono text-sm leading-tight truncate">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="font-mono font-extrabold text-[#9B050B] text-xs sm:text-sm leading-none">
               {formatCurrency(currentPrice * quantity)}
             </span>
             {discountPercent > 0 && (
-              <span className="text-[9px] font-bold text-[#A80C14] bg-[#FFF0F6] px-1 rounded">
+              <span className="text-[8px] font-bold text-[#9B050B] bg-[#FFF0F6] border border-[#F8D2D5] px-1 py-0.2 rounded-full">
                 -{discountPercent}%
+              </span>
+            )}
+            {product.originalPrice && product.originalPrice > currentPrice && (
+              <span className="text-[9px] text-stone-400 line-through font-mono hidden xs:inline">
+                {formatCurrency(product.originalPrice * quantity)}
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-1 mt-0.5 text-[10px] text-stone-600 font-medium min-w-0">
+          <div className="flex items-center gap-1 text-[10px] font-semibold text-stone-700 min-w-0">
             <span
               className="w-2 h-2 rounded-full shrink-0 border border-black/10"
               style={{ backgroundColor: activeColorBadge.dotBg }}
             />
-            <span className="truncate max-w-[70px] sm:max-w-[100px]">
-              {selectedColor}
-            </span>
+            <span className="truncate max-w-[70px] font-bold text-stone-900">{selectedColor}</span>
             <span className="text-stone-300">•</span>
-            <span className="truncate max-w-[50px] font-bold text-stone-800">
-              {selectedSize}
+            <span className="font-mono font-bold text-stone-900">{selectedSize}</span>
+            <span className="text-[9px] font-bold text-[#9B050B] bg-white border border-[#9B050B]/30 px-1.5 py-0.2 rounded flex items-center gap-0.5 group-hover/mobiletopbar:bg-[#9B050B] group-hover/mobiletopbar:text-white transition-colors shrink-0 ml-0.5">
+              <span>Change</span>
+              <SlidersHorizontal className="w-2 h-2" />
             </span>
-            <SlidersHorizontal className="w-2.5 h-2.5 text-stone-400 group-hover/mobilebar:text-[#A80C14] shrink-0 ml-0.5" />
           </div>
         </button>
 
-        {/* Right: Add to Cart & Buy Now Buttons */}
-        <div className="flex gap-1.5 xs:gap-2 flex-1 min-w-0 justify-end">
+        {/* Bottom Tier: Sleek Compact Action Buttons */}
+        <div className="p-1.5 px-3 flex items-center gap-2 bg-white">
           <button
             type="button"
             onClick={onAddToCart}
             disabled={isOutOfStock}
-            className="flex-1 min-h-[44px] px-2.5 xs:px-3 py-2 bg-stone-900 active:bg-stone-800 disabled:bg-stone-300 disabled:text-stone-500 text-white text-[11px] xs:text-xs font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap disabled:cursor-not-allowed"
+            className="flex-1 min-h-[38px] px-3 py-1 bg-stone-900 hover:bg-stone-800 active:bg-stone-950 disabled:bg-stone-200 disabled:text-stone-400 text-white text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.97] whitespace-nowrap disabled:cursor-not-allowed border border-stone-800"
           >
-            <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
+            <ShoppingBag className="w-3.5 h-3.5 text-stone-200 shrink-0" />
             <span className="truncate">{isOutOfStock ? 'Sold Out' : 'Add to Cart'}</span>
           </button>
 
@@ -395,9 +399,9 @@ export function MobileProductBottomBar({
             type="button"
             onClick={onBuyNow}
             disabled={isOutOfStock}
-            className="flex-1 min-h-[44px] px-2.5 xs:px-3 py-2 bg-[#A80C14] hover:bg-[#8C0A10] active:bg-[#72070C] disabled:bg-stone-200 disabled:text-stone-400 text-white text-[11px] xs:text-xs font-extrabold rounded-xl transition-all shadow-md shadow-[#A80C14]/20 flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap disabled:cursor-not-allowed"
+            className="flex-1 min-h-[38px] px-3 py-1 bg-gradient-to-r from-[#9B050B] via-[#B50B12] to-[#800409] hover:brightness-110 active:scale-[0.97] disabled:bg-stone-200 disabled:from-stone-200 disabled:to-stone-200 disabled:text-stone-400 text-white text-[11px] font-black uppercase tracking-wider rounded-lg transition-all shadow-md shadow-[#9B050B]/25 border border-[#D11A22]/40 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap disabled:cursor-not-allowed"
           >
-            <Zap className="w-3.5 h-3.5 fill-white shrink-0" />
+            <Zap className="w-3.5 h-3.5 fill-white text-white shrink-0" />
             <span className="truncate">{isOutOfStock ? 'Sold Out' : 'Buy Now'}</span>
           </button>
         </div>

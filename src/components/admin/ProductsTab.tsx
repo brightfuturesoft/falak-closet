@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   Plus,
   Search,
@@ -21,6 +22,7 @@ import {
   PackageX,
   Warehouse,
   X,
+  Eye,
 } from 'lucide-react';
 import { Product } from '@/data/products';
 import { useCategories } from '@/lib/useCategories';
@@ -367,7 +369,13 @@ export function ProductsTab({
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 max-w-[220px]">
-                <p className="font-bold text-stone-900 truncate">{p.name}</p>
+                <Link
+                  href={`/admin/products/${p.id}`}
+                  className="font-bold text-stone-900 truncate hover:text-[#9B050B] transition-colors"
+                  title="View Product Details & Cart History"
+                >
+                  {p.name}
+                </Link>
                 {p.freeDeliveryQuantity && p.freeDeliveryQuantity > 0 ? (
                   <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#A80C14]/10 text-[#A80C14] border border-[#A80C14]/20 shrink-0">
                     🚚 Free @ {p.freeDeliveryQuantity}+
@@ -476,6 +484,13 @@ export function ProductsTab({
         {/* Actions */}
         <td className="py-3 text-right">
           <div className="flex items-center justify-end gap-2">
+            <Link
+              href={`/admin/products/${p.id}`}
+              className="p-2 bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-200 rounded-lg transition-colors cursor-pointer"
+              title="View Product Details & Cart History"
+            >
+              <Eye className="w-3.5 h-3.5" />
+            </Link>
             <button
               onClick={() => onOpenEditModal(p)}
               className="p-2 bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-200 rounded-lg transition-colors cursor-pointer"
@@ -549,6 +564,13 @@ export function ProductsTab({
             <span className="font-mono text-base font-black text-stone-900">{formatCurrency(p.price)}</span>
 
             <div className="flex items-center gap-2">
+              <Link
+                href={`/admin/products/${p.id}`}
+                className="p-2 bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-200 rounded-xl transition-colors cursor-pointer"
+                title="View Product Details & Cart History"
+              >
+                <Eye className="w-4 h-4" />
+              </Link>
               <button
                 onClick={() => onOpenEditModal(p)}
                 className="p-2 bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-200 rounded-xl transition-colors cursor-pointer"
