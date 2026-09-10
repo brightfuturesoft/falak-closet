@@ -215,11 +215,10 @@ export function MobileProductBottomBar({
                             color: isSelected ? badge.color : '#292524',
                             borderColor: isSelected ? '#A80C14' : 'transparent',
                           }}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer ${
-                            isSelected
-                              ? 'ring-2 ring-[#A80C14]/40 shadow-xs scale-105'
-                              : 'hover:bg-stone-200/80 border-stone-200'
-                          }`}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer ${isSelected
+                            ? 'ring-2 ring-[#A80C14]/40 shadow-xs scale-105'
+                            : 'hover:bg-stone-200/80 border-stone-200'
+                            }`}
                         >
                           <span
                             className="w-2.5 h-2.5 rounded-full shrink-0 border border-black/10"
@@ -254,13 +253,12 @@ export function MobileProductBottomBar({
                           type="button"
                           disabled={isSzOutOfStock}
                           onClick={() => onSelectSize(sz)}
-                          className={`min-h-[38px] px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
-                            isSelected
-                              ? 'bg-[#A80C14] text-white border-[#A80C14] shadow-xs'
-                              : isSzOutOfStock
+                          className={`min-h-[38px] px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${isSelected
+                            ? 'bg-[#A80C14] text-white border-[#A80C14] shadow-xs'
+                            : isSzOutOfStock
                               ? 'bg-stone-100 text-stone-400 border-stone-200 line-through cursor-not-allowed'
                               : 'bg-white text-stone-800 border-stone-300 hover:border-stone-400'
-                          }`}
+                            }`}
                         >
                           <span>{sz}</span>
                           {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
@@ -349,7 +347,7 @@ export function MobileProductBottomBar({
         <button
           type="button"
           onClick={() => setIsDrawerOpen((prev) => !prev)}
-          className="px-3 py-0.5 bg-stone-50/90 border-b border-stone-100 flex items-center justify-between gap-2 text-left cursor-pointer hover:bg-stone-100/80 transition-colors group/mobiletopbar"
+          className="px-3.5 py-1.5 min-h-[36px] bg-stone-50/90 border-b border-stone-100 flex items-center justify-between gap-2 text-left cursor-pointer hover:bg-stone-100/80 active:bg-stone-200/60 transition-colors group/mobiletopbar"
           title="Tap to change color, size or quantity"
         >
           <div className="flex items-center gap-1.5 min-w-0">
