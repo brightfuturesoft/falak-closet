@@ -955,17 +955,6 @@ export default function CheckoutClient() {
                     </span>
                   )}
                 </h2>
-                {/* Stacked thumbnails preview (mobile teaser) */}
-                <div className="lg:hidden flex items-center gap-1 mt-1.5">
-                  {activeItems.slice(0, 4).map((item, idx) => (
-                    <div key={idx} className="relative w-7 h-8 rounded-md overflow-hidden border border-white shadow-sm bg-stone-100 -ml-1.5 first:ml-0">
-                      <Image src={item.product?.images[0]} alt="" fill sizes="28px" className="object-cover" />
-                    </div>
-                  ))}
-                  {activeItems.length > 4 && (
-                    <span className="text-[10px] font-bold text-stone-400 ml-0.5">+{activeItems.length - 4}</span>
-                  )}
-                </div>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
