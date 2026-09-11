@@ -558,7 +558,7 @@ export default function CheckoutClient() {
   const [userIp] = useState<string>('103.24.12.89');
 
   // Mobile summary disclosure + sticky CTA
-  const [isSummaryOpen, setIsSummaryOpen] = useState(false);
+  const [isSummaryOpen, setIsSummaryOpen] = useState(true);
 
   // bKash manual payment settings state
   const [bkashSettings, setBkashSettings] = useState<{
@@ -1167,10 +1167,61 @@ export default function CheckoutClient() {
             </span>
           </button>
 
+          {/* Payment Option */}
+          <section className="bg-white p-4 sm:p-6 rounded-3xl border border-[#F8D2D5] shadow-xs space-y-3">
+            <h2 className="font-bold text-base sm:text-lg text-stone-900 flex items-center gap-2">
+              <span className="w-7 h-7 rounded-full bg-[#A80C14]/10 text-[#A80C14] text-xs font-black flex items-center justify-center shrink-0">1</span>
+              Payment Option
+            </h2>
+
+            <div className="space-y-2.5 text-xs" role="radiogroup" aria-label="Payment method">
+              {[
+                {
+                  id: 'Cash on Delivery (COD)',
+                  icon: Banknote,
+                  desc: 'Pay in cash when your parcel arrives at your door'
+                },
+                {
+                  id: 'bKash Send Money (Manual)',
+                  icon: Smartphone,
+                  desc: 'Send Money now, then share the TrxID — verified before dispatch'
+                }
+              ].map((pm) => {
+                const isSelected = paymentMethod === pm.id;
+                const Icon = pm.icon;
+                return (
+                  <label
+                    key={pm.id}
+                    className={`flex items-start gap-3 min-h-[56px] p-3.5 rounded-2xl border cursor-pointer transition-all active:scale-[0.99] ${isSelected
+                      ? 'border-[#A80C14] bg-[#FDF2F3] font-bold shadow-xs'
+                      : 'border-stone-200 text-stone-700 hover:border-[#F8D2D5]'
+                      }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      checked={isSelected}
+                      onChange={() => setPaymentMethod(pm.id)}
+                      className="accent-[#A80C14] w-4 h-4 shrink-0 mt-0.5"
+                    />
+                    <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isSelected ? 'bg-[#A80C14] text-white' : 'bg-stone-100 text-stone-500'}`}>
+                      <Icon className="w-[18px] h-[18px]" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className={`block font-bold ${isSelected ? 'text-[#A80C14]' : 'text-stone-800'}`}>{pm.id}</span>
+                      <span className="block text-[10px] text-stone-500 font-normal mt-0.5 leading-snug">{pm.desc}</span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Shipping & Contact Details */}
           <section className="bg-white p-4 sm:p-6 rounded-3xl border border-[#F8D2D5] shadow-xs space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <h2 className="font-bold text-base sm:text-lg text-stone-900 flex items-center gap-2">
-                <span className="w-7 h-7 rounded-full bg-[#A80C14]/10 text-[#A80C14] text-xs font-black flex items-center justify-center shrink-0">1</span>
+                <span className="w-7 h-7 rounded-full bg-[#A80C14]/10 text-[#A80C14] text-xs font-black flex items-center justify-center shrink-0">2</span>
                 Shipping &amp; Contact Details
               </h2>
             </div>
@@ -1262,56 +1313,6 @@ export default function CheckoutClient() {
               <p className="text-[11px] text-stone-500">
                 Inside Dhaka: <strong>৳80</strong> • Sub-area Dhaka: <strong>৳100</strong> • Outside Dhaka: <strong>৳150</strong>
               </p>
-            </div>
-          </section>
-
-          {/* Payment Option */}
-          <section className="bg-white p-4 sm:p-6 rounded-3xl border border-[#F8D2D5] shadow-xs space-y-3">
-            <h2 className="font-bold text-base sm:text-lg text-stone-900 flex items-center gap-2">
-              <span className="w-7 h-7 rounded-full bg-[#A80C14]/10 text-[#A80C14] text-xs font-black flex items-center justify-center shrink-0">2</span>
-              Payment Option
-            </h2>
-
-            <div className="space-y-2.5 text-xs" role="radiogroup" aria-label="Payment method">
-              {[
-                {
-                  id: 'Cash on Delivery (COD)',
-                  icon: Banknote,
-                  desc: 'Pay in cash when your parcel arrives at your door'
-                },
-                {
-                  id: 'bKash Send Money (Manual)',
-                  icon: Smartphone,
-                  desc: 'Send Money now, then share the TrxID — verified before dispatch'
-                }
-              ].map((pm) => {
-                const isSelected = paymentMethod === pm.id;
-                const Icon = pm.icon;
-                return (
-                  <label
-                    key={pm.id}
-                    className={`flex items-start gap-3 min-h-[56px] p-3.5 rounded-2xl border cursor-pointer transition-all active:scale-[0.99] ${isSelected
-                      ? 'border-[#A80C14] bg-[#FDF2F3] font-bold shadow-xs'
-                      : 'border-stone-200 text-stone-700 hover:border-[#F8D2D5]'
-                      }`}
-                  >
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      checked={isSelected}
-                      onChange={() => setPaymentMethod(pm.id)}
-                      className="accent-[#A80C14] w-4 h-4 shrink-0 mt-0.5"
-                    />
-                    <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isSelected ? 'bg-[#A80C14] text-white' : 'bg-stone-100 text-stone-500'}`}>
-                      <Icon className="w-[18px] h-[18px]" />
-                    </span>
-                    <span className="min-w-0">
-                      <span className={`block font-bold ${isSelected ? 'text-[#A80C14]' : 'text-stone-800'}`}>{pm.id}</span>
-                      <span className="block text-[10px] text-stone-500 font-normal mt-0.5 leading-snug">{pm.desc}</span>
-                    </span>
-                  </label>
-                );
-              })}
             </div>
           </section>
         </div>
