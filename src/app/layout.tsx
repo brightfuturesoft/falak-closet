@@ -39,6 +39,9 @@ const hindSiliguri = Hind_Siliguri({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://falakcloset.com'),
+  verification: {
+    google: 'dXJF0r19c0PtwgQp2EPUUFT4J8aDa7JpFCO2RQDKedk',
+  },
   title: {
     default: 'Falak Closet | Premium Modest Fashion, Abayas & Hijabs (৳ BDT)',
     template: '%s | Falak Closet'
