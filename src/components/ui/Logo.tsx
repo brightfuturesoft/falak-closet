@@ -20,9 +20,9 @@ export function Logo({
 }: LogoProps) {
   const [imgError, setImgError] = useState(false);
 
-  // Pick between transparent logo (/transparent_logo.png) or normal logo (/logo.png)
-  // const isTransparent = variant === 'transparent' || (transparent && variant !== 'normal');
-  const logoSrc = '/favicon.ico';
+  // Use transparent logo for badge/transparent variants, main logo otherwise
+  const isTransparent = variant === 'transparent' || (transparent && variant !== 'normal' && variant !== 'full');
+  const logoSrc = isTransparent ? '/transparent_logo.png' : '/Logo.jpeg';
 
   const sizeMap = {
     sm: 'h-8 sm:h-9 max-w-[140px]',
