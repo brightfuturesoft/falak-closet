@@ -1,13 +1,13 @@
 import React from 'react';
 import { Metadata } from 'next';
 import LivePromotionsClient from './LivePromotionsClient';
-import { getActiveBanners } from '@/lib/promotionBanners';
-import { getFlashSaleProducts } from '@/lib/products';
+import { getActiveBannersSafe } from '@/lib/promotionBanners';
+import { getFlashSaleProductsSafe } from '@/lib/products';
 
 export const revalidate = 3600;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const banners = await getActiveBanners();
+  const banners = await getActiveBannersSafe();
   const banner = banners[0];
 
   if (!banner) {
@@ -55,8 +55,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function LivePromotionsPage() {
   const [banners, flashProducts] = await Promise.all([
-    getActiveBanners(),
-    getFlashSaleProducts()
+    getActiveBannersSafe(),
+    getFlashSaleProductsSafe()
   ]);
 
   const now = new Date();
