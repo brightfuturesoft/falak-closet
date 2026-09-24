@@ -81,7 +81,7 @@ export const metadata: Metadata = {
     siteName: 'Falak Closet',
     images: [
       {
-        url: '/favicon.ico',
+        url: '/Logo.jpeg',
         width: 1200,
         height: 630,
         alt: 'Falak Closet Haute Couture Collection'
@@ -94,15 +94,15 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Falak Closet | Premium Modest Fashion',
     description: 'Handcrafted abayas, luxury hijabs, and modest fashion creations in Bangladesh.',
-    images: ['/favicon.ico']
+    images: ['/Logo.jpeg']
   },
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: '32x32', type: 'image/ico' },
-      { url: '/favicon.ico', sizes: '192x192', type: 'image/ico' }
+      { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },
+      { url: '/android-chrome-192x192.png', sizes: '192x192', type: 'image/png' }
     ],
     shortcut: '/favicon.ico',
-    apple: '/favicon.ico'
+    apple: '/apple-touch-icon.png'
   }
 };
 
