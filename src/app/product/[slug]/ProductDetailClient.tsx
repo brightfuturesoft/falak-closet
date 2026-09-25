@@ -525,7 +525,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         </div>
 
         {/* Right: Summary Details Sidebar */}
-        <div className="lg:col-span-5">
+        <div className="lg:col-span-5 flex flex-col gap-6">
           <ProductSummarySidebar
             product={product}
             colorsList={colorsList}
@@ -533,6 +533,148 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
             reviewsCount={reviewsList.length}
             onJumpToReviews={jumpToReviews}
           />
+
+          {/* ── Desktop Action Panel (hidden on mobile — mobile uses MobileProductBottomBar) ── */}
+          <div className="hidden lg:block space-y-4 bg-white border border-[#F8D2D5] rounded-3xl p-5 shadow-sm">
+
+            {/* Color Selector */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold tracking-widest text-stone-500 uppercase">Color</span>
+                <span className="text-xs font-semibold text-[#A80C14] bg-[#FDF2F3] px-2.5 py-0.5 rounded-full border border-[#F8D2D5]">
+                  {selectedColor}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {colorsList.map((col) => {
+                  const isSelected = col.name.toLowerCase() === selectedColor.toLowerCase();
+                  const hex = col.hex || '#E5E7EB';
+                  return (
+                    <button
+                      key={col.name}
+                      onClick={() => handleSelectColor(col.name)}
+                      title={col.name}
+                      className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 cursor-pointer focus:outline-none ${
+                        isSelected ? 'border-[#A80C14] scale-110 shadow-md' : 'border-transparent hover:border-stone-300'
+                      }`}
+                      style={{ backgroundColor: hex }}
+                      aria-label={col.name}
+                      aria-pressed={isSelected}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Size Selector */}
+            {!(sizesList.length === 1 && /free/i.test(String(sizesList[0]))) && (
+              <div className="space-y-2">
+                <span className="text-xs font-bold tracking-widest text-stone-500 uppercase">Size</span>
+                <div className="flex flex-wrap gap-2">
+                  {sizesList.map((sz) => {
+                    const isSelected = sz === selectedSize;
+                    const sizeStock = stockForSize(selectedColor, sz);
+                    const isSizeOut = sizeStock !== undefined && sizeStock <= 0;
+                    return (
+                      <button
+                        key={sz}
+                        onClick={() => !isSizeOut && handleSelectSize(sz)}
+                        disabled={isSizeOut}
+                        className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all cursor-pointer ${
+                          isSizeOut
+                            ? 'border-stone-200 text-stone-300 bg-stone-50 line-through cursor-not-allowed'
+                            : isSelected
+                            ? 'border-[#A80C14] bg-[#A80C14] text-white shadow-md'
+                            : 'border-stone-200 text-stone-700 bg-white hover:border-[#A80C14] hover:text-[#A80C14]'
+                        }`}
+                      >
+                        {sz}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Quantity Stepper */}
+            <div className="flex items-center gap-4">
+              <span className="text-xs font-bold tracking-widest text-stone-500 uppercase">Qty</span>
+              <div className="flex items-center gap-1 border border-stone-200 rounded-xl overflow-hidden">
+                <button
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  disabled={quantity <= 1}
+                  className="w-9 h-9 flex items-center justify-center text-stone-600 hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                  aria-label="Decrease quantity"
+                >
+                  <Minus className="w-3.5 h-3.5" />
+                </button>
+                <span className="w-8 text-center text-sm font-bold text-stone-900 font-mono">{quantity}</span>
+                <button
+                  onClick={() => setQuantity((q) => Math.min(currentStock || 99, q + 1))}
+                  disabled={quantity >= (currentStock || 99)}
+                  className="w-9 h-9 flex items-center justify-center text-stone-600 hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                  aria-label="Increase quantity"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              {/* Stock badge */}
+              {!isOutOfStock ? (
+                <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                  In Stock
+                </span>
+              ) : (
+                <span className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 px-2.5 py-0.5 rounded-full">
+                  Out of Stock
+                </span>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              {/* Add to Cart */}
+              <button
+                id="desktop-add-to-cart"
+                onClick={handleAddToCart}
+                disabled={isOutOfStock}
+                className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border-2 border-[#A80C14] text-[#A80C14] font-bold text-sm hover:bg-[#A80C14] hover:text-white active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-sm"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                Add to Cart
+              </button>
+
+              {/* Buy Now */}
+              <button
+                id="desktop-buy-now"
+                onClick={handleBuyNow}
+                disabled={isOutOfStock}
+                className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-[#A80C14] text-white font-bold text-sm hover:bg-[#8C0A10] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-sm"
+              >
+                <Zap className="w-4 h-4" />
+                Buy Now
+              </button>
+            </div>
+
+            {/* Wishlist + Share row */}
+            <div className="flex items-center justify-between pt-1 border-t border-stone-100">
+              <button
+                onClick={() => product && toggleWishlist(product.id)}
+                className={`flex items-center gap-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+                  isWishlisted ? 'text-[#A80C14]' : 'text-stone-400 hover:text-[#A80C14]'
+                }`}
+              >
+                <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-[#A80C14]' : ''}`} />
+                {isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}
+              </button>
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-1.5 text-xs font-semibold text-stone-400 hover:text-stone-700 transition-colors cursor-pointer"
+              >
+                <Share2 className="w-4 h-4" />
+                Share
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
