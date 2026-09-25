@@ -658,7 +658,7 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
             {/* Wishlist + Share row */}
             <div className="flex items-center justify-between pt-1 border-t border-stone-100">
               <button
-                onClick={() => product && toggleWishlist(product.id)}
+                onClick={() => product && toggleWishlist(product)}
                 className={`flex items-center gap-1.5 text-xs font-semibold transition-colors cursor-pointer ${
                   isWishlisted ? 'text-[#A80C14]' : 'text-stone-400 hover:text-[#A80C14]'
                 }`}
