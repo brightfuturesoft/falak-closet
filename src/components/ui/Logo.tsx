@@ -22,7 +22,7 @@ export function Logo({
 
   // Use transparent logo for badge/transparent variants, main logo otherwise
   const isTransparent = variant === 'transparent' || (transparent && variant !== 'normal' && variant !== 'full');
-  const logoSrc = isTransparent ? '/transparent_logo.png' : '/Logo.jpeg';
+  const logoSrc = isTransparent ? '/transparent_logo.png' : '/Logo.jpg';
 
   const sizeMap = {
     sm: 'h-8 sm:h-9 max-w-[140px]',

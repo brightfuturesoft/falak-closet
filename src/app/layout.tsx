@@ -81,7 +81,7 @@ export const metadata: Metadata = {
     siteName: 'Falak Closet',
     images: [
       {
-        url: '/Logo.jpeg',
+        url: '/Logo.jpg',
         width: 1200,
         height: 630,
         alt: 'Falak Closet Haute Couture Collection'
@@ -94,7 +94,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Falak Closet | Premium Modest Fashion',
     description: 'Handcrafted abayas, luxury hijabs, and modest fashion creations in Bangladesh.',
-    images: ['/Logo.jpeg']
+    images: ['/Logo.jpg']
   },
   icons: {
     icon: [
