@@ -268,6 +268,16 @@ export const getFlashSaleProducts = unstable_cache(
   { tags: [PRODUCTS_TAG], revalidate: 3600 }
 );
 
+/** `getFlashSaleProducts()` that never throws — returns empty array on DB failure. */
+export async function getFlashSaleProductsSafe(): Promise<Product[]> {
+  try {
+    return await getFlashSaleProducts();
+  } catch (err) {
+    console.error('[products] flash sale read failed:', err instanceof Error ? err.message : err);
+    return [];
+  }
+}
+
 /**
  * `getProducts()` that reports failure instead of throwing.
  *
