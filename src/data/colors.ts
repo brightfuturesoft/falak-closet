@@ -209,4 +209,3 @@ export function getColorNameFromHex(hexInput: string): { name: string; hex: stri
     category: closestColor.category
   };
 }
-
