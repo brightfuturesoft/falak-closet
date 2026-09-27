@@ -556,20 +556,29 @@ export function ProductFormModal({
     if (colorVariations.length === 1) return; // Keep at least 1 color variation
     const target = colorVariations.find((c) => c.id === id);
     setColorVariations((prev) => prev.filter((c) => c.id !== id));
-    if (target) {
-      setVariationsMatrix((prev) => prev.filter((v) => v.colorName !== target.name));
+    if (target && target.name) {
+      setVariationsMatrix((prev) =>
+        prev.filter((v) => v.colorName.toLowerCase() !== target.name.toLowerCase())
+      );
     }
   };
 
   // Update Color Variation Name inline
   const handleUpdateColorName = (id: string, name: string) => {
     const oldColor = colorVariations.find((c) => c.id === id);
+    const oldName = oldColor?.name || '';
+
     setColorVariations((prev) =>
       prev.map((c) => (c.id === id ? { ...c, name } : c))
     );
-    if (oldColor) {
+
+    if (oldName) {
       setVariationsMatrix((prev) =>
-        prev.map((v) => (v.colorName === oldColor.name ? { ...v, colorName: name } : v))
+        prev.map((v) =>
+          v.colorName.toLowerCase() === oldName.toLowerCase()
+            ? { ...v, colorName: name }
+            : v
+        )
       );
     }
   };
@@ -577,54 +586,38 @@ export function ProductFormModal({
   // Update Color Variation Hex Code inline
   const handleUpdateColorHex = (id: string, hex: string) => {
     const oldColor = colorVariations.find((c) => c.id === id);
+    const oldName = oldColor?.name || '';
+
     setColorVariations((prev) =>
       prev.map((c) => (c.id === id ? { ...c, hex } : c))
     );
-    if (oldColor) {
+
+    if (oldName) {
       setVariationsMatrix((prev) =>
-        prev.map((v) => (v.colorName === oldColor.name ? { ...v, colorHex: hex } : v))
+        prev.map((v) =>
+          v.colorName.toLowerCase() === oldName.toLowerCase()
+            ? { ...v, colorHex: hex }
+            : v
+        )
       );
     }
   };
 
   // Append new empty Color Variation card when clicking [ Add More ]
   const handleAddNewColorRow = () => {
-    const defaultColors = [
-      { name: 'Obsidian Black', hex: '#0B0B0B' },
-      { name: 'Emerald Green', hex: '#0B6623' },
-      { name: 'Royal Crimson', hex: '#9B050B' },
-      { name: 'Champagne Gold', hex: '#F7E7CE' },
-      { name: 'Midnight Navy', hex: '#00052C' },
-      { name: 'Dusty Rose', hex: '#DCAE96' }
-    ];
-    const unused = defaultColors.find(
-      (dc) => !colorVariations.some((c) => c.name.toLowerCase() === dc.name.toLowerCase())
-    ) || { name: `New Color ${colorVariations.length + 1}`, hex: '#9B050B' };
-
+    const newId = `col-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     setColorVariations((prev) => [
       ...prev,
       {
-        id: `col-${Date.now()}-${Math.random()}`,
-        name: unused.name,
-        hex: unused.hex,
-        stock: 10,
+        id: newId,
+        name: '',
+        hex: '#9B050B',
         images: [],
         mainImageIndex: 0
       }
     ]);
-
-    setVariationsMatrix((prev) => [
-      ...prev,
-      {
-        id: `var-${unused.name}-Free Size-${Date.now()}`,
-        colorName: unused.name,
-        colorHex: unused.hex,
-        size: 'Free Size',
-        stock: 10,
-        imageUrl: ''
-      }
-    ]);
   };
+
 
   // Upload images for a Color Variation → Cloudinary (used to be base64 → MongoDB bloat)
   const handleColorFileUpload = async (colorId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -844,18 +837,46 @@ export function ProductFormModal({
         .map((c) => c.trim())
         .filter(Boolean);
 
-      const aggregatedSizes = Array.from(
-        new Set(variationsMatrix.map((v) => v.size).filter(Boolean))
-      );
-      const totalStockFromMatrix = variationsMatrix.reduce((sum, v) => sum + v.stock, 0);
+      // Only retain variations for active, valid color variations with non-empty sizes
+      const validColorNames = new Map<string, string>();
+      colorVariations.forEach((c) => {
+        const trimmed = c.name.trim();
+        if (trimmed) validColorNames.set(trimmed.toLowerCase(), trimmed);
+      });
 
-      const varPrices = variationsMatrix
+      const seenVarKeys = new Set<string>();
+      const sanitizedVariations: ProductVariation[] = [];
+
+      variationsMatrix.forEach((v) => {
+        const colorKey = (v.colorName || '').trim().toLowerCase();
+        const sizeKey = (v.size || '').trim();
+        if (!colorKey || !sizeKey) return;
+        if (!validColorNames.has(colorKey)) return;
+
+        const exactColorName = validColorNames.get(colorKey)!;
+        const dedupeKey = `${colorKey}|${sizeKey.toLowerCase()}`;
+        if (seenVarKeys.has(dedupeKey)) return;
+        seenVarKeys.add(dedupeKey);
+
+        sanitizedVariations.push({
+          ...v,
+          colorName: exactColorName,
+          size: sizeKey
+        });
+      });
+
+      const aggregatedSizes = Array.from(
+        new Set(sanitizedVariations.map((v) => v.size).filter(Boolean))
+      );
+      const totalStockFromMatrix = sanitizedVariations.reduce((sum, v) => sum + v.stock, 0);
+
+      const varPrices = sanitizedVariations
         .filter((v) => !v.isHidden)
         .map((v) => v.price)
         .filter((p): p is number => typeof p === 'number' && p > 0);
       const derivedPrice = varPrices.length > 0 ? Math.min(...varPrices) : (formData.price || 0);
 
-      const varBuyingPrices = variationsMatrix
+      const varBuyingPrices = sanitizedVariations
         .filter((v) => !v.isHidden)
         .map((v) => v.buyingPrice)
         .filter((bp): bp is number => typeof bp === 'number' && bp > 0);
@@ -879,9 +900,9 @@ export function ProductFormModal({
         isNew: formData.isNew,
         description: formData.description,
         colors: formattedColors,
-        sizes: aggregatedSizes.length > 0 ? aggregatedSizes : ['Free Size'],
+        sizes: aggregatedSizes.length > 0 ? aggregatedSizes : (editingProduct?.sizes && editingProduct.sizes.length > 0 ? editingProduct.sizes : ['Free Size']),
         images: allAggregatedImages.length > 0 ? allAggregatedImages : ['https://images.unsplash.com/photo-1609357605129-26f69add5d6e?auto=format&fit=crop&w=1000&q=80'],
-        variations: variationsMatrix,
+        variations: sanitizedVariations,
         stock: totalStockFromMatrix > 0 ? totalStockFromMatrix : formData.stock,
         features,
         careInstructions,

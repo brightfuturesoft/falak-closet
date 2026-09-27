@@ -130,8 +130,28 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
     return sizesList[0] || 'Free Size';
   });
 
+  // Keep selectedColor in sync if colorsList changes (e.g. after product update or query change)
+  useEffect(() => {
+    if (colorsList && colorsList.length > 0) {
+      const exists = colorsList.some((c) => c.name.toLowerCase() === selectedColor.toLowerCase());
+      if (!exists) {
+        setSelectedColor(colorsList[0].name);
+      }
+    }
+  }, [colorsList, selectedColor]);
+
+  // Keep selectedSize in sync whenever sizesList changes for the selected color
+  useEffect(() => {
+    if (sizesList && sizesList.length > 0) {
+      if (!sizesList.includes(selectedSize)) {
+        setSelectedSize(sizesList[0]);
+      }
+    }
+  }, [sizesList, selectedSize]);
+
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
+
 
   // Mouse Hover Image Zoom Lens State
   const [isHovering, setIsHovering] = useState(false);
