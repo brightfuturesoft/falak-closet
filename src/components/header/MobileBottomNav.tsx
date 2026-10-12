@@ -159,7 +159,7 @@ export function MobileBottomNav() {
     setIsSearchOpen(false);
   }, [pathname]);
 
-  if (pathname?.startsWith('/admin')) {
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/landing')) {
     return null;
   }
 

@@ -12,6 +12,7 @@ import {
   sanitizeProductForPublic,
   ProductValidationError,
 } from '@/lib/products';
+import { broadcastSocketEventServer } from '@/lib/socketServerBroadcast';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -23,7 +24,10 @@ function bustProductCache(slug?: string) {
   revalidateTag(PRODUCTS_TAG, 'max');
   revalidatePath('/');
   revalidatePath('/shop');
-  if (slug) revalidatePath(`/product/${slug}`);
+  if (slug) {
+    revalidatePath(`/product/${slug}`);
+    revalidatePath(`/landing/${slug}`);
+  }
 }
 
 /**
@@ -86,10 +90,17 @@ async function update(req: Request, { params }: RouteContext) {
     bustProductCache(updated.slug);
     if (existing.slug !== updated.slug) bustProductCache(existing.slug);
 
+    const serialized = serializeProduct(updated);
+    void broadcastSocketEventServer('product_sync', {
+      type: 'update',
+      product: serialized,
+      id: updated.id,
+    });
+
     return NextResponse.json({
       success: true,
       message: 'Product updated',
-      product: serializeProduct(updated),
+      product: serialized,
     });
   } catch (err) {
     if (err instanceof ProductValidationError) {
@@ -115,6 +126,11 @@ export async function DELETE(_req: Request, { params }: RouteContext) {
     await prisma.product.delete({ where: { id: existing.id } });
 
     bustProductCache(existing.slug);
+    void broadcastSocketEventServer('product_sync', {
+      type: 'delete',
+      id: existing.id,
+    });
+
     return NextResponse.json({ success: true, message: 'Product deleted', id: existing.id });
   } catch (err) {
     console.error('[DELETE /api/products/[id]]', err);

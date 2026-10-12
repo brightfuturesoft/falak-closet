@@ -23,6 +23,7 @@ import {
   Warehouse,
   X,
   Eye,
+  ExternalLink,
 } from 'lucide-react';
 import { Product } from '@/data/products';
 import { useCategories } from '@/lib/useCategories';
@@ -485,6 +486,15 @@ export function ProductsTab({
         <td className="py-3 text-right">
           <div className="flex items-center justify-end gap-2">
             <Link
+              href={`/landing/${p.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 bg-gradient-to-r from-amber-50 to-rose-50 hover:from-amber-100 hover:to-rose-100 text-[#A80C14] border border-[#F8D2D5] rounded-lg transition-all cursor-pointer shadow-xs group"
+              title="View Promotional Landing Page (New Tab)"
+            >
+              <ExternalLink className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+            </Link>
+            <Link
               href={`/admin/products/${p.id}`}
               className="p-2 bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-200 rounded-lg transition-colors cursor-pointer"
               title="View Product Details & Cart History"
@@ -564,6 +574,15 @@ export function ProductsTab({
             <span className="font-mono text-base font-black text-stone-900">{formatCurrency(p.price)}</span>
 
             <div className="flex items-center gap-2">
+              <Link
+                href={`/landing/${p.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 bg-gradient-to-r from-amber-50 to-rose-50 hover:from-amber-100 hover:to-rose-100 text-[#A80C14] border border-[#F8D2D5] rounded-xl transition-all cursor-pointer shadow-xs group"
+                title="View Promotional Landing Page (New Tab)"
+              >
+                <ExternalLink className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              </Link>
               <Link
                 href={`/admin/products/${p.id}`}
                 className="p-2 bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-200 rounded-xl transition-colors cursor-pointer"

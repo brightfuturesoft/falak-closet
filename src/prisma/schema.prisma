@@ -201,6 +201,9 @@ model Product {
   freeDeliveryQuantity Int?
   weight               Float?             @default(0.5)
 
+  videoUrl                   String?
+  landingDiscountPercentage  Float?
+
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 

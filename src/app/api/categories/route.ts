@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { CATEGORIES_TAG } from '@/lib/fetcher';
+import { broadcastSocketEventServer } from '@/lib/socketServerBroadcast';
 
 function slugify(text: string) {
   return text.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -24,6 +25,7 @@ function bustCategoryCache() {
   revalidateTag(CATEGORIES_TAG, 'max');
   revalidatePath('/');
   revalidatePath('/shop');
+  void broadcastSocketEventServer('category_sync', {});
 }
 
 // ─── GET /api/categories ─────────────────────────────────────────────────────

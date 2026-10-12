@@ -125,30 +125,11 @@ export default function TopProgressBar() {
       return originalReplaceState.apply(this, args);
     };
 
-    // Intercept fetch requests to show progress bar during API calls
-    const originalFetch = window.fetch;
-    window.fetch = async function (...args) {
-      activeRequests.current++;
-      if (activeRequests.current === 1) {
-        handleStart(false); // Soft start for API calls
-      }
-
-      try {
-        return await originalFetch.apply(this, args);
-      } finally {
-        activeRequests.current--;
-        if (activeRequests.current === 0) {
-          handleStop();
-        }
-      }
-    };
-
     document.addEventListener('click', handleAnchorClick, { capture: true });
 
     return () => {
       window.history.pushState = originalPushState;
       window.history.replaceState = originalReplaceState;
-      window.fetch = originalFetch;
       document.removeEventListener('click', handleAnchorClick, { capture: true });
       if (fetchTimerRef.current) clearTimeout(fetchTimerRef.current);
       if (finishTimerRef.current) clearTimeout(finishTimerRef.current);

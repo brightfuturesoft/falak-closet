@@ -13,11 +13,18 @@ export async function GET() {
       return NextResponse.json({ success: false, error: 'Not signed in' }, { status: 401 });
     }
 
+    const cleanDigits = user.phone ? user.phone.replace(/\D/g, '').replace(/^88/, '') : '';
+
     const orders = await prisma.order.findMany({
       where: {
         OR: [
           { userEmail: user.email },
-          // { shippingAddress: { is: { phone: user.phone } } },
+          ...(user.phone ? [{ shippingAddress: { is: { phone: user.phone } } }] : []),
+          ...(cleanDigits ? [
+            { shippingAddress: { is: { phone: cleanDigits } } },
+            { shippingAddress: { is: { phone: `0${cleanDigits}` } } },
+            { shippingAddress: { is: { phone: `+880${cleanDigits}` } } },
+          ] : []),
         ],
       },
       orderBy: { createdAt: 'desc' },

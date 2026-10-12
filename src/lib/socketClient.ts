@@ -3,28 +3,11 @@
 import { io, Socket } from 'socket.io-client';
 import { OrderRecord } from '@/context/CartContext';
 
-/**
- * Realtime transport policy (Vercel deployment — no socket server):
- *
- * This project deploys to Vercel, which cannot host the long-lived
- * `socket-server.js` process. Realtime therefore runs in one of two modes:
- *
- *  • POLLING (default in production): no `NEXT_PUBLIC_SOCKET_URL` is set, so
- *    no socket connection is attempted at all. New-order alerts come from the
- *    admin provider's periodic sync (sound + toast + instant table prepend,
- *    delayed by at most one interval). Zero extra infrastructure.
- *
- *  • SOCKET (opt-in): set `NEXT_PUBLIC_SOCKET_URL=https://your-socket-host`
- *    (e.g. a Railway/Render service running `node socket-server.js`) and
- *    redeploy — alerts become instant. Local dev keeps the zero-config
- *    `http://localhost:3001` default (`npm run socket`).
- */
-
 const SOCKET_URL =
   process.env.NEXT_PUBLIC_SOCKET_URL ||
-  (process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : '');
+  (process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : 'http://localhost:3001');
 
-/** True when a socket server is configured (explicitly, or implied in dev). */
+/** True when a socket server is configured (explicitly or locally). */
 export const isSocketEnabled = Boolean(SOCKET_URL);
 
 let socketInstance: Socket | null = null;
@@ -34,8 +17,8 @@ export function getSocket(): Socket {
     socketInstance = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
       autoConnect: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000
+      reconnectionAttempts: 15,
+      reconnectionDelay: 1000,
     });
   }
 
@@ -46,12 +29,72 @@ export function getSocket(): Socket {
   return socketInstance;
 }
 
+/** Emit a new purchase notification to alert admins in real time */
 export function sendNewOrderNotification(order: OrderRecord) {
-  if (!isSocketEnabled) return; // polling mode — the admin sync will pick it up
+  if (!isSocketEnabled) return;
   try {
     const socket = getSocket();
     socket.emit('new_order', order);
   } catch (err) {
     console.error('[Socket Client] Failed to emit order notification:', err);
+  }
+}
+
+/** Emit an order status / payment / courier update event */
+export function sendOrderUpdateNotification(orderData: Partial<OrderRecord> & { id: string; orderId?: string }) {
+  if (!isSocketEnabled) return;
+  try {
+    const socket = getSocket();
+    socket.emit('order_update', orderData);
+  } catch (err) {
+    console.error('[Socket Client] Failed to emit order update:', err);
+  }
+}
+
+/** Emit a product catalog change (create, edit, delete, stock update) */
+export function sendProductUpdateNotification(payload: {
+  type: 'create' | 'update' | 'delete';
+  product?: any;
+  id?: string;
+}) {
+  if (!isSocketEnabled) return;
+  try {
+    const socket = getSocket();
+    socket.emit('product_update', payload);
+  } catch (err) {
+    console.error('[Socket Client] Failed to emit product update:', err);
+  }
+}
+
+/** Emit a promotion voucher change */
+export function sendPromotionUpdateNotification(payload?: any) {
+  if (!isSocketEnabled) return;
+  try {
+    const socket = getSocket();
+    socket.emit('promotion_update', payload);
+  } catch (err) {
+    console.error('[Socket Client] Failed to emit promotion update:', err);
+  }
+}
+
+/** Emit a category taxonomy change */
+export function sendCategoryUpdateNotification(payload?: any) {
+  if (!isSocketEnabled) return;
+  try {
+    const socket = getSocket();
+    socket.emit('category_update', payload);
+  } catch (err) {
+    console.error('[Socket Client] Failed to emit category update:', err);
+  }
+}
+
+/** Emit a store settings change */
+export function sendSettingsUpdateNotification(payload?: any) {
+  if (!isSocketEnabled) return;
+  try {
+    const socket = getSocket();
+    socket.emit('settings_update', payload);
+  } catch (err) {
+    console.error('[Socket Client] Failed to emit settings update:', err);
   }
 }

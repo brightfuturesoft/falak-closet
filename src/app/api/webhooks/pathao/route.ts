@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { mapPathaoStatusToOrderStatus } from '@/lib/shipping/pathao';
 import { adjustStockForOrderItems, serializeOrder } from '@/lib/orders';
+import { broadcastSocketEventServer } from '@/lib/socketServerBroadcast';
 
 const INTEGRATION_SECRET =
   process.env.PATHAO_WEBHOOK_SECRET || 'f3992ecc-59da-4cbe-a049-a13da2018d51';
@@ -134,11 +135,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const serialized = serializeOrder(updatedOrder);
+    void broadcastSocketEventServer('order_updated', serialized);
+
     return createWebhookResponse(
       {
         success: true,
         message: `Order #${order.orderNumber} status updated to ${newStatus} (Courier: ${rawPathaoStatus})`,
-        order: serializeOrder(updatedOrder),
+        order: serialized,
       },
       202
     );

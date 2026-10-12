@@ -13,7 +13,8 @@ import { v2 as cloudinary, type UploadApiResponse } from 'cloudinary';
 // Route handlers are dynamic by default in Next 16 — keep uploads uncached.
 export const dynamic = 'force-dynamic';
 
-const MAX_BYTES = 5 * 1024 * 1024; // 5 MB per image
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MB per image
+const MAX_VIDEO_BYTES = 60 * 1024 * 1024; // 60 MB per video
 const NAMESPACE = 'falak-closet';
 const FOLDER_RE = /^[a-z0-9/_-]{1,60}$/;
 
@@ -76,24 +77,29 @@ export async function POST(req: Request) {
   );
   if (files.length === 0) {
     return NextResponse.json(
-      { success: false, error: 'No image file provided' },
+      { success: false, error: 'No media file provided' },
       { status: 400 }
     );
   }
 
   const results: UploadResult[] = [];
   for (const file of files) {
-    if (!file.type.startsWith('image/')) {
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
+
+    if (!isImage && !isVideo) {
       return NextResponse.json(
-        { success: false, error: `"${file.name}" is not an image`, uploaded: results },
+        { success: false, error: `"${file.name}" is not a supported image or video`, uploaded: results },
         { status: 400 }
       );
     }
-    if (file.size > MAX_BYTES) {
+
+    const maxBytes = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+    if (file.size > maxBytes) {
       return NextResponse.json(
         {
           success: false,
-          error: `"${file.name}" exceeds the 5 MB limit`,
+          error: `"${file.name}" exceeds the ${isVideo ? '60 MB' : '10 MB'} limit`,
           uploaded: results,
         },
         { status: 413 }
@@ -101,12 +107,11 @@ export async function POST(req: Request) {
     }
 
     try {
-      // Delivery optimization happens via URL params (f_auto,q_auto), not here.
-      // Buffers must go through upload_stream — upload() only takes paths/URLs.
       const buffer = Buffer.from(await file.arrayBuffer());
+      const resourceType = isVideo ? 'video' : 'image';
       const uploaded = await new Promise<UploadApiResponse>((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
-          { folder, resource_type: 'image', filename: file.name },
+          { folder, resource_type: resourceType, filename: file.name },
           (err, res) => (err || !res ? reject(err ?? new Error('Empty Cloudinary response')) : resolve(res))
         );
         stream.end(buffer);

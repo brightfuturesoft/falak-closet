@@ -17,11 +17,12 @@ import {
   Images,
   Star,
   LogOut,
-  Wallet
+  Wallet,
+  Video
 } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 
-export type AdminTabType = 'overview' | 'orders' | 'products' | 'categories' | 'promotions' | 'customers' | 'analytics' | 'finances' | 'security' | 'settings' | 'delivery' | 'banners' | 'hero' | 'reviews';
+export type AdminTabType = 'overview' | 'orders' | 'products' | 'landing' | 'categories' | 'promotions' | 'customers' | 'analytics' | 'finances' | 'security' | 'settings' | 'delivery' | 'banners' | 'hero' | 'reviews';
 
 interface AdminSidebarProps {
   pendingOrdersCount: number;
@@ -36,7 +37,7 @@ interface AdminSidebarProps {
 export function activeTabFromPathname(pathname: string): AdminTabType {
   const segment = pathname.replace(/^\/admin\/?/, '').split('/')[0];
   const tabs: AdminTabType[] = [
-    'overview', 'orders', 'products', 'categories', 'promotions', 'customers',
+    'overview', 'orders', 'products', 'landing', 'categories', 'promotions', 'customers',
     'finances', 'security', 'analytics', 'settings', 'delivery', 'banners', 'hero', 'reviews'
   ];
   return (tabs.find((t) => t === segment) || 'overview') as AdminTabType;
@@ -81,6 +82,13 @@ export function AdminSidebar({
           {productsCount}
         </span>
       )
+    },
+    {
+      id: 'landing' as AdminTabType,
+      href: '/admin/landing',
+      label: 'Landing Pages',
+      icon: Video,
+      badge: null
     },
     {
       id: 'reviews' as AdminTabType,

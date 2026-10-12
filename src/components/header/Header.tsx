@@ -88,7 +88,7 @@ export function Header() {
     });
   }, [searchQuery, allStoreProducts]);
 
-  if (pathname?.startsWith('/admin')) {
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/landing')) {
     return null;
   }
 

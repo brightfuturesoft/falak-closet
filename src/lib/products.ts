@@ -93,6 +93,8 @@ export function serializeProduct(row: ProductRow): Product {
       status: r.status === 'pending' ? 'pending' : r.status === 'approved' ? 'approved' : undefined,
     })),
     freeDeliveryQuantity: opt(row.freeDeliveryQuantity),
+    videoUrl: opt(row.videoUrl),
+    landingDiscountPercentage: opt(row.landingDiscountPercentage),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -490,6 +492,20 @@ export function buildProductData(body: Raw, options: { partial?: boolean } = {})
         throw new ProductValidationError('Free delivery quantity must be a positive integer.');
       }
       data.freeDeliveryQuantity = toInt(rawVal);
+    }
+  }
+
+  if (sent('videoUrl')) {
+    data.videoUrl = toStr(body.videoUrl) || null;
+  }
+
+  if (sent('landingDiscountPercentage')) {
+    const raw = body.landingDiscountPercentage;
+    if (raw === null || raw === undefined || raw === '' || Number(raw) === 0) {
+      data.landingDiscountPercentage = null;
+    } else {
+      const parsed = toNum(raw, 0);
+      data.landingDiscountPercentage = Math.max(0, Math.min(100, parsed));
     }
   }
 

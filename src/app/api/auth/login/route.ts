@@ -6,22 +6,38 @@ import { signUserSessionToken, USER_SESSION_COOKIE, USER_COOKIE_OPTIONS } from '
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, password } = body;
+    const loginId = (body.identifier || body.email || body.phone || '').trim();
+    const password = typeof body.password === 'string' ? body.password : '';
 
-    if (!email || !password) {
+    if (!loginId || !password) {
       return NextResponse.json(
-        { success: false, error: 'Email and password are required' },
+        { success: false, error: 'Email or phone number and password are required' },
         { status: 400 }
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() },
+    const isEmail = loginId.includes('@');
+    const cleanDigits = loginId.replace(/\D/g, '').replace(/^88/, '');
+
+    const user = await prisma.user.findFirst({
+      where: isEmail
+        ? { email: loginId.toLowerCase() }
+        : {
+            OR: [
+              { phone: loginId },
+              { phone: cleanDigits },
+              { phone: `0${cleanDigits}` },
+              { phone: `+880${cleanDigits}` },
+              { phone: `+88${cleanDigits}` },
+              { email: loginId.toLowerCase() },
+              ...(cleanDigits ? [{ email: `${cleanDigits}@falakcloset.com` }] : []),
+            ],
+          },
     });
 
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'No account found with this email address' },
+        { success: false, error: 'No account found with this email or phone number' },
         { status: 404 }
       );
     }

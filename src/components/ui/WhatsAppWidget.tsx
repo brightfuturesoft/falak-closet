@@ -67,7 +67,7 @@ export function WhatsAppWidget({ whatsappNumber, contactPhone }: WhatsAppWidgetP
 
   return (
     <div
-      className="hidden lg:block fixed z-[998]"
+      className="fixed z-[998]"
       style={{
         bottom: '80px',
         right: '24px',

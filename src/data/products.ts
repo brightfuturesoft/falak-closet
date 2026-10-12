@@ -71,6 +71,8 @@ export interface Product {
   careInstructions?: string[];
   reviewsList?: Review[];
   freeDeliveryQuantity?: number;
+  videoUrl?: string;
+  landingDiscountPercentage?: number;
   /** ISO strings — Prisma `Date`s are serialized in `src/lib/products.ts` so they can cross to the client. */
   createdAt?: string;
   updatedAt?: string;
