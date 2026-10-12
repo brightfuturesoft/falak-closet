@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { SITE_SETTINGS_TAG } from '@/lib/fetcher';
+import { broadcastSocketEventServer } from '@/lib/socketServerBroadcast';
 
 function errorMessage(err: unknown) {
   return err instanceof Error ? err.message : 'Server error';
@@ -177,6 +178,7 @@ export async function POST(req: Request) {
     // The root layout renders the footer + Organization JSON-LD from these
     // settings — 'layout' scope refreshes every page that shares it.
     revalidatePath('/', 'layout');
+    void broadcastSocketEventServer('settings_sync', { key, setting });
 
     return NextResponse.json({ success: true, message: 'Settings saved', setting });
   } catch (err) {

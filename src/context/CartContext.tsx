@@ -134,6 +134,7 @@ interface CartContextType {
   toggleWishlist: (product: Product) => void;
   isInWishlist: (productId: string) => boolean;
   mergeServerWishlist: (serverIds: string[]) => void;
+  clearWishlist: () => void;
 
   // Server Cart Merge (called after login/signup)
   mergeServerCart: (serverCartItems: { productId: string; selectedColor: string; selectedSize: string; quantity: number }[]) => void;
@@ -189,6 +190,8 @@ export function CartProvider({
 
   // Pending server cart items waiting for products to load (so we can resolve productId -> Product)
   const pendingServerCartRef = useRef<{ productId: string; selectedColor: string; selectedSize: string; quantity: number }[] | null>(null);
+  const mergeServerWishlistRef = useRef<((ids: string[]) => void) | null>(null);
+  const clearWishlistRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -204,12 +207,17 @@ export function CartProvider({
             if (Array.isArray(data.cart) && data.cart.length > 0) {
               pendingServerCartRef.current = data.cart;
             }
+            // Sync database wishlist for logged-in user
+            if (Array.isArray(data.wishlist) && data.wishlist.length > 0 && mergeServerWishlistRef.current) {
+              mergeServerWishlistRef.current(data.wishlist);
+            }
             return;
           }
         }
       } catch {}
       Promise.resolve().then(() => {
         setUser(null);
+        clearWishlistRef.current?.();
       });
     };
 
@@ -278,7 +286,10 @@ export function CartProvider({
     toggleWishlist,
     isInWishlist,
     mergeServerWishlist,
-  } = useWishlist(products);
+    clearWishlist,
+  } = useWishlist(products, user);
+  mergeServerWishlistRef.current = mergeServerWishlist;
+  clearWishlistRef.current = clearWishlist;
 
   // Load products from Database API
   const refreshProductsFromApi = async () => {
@@ -815,6 +826,7 @@ export function CartProvider({
         toggleWishlist,
         isInWishlist,
         mergeServerWishlist,
+        clearWishlist,
         mergeServerCart,
         isCartDrawerOpen,
         user,

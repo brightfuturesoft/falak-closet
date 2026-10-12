@@ -13,6 +13,7 @@ import {
   ProductValidationError,
   type ProductSort,
 } from '@/lib/products';
+import { broadcastSocketEventServer } from '@/lib/socketServerBroadcast';
 
 const SORTS: ProductSort[] = ['newest', 'price-low', 'price-high', 'rating', 'name'];
 
@@ -212,8 +213,16 @@ export async function POST(req: Request) {
     });
 
     bustProductCache();
+
+    const serialized = serializeProduct(created);
+    void broadcastSocketEventServer('product_sync', {
+      type: 'create',
+      product: serialized,
+      id: created.id,
+    });
+
     return NextResponse.json(
-      { success: true, message: 'Product created', product: serializeProduct(created) },
+      { success: true, message: 'Product created', product: serialized },
       { status: 201 }
     );
   } catch (err) {

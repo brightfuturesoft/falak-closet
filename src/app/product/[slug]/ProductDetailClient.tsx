@@ -41,6 +41,7 @@ import { ProductVariationsGrid } from '@/components/product/ProductVariationsGri
 import { ProductSummarySidebar } from '@/components/product/ProductSummarySidebar';
 import { ProductGallery } from '@/components/product/ProductGallery';
 import { MobileProductBottomBar } from '@/components/product/MobileProductBottomBar';
+import { AuthModal } from '@/components/ui/AuthModal';
 
 
 
@@ -49,9 +50,10 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   const colorQueryParam = searchParams.get('color');
   const sizeQueryParam = searchParams.get('size');
   const router = useRouter();
-  const { addToCart, toggleWishlist, isInWishlist, products, user } = useCart();
+  const { addToCart, toggleWishlist, isInWishlist, products, user, isAuthenticated } = useCart();
   const { trackEvent } = useAnalytics();
   const { showToast } = useToast();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // The server resolved this product (and 404'd if it did not exist), so it is
   // always the FULL document — description, features, reviews. Context copies
@@ -190,6 +192,11 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
   };
 
   const ratingValue = product?.rating || 0;
+
+  const selectedColorHex = useMemo(() => {
+    const match = colorsList.find((c) => c.name.toLowerCase() === selectedColor.toLowerCase());
+    return match?.hex || '#000000';
+  }, [colorsList, selectedColor]);
 
   // 1. When user selects a color -> auto select corresponding product image
   const handleSelectColor = (colorName: string) => {
@@ -553,43 +560,74 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
             reviewsCount={reviewsList.length}
             onJumpToReviews={jumpToReviews}
           />
+        </div>
+      </div>
 
-          {/* ── Desktop Action Panel (hidden on mobile — mobile uses MobileProductBottomBar) ── */}
-          <div className="hidden lg:block space-y-4 bg-white border border-[#F8D2D5] rounded-3xl p-5 shadow-sm">
+      {/* ── Full Width Horizontal Bar: Color, Size, QTY & Action Panel ── */}
+      <div className="w-full bg-white border border-[#F8D2D5] rounded-3xl p-5 sm:p-7 md:p-8 shadow-sm my-6 sm:my-8 space-y-6 sm:space-y-7">
+        {/* Top: Color Selector (Full Width with flex-wrap so extra colors start on new lines) */}
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="text-xs sm:text-sm font-bold tracking-widest text-stone-500 uppercase">Color</span>
+              <span className="text-xs font-semibold text-stone-400 font-mono">({colorsList.length} Options)</span>
+            </div>
+            <div className="flex items-center gap-2 bg-[#FDF2F3] border border-[#F8D2D5] px-3.5 py-1 rounded-full shadow-2xs">
+              <span
+                className="w-2.5 h-2.5 rounded-full shrink-0 border border-black/10"
+                style={{ backgroundColor: selectedColorHex }}
+              />
+              <span className="text-xs sm:text-sm font-bold text-[#A80C14]">{selectedColor}</span>
+            </div>
+          </div>
 
-            {/* Color Selector */}
+          {/* Color circular swatches - wrapping smoothly onto new lines with stable layout */}
+          <div className="flex flex-wrap gap-2.5 sm:gap-3 items-center pt-1">
+            {colorsList.map((col) => {
+              const isSelected = col.name.toLowerCase() === selectedColor.toLowerCase();
+              const hex = col.hex || '#E5E7EB';
+              return (
+                <button
+                  key={col.name}
+                  onClick={() => handleSelectColor(col.name)}
+                  title={col.name}
+                  type="button"
+                  className={`group relative shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all duration-200 ease-out cursor-pointer focus:outline-none flex items-center justify-center ${
+                    isSelected
+                      ? 'border-2 border-white ring-2 ring-[#A80C14] ring-offset-2 shadow-sm'
+                      : 'border-2 border-stone-200/90 hover:border-stone-400 hover:scale-105 shadow-2xs'
+                  }`}
+                  style={{ backgroundColor: hex }}
+                  aria-label={col.name}
+                  aria-pressed={isSelected}
+                >
+                  {/* Tooltip on hover */}
+                  <span className="pointer-events-none absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-stone-900 px-2 py-0.5 text-[11px] font-medium text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 z-20">
+                    {col.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-[#F8D2D5]/70" />
+
+        {/* Bottom Row: Split into 2 Boxes (Left: Size & QTY, Right: Purchase Actions) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 items-stretch">
+          {/* ── Box 1 (Left): Size & QTY ── */}
+          <div className="bg-stone-50/80 border border-stone-200/80 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-4">
+            {/* Size selection */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold tracking-widest text-stone-500 uppercase">Color</span>
-                <span className="text-xs font-semibold text-[#A80C14] bg-[#FDF2F3] px-2.5 py-0.5 rounded-full border border-[#F8D2D5]">
-                  {selectedColor}
+                <span className="text-xs font-bold tracking-widest text-stone-500 uppercase">Size</span>
+                <span className="text-xs font-semibold text-stone-600 bg-white border border-stone-200 px-2.5 py-0.5 rounded-md">
+                  {selectedSize}
                 </span>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {colorsList.map((col) => {
-                  const isSelected = col.name.toLowerCase() === selectedColor.toLowerCase();
-                  const hex = col.hex || '#E5E7EB';
-                  return (
-                    <button
-                      key={col.name}
-                      onClick={() => handleSelectColor(col.name)}
-                      title={col.name}
-                      className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 cursor-pointer focus:outline-none ${
-                        isSelected ? 'border-[#A80C14] scale-110 shadow-md' : 'border-transparent hover:border-stone-300'
-                      }`}
-                      style={{ backgroundColor: hex }}
-                      aria-label={col.name}
-                      aria-pressed={isSelected}
-                    />
-                  );
-                })}
-              </div>
-            </div>
 
-            {/* Size Selector */}
-            {!(sizesList.length === 1 && /free/i.test(String(sizesList[0]))) && (
-              <div className="space-y-2">
-                <span className="text-xs font-bold tracking-widest text-stone-500 uppercase">Size</span>
+              {!(sizesList.length === 1 && /free/i.test(String(sizesList[0]))) ? (
                 <div className="flex flex-wrap gap-2">
                   {sizesList.map((sz) => {
                     const isSelected = sz === selectedSize;
@@ -600,9 +638,10 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                         key={sz}
                         onClick={() => !isSizeOut && handleSelectSize(sz)}
                         disabled={isSizeOut}
-                        className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all cursor-pointer ${
+                        type="button"
+                        className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold border-2 transition-all cursor-pointer ${
                           isSizeOut
-                            ? 'border-stone-200 text-stone-300 bg-stone-50 line-through cursor-not-allowed'
+                            ? 'border-stone-200 text-stone-300 bg-stone-100 line-through cursor-not-allowed'
                             : isSelected
                             ? 'border-[#A80C14] bg-[#A80C14] text-white shadow-md'
                             : 'border-stone-200 text-stone-700 bg-white hover:border-[#A80C14] hover:text-[#A80C14]'
@@ -613,85 +652,123 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
                     );
                   })}
                 </div>
-              </div>
-            )}
-
-            {/* Quantity Stepper */}
-            <div className="flex items-center gap-4">
-              <span className="text-xs font-bold tracking-widest text-stone-500 uppercase">Qty</span>
-              <div className="flex items-center gap-1 border border-stone-200 rounded-xl overflow-hidden">
-                <button
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  disabled={quantity <= 1}
-                  className="w-9 h-9 flex items-center justify-center text-stone-600 hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                  aria-label="Decrease quantity"
-                >
-                  <Minus className="w-3.5 h-3.5" />
-                </button>
-                <span className="w-8 text-center text-sm font-bold text-stone-900 font-mono">{quantity}</span>
-                <button
-                  onClick={() => setQuantity((q) => Math.min(currentStock || 99, q + 1))}
-                  disabled={quantity >= (currentStock || 99)}
-                  className="w-9 h-9 flex items-center justify-center text-stone-600 hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                  aria-label="Increase quantity"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              {/* Stock badge */}
-              {!isOutOfStock ? (
-                <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                  In Stock
-                </span>
               ) : (
-                <span className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 px-2.5 py-0.5 rounded-full">
-                  Out of Stock
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="px-3.5 py-1.5 bg-white border border-stone-200 text-stone-700 rounded-xl text-xs sm:text-sm font-bold">
+                    {sizesList[0] || 'Free Size'}
+                  </span>
+                </div>
               )}
             </div>
 
-            {/* Action Buttons */}
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              {/* Add to Cart */}
-              <button
-                id="desktop-add-to-cart"
-                onClick={handleAddToCart}
-                disabled={isOutOfStock}
-                className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border-2 border-[#A80C14] text-[#A80C14] font-bold text-sm hover:bg-[#A80C14] hover:text-white active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-sm"
-              >
-                <ShoppingBag className="w-4 h-4" />
-                Add to Cart
-              </button>
+            {/* QTY & Stock */}
+            <div className="space-y-2 pt-3 border-t border-stone-200/60">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold tracking-widest text-stone-500 uppercase">Quantity</span>
+                {!isOutOfStock ? (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    In Stock ({currentStock ?? 'Available'})
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-600 bg-red-50 border border-red-200 px-2.5 py-0.5 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                    Out of Stock
+                  </span>
+                )}
+              </div>
 
-              {/* Buy Now */}
-              <button
-                id="desktop-buy-now"
-                onClick={handleBuyNow}
-                disabled={isOutOfStock}
-                className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-[#A80C14] text-white font-bold text-sm hover:bg-[#8C0A10] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-sm"
-              >
-                <Zap className="w-4 h-4" />
-                Buy Now
-              </button>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center border-2 border-stone-200 bg-white rounded-xl overflow-hidden shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    disabled={quantity <= 1}
+                    className="w-10 h-10 flex items-center justify-center text-stone-600 hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                    aria-label="Decrease quantity"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <span className="w-10 text-center text-sm font-bold text-stone-900 font-mono">{quantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.min(currentStock || 99, q + 1))}
+                    disabled={quantity >= (currentStock || 99)}
+                    className="w-10 h-10 flex items-center justify-center text-stone-600 hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                    aria-label="Increase quantity"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                <span className="text-xs text-stone-500">
+                  Subtotal: <strong className="text-stone-900 font-mono">{formatCurrency((currentPrice || product.price || 0) * quantity)}</strong>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Box 2 (Right): Purchase Actions (Add to Cart & Buy Now) ── */}
+          <div className="bg-stone-50/80 border border-stone-200/80 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold tracking-widest text-stone-500 uppercase">Purchase Actions</span>
+                <span className="text-xs text-stone-400">Instant Checkout / Add to Bag</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Add to Cart */}
+                <button
+                  id="desktop-add-to-cart"
+                  type="button"
+                  onClick={handleAddToCart}
+                  disabled={isOutOfStock}
+                  className="w-full flex items-center justify-center gap-2 px-5 py-3.5 sm:py-4 rounded-xl border-2 border-[#A80C14] bg-white text-[#A80C14] font-bold text-sm hover:bg-[#A80C14] hover:text-white active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                  Add to Cart
+                </button>
+
+                {/* Buy Now */}
+                <button
+                  id="desktop-buy-now"
+                  type="button"
+                  onClick={handleBuyNow}
+                  disabled={isOutOfStock}
+                  className="w-full flex items-center justify-center gap-2 px-5 py-3.5 sm:py-4 rounded-xl bg-[#A80C14] hover:bg-[#8C0A10] text-white font-bold text-sm active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-md hover:shadow-lg"
+                >
+                  <Zap className="w-4 h-4" />
+                  Buy Now
+                </button>
+              </div>
             </div>
 
-            {/* Wishlist + Share row */}
-            <div className="flex items-center justify-between pt-1 border-t border-stone-100">
+            {/* Wishlist + Share Row */}
+            <div className="flex items-center justify-between pt-2 border-t border-stone-200/60">
               <button
-                onClick={() => product && toggleWishlist(product)}
+                type="button"
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    setShowAuthModal(true);
+                    return;
+                  }
+                  if (product) {
+                    toggleWishlist(product);
+                  }
+                }}
                 className={`flex items-center gap-1.5 text-xs font-semibold transition-colors cursor-pointer ${
-                  isWishlisted ? 'text-[#A80C14]' : 'text-stone-400 hover:text-[#A80C14]'
+                  isWishlisted ? 'text-[#A80C14]' : 'text-stone-500 hover:text-[#A80C14]'
                 }`}
               >
                 <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-[#A80C14]' : ''}`} />
-                {isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}
+                {isWishlisted ? 'Saved in Wishlist' : 'Add to Wishlist'}
               </button>
               <button
+                type="button"
                 onClick={handleShare}
-                className="flex items-center gap-1.5 text-xs font-semibold text-stone-400 hover:text-stone-700 transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-stone-800 transition-colors cursor-pointer"
               >
                 <Share2 className="w-4 h-4" />
-                Share
+                Share Product
               </button>
             </div>
           </div>
@@ -1198,6 +1275,14 @@ export default function ProductDetailClient({ initialProduct }: { initialProduct
         onAddToCart={handleAddToCart}
         onBuyNow={handleBuyNow}
         stockForSize={stockForSize}
+      />
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        product={product}
+        title="Add to Wishlist"
+        subtitle="Please sign in to save this product to your wishlist."
       />
     </div>
   );

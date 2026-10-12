@@ -4,11 +4,12 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { SmartImage } from '@/components/ui/SmartImage';
-import { Heart, ShoppingBag, Zap, Star, X } from 'lucide-react';
+import { Heart, ShoppingBag, Zap, Star } from 'lucide-react';
 import { Product, type ProductColor } from '@/data/products';
 import { useCart } from '@/context/CartContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useToast } from '@/components/ui/Toast';
+import { AuthModal } from '@/components/ui/AuthModal';
 
 interface ProductCardProps {
   product: Product;
@@ -127,10 +128,6 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
   const [showWishlistToast, setShowWishlistToast] = React.useState(false);
   const [wishlistToastText, setWishlistToastText] = React.useState('');
   const [showAuthModal, setShowAuthModal] = React.useState(false);
-  const [authEmail, setAuthEmail] = React.useState('');
-  const [authPassword, setAuthPassword] = React.useState('');
-  const [isSubmittingAuth, setIsSubmittingAuth] = React.useState(false);
-  const [authError, setAuthError] = React.useState('');
 
   // Auto-hide toast timer
   React.useEffect(() => {
@@ -156,43 +153,6 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
     const nextState = !isWishlisted;
     setWishlistToastText(nextState ? 'Added to Wishlist' : 'Removed from Wishlist');
     setShowWishlistToast(true);
-  };
-
-  const handleAuthSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!authEmail || !authPassword) return;
-    setIsSubmittingAuth(true);
-    setAuthError('');
-
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: authEmail.trim(), password: authPassword }),
-      });
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        setAuthError(data.error || 'Sign-in failed. Please check credentials.');
-        return;
-      }
-
-      setShowAuthModal(false);
-      setAuthEmail('');
-      setAuthPassword('');
-
-      // Auto-add to wishlist now that we are signed in
-      toggleWishlist(product);
-      setWishlistToastText('Added to Wishlist');
-      setShowWishlistToast(true);
-
-      // Notify other parts of the app
-      window.dispatchEvent(new Event('falak:auth-changed'));
-    } catch {
-      setAuthError('Connection issue. Please try again.');
-    } finally {
-      setIsSubmittingAuth(false);
-    }
   };
 
   const handleAddToCartClick = (e: React.MouseEvent) => {
@@ -411,91 +371,12 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
         </div>
       )}
 
-      {/* Auth Modal Sign In (Apple Glass Style) */}
-      {showAuthModal && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-[#0D153A]/25 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white/80 backdrop-blur-xl border border-white/30 rounded-3xl p-6 shadow-2xl max-w-sm w-full max-h-[90vh] flex flex-col relative animate-in zoom-in-95 duration-200 text-center overflow-hidden">
-            <button
-              type="button"
-              onClick={() => {
-                setShowAuthModal(false);
-                setAuthError('');
-              }}
-              className="absolute top-4 right-4 p-1.5 text-stone-400 hover:text-stone-600 rounded-full hover:bg-stone-100 transition-colors cursor-pointer z-10"
-              aria-label="Close modal"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div className="flex-1 overflow-y-auto">
-              <div className="w-12 h-12 rounded-full bg-[#FDF2F3] text-[#A80C14] flex items-center justify-center mx-auto mb-4 border border-[#F8D2D5]">
-                <Heart className="w-6 h-6 fill-current" />
-              </div>
-
-              <h3 className="font-serif font-extrabold text-stone-900 text-lg mb-1">
-                Add to Wishlist
-              </h3>
-              <p className="text-xs text-stone-500 leading-relaxed mb-5">
-                Please sign in to save your favorite abayas, hijabs, and couture collections to your wishlist.
-              </p>
-
-              <form onSubmit={handleAuthSubmit} className="space-y-3.5 text-left">
-                <div>
-                  <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={authEmail}
-                    onChange={(e) => setAuthEmail(e.target.value)}
-                    placeholder="name@email.com"
-                    className="w-full text-xs px-3.5 py-2.5 bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A80C14]/20 focus:border-[#A80C14]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={authPassword}
-                    onChange={(e) => setAuthPassword(e.target.value)}
-                    placeholder="Enter password"
-                    className="w-full text-xs px-3.5 py-2.5 bg-white border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#A80C14]/20 focus:border-[#A80C14]"
-                  />
-                </div>
-
-                {authError && (
-                  <p className="text-[11px] font-bold text-red-500 mt-1">
-                    {authError}
-                  </p>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isSubmittingAuth}
-                  className="w-full py-2.5 bg-[#A80C14] hover:bg-[#8C0A10] text-white font-bold text-xs rounded-xl shadow-md transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer mt-2"
-                >
-                  {isSubmittingAuth ? 'Signing in...' : 'Sign In'}
-                </button>
-              </form>
-
-              <div className="mt-4 text-center">
-                <Link
-                  href="/account?type=register"
-                  onClick={() => setShowAuthModal(false)}
-                  className="text-[11px] font-bold text-[#A80C14] hover:underline"
-                >
-                  Don&apos;t have an account? Sign Up
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Auth Modal Sign In */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        product={product}
+      />
     </>
   );
 }

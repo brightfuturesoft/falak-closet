@@ -50,7 +50,7 @@ export function useAccount(initialUser: UserProfile | null) {
   const type = params.get('type')
   const [authMode, setAuthMode] = useState<AuthMode>('signin');
   const [feedback, setFeedback] = useState<FeedbackMessage | null>(null);
-  const { mergeServerWishlist, mergeServerCart, clearCart } = useCart();
+  const { mergeServerWishlist, mergeServerCart, clearCart, clearWishlist } = useCart();
 
   const [orders, setOrders] = useState<MineOrder[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
@@ -200,8 +200,9 @@ export function useAccount(initialUser: UserProfile | null) {
     setAuthMode('signin');
     setFeedback(null);
     clearCart();
+    clearWishlist();
     window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
-  }, [clearCart]);
+  }, [clearCart, clearWishlist]);
 
   const updateUser = useCallback((updated: UserProfile) => {
     setUserProfile(updated);

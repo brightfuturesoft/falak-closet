@@ -32,8 +32,8 @@ export function AnnouncementBar({ announcement }: { announcement: Announcement }
     }
   }, [announcement.isActive, announcement.message]);
 
-  // Admin has its own chrome; the storefront bar never shows there.
-  if (!announcement.isActive || !announcement.message || pathname?.startsWith('/admin')) {
+  // Admin and Landing pages have their own chrome; the storefront bar never shows there.
+  if (!announcement.isActive || !announcement.message || pathname?.startsWith('/admin') || pathname?.startsWith('/landing')) {
     return null;
   }
 

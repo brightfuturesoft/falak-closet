@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { Prisma, type DiscountType, type PromotionStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { DEFAULT_COUPONS } from '@/data/promotions';
+import { broadcastSocketEventServer } from '@/lib/socketServerBroadcast';
 
 function errorMessage(err: unknown) {
   return err instanceof Error ? err.message : 'Server error';
@@ -172,6 +173,8 @@ export async function POST(req: Request) {
       },
     });
 
+    void broadcastSocketEventServer('promotion_sync', { promotion });
+
     return NextResponse.json(
       { success: true, message: 'Promotion created', promotion },
       { status: 201 }
@@ -226,6 +229,7 @@ export async function PATCH(req: Request) {
     if (body.expiryDate) data.expiryDate = String(body.expiryDate);
 
     const promotion = await prisma.promotion.update({ where: { id: existing.id }, data });
+    void broadcastSocketEventServer('promotion_sync', { promotion });
     return NextResponse.json({ success: true, message: 'Promotion updated', promotion });
   } catch (err) {
     console.error('[PATCH /api/promotions]', err);
@@ -252,6 +256,7 @@ export async function DELETE(req: Request) {
     }
 
     await prisma.promotion.delete({ where: { id: existing.id } });
+    void broadcastSocketEventServer('promotion_sync', { id: existing.id, code: existing.code, deleted: true });
     return NextResponse.json({ success: true, message: 'Promotion deleted successfully' });
   } catch (err) {
     console.error('[DELETE /api/promotions]', err);

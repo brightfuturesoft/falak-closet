@@ -5,6 +5,7 @@ import { evaluatePromotion } from '@/lib/promotions';
 import { getPathaoDeliveryFee, calculateOrderWeight } from '@/lib/shipping/pathao';
 import { getStoreSettingsSafe } from '@/lib/siteSettings';
 import { checkIsFreeDelivery } from '@/lib/shipping/locationBilingual';
+import { broadcastSocketEventServer } from '@/lib/socketServerBroadcast';
 
 function errorMessage(err: unknown) {
   return err instanceof Error ? err.message : 'Server error';
@@ -277,11 +278,14 @@ export async function POST(req: Request) {
       console.error('[POST /api/orders] profile sync skipped', profileErr);
     }
 
+    const serialized = serializeOrder(order);
+    void broadcastSocketEventServer('new_order_alert', serialized);
+
     return NextResponse.json(
       {
         success: true,
         message: 'Order placed',
-        order: serializeOrder(order),
+        order: serialized,
         ...(warning ? { warning } : {}),
       },
       { status: 201 }
@@ -347,10 +351,13 @@ export async function PATCH(req: Request) {
       data: updateData,
     });
 
+    const serialized = serializeOrder(order);
+    void broadcastSocketEventServer('order_updated', serialized);
+
     return NextResponse.json({
       success: true,
       message: 'Order updated',
-      order: serializeOrder(order),
+      order: serialized,
     });
   } catch (err) {
     console.error('[PATCH /api/orders]', err);

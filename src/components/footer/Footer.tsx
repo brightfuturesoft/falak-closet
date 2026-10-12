@@ -80,7 +80,7 @@ function SocialIcon({ label, className = "w-5 h-5" }: { label: string; className
 export function Footer({ identity }: { identity: SiteIdentity }) {
   const pathname = usePathname();
 
-  if (pathname?.startsWith('/admin')) {
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/landing')) {
     return null;
   }
 
@@ -212,7 +212,7 @@ export function Footer({ identity }: { identity: SiteIdentity }) {
         <p className="flex items-center gap-1.5">
           <span>Design &amp; Development by</span>
           <a
-            href="https://brightfuturesoft.com?ref=falakcloset"
+            href="https://brightfuturesoft.com/?ref=falakcloset"
             target="_blank"
             rel="noopener noreferrer"
             className="text-[#A80C14] font-bold hover:underline underline-offset-2 decoration-[#A80C14]/50 hover:decoration-[#A80C14] transition-colors"

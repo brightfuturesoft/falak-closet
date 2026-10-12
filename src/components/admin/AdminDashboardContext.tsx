@@ -4,7 +4,13 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Product } from '@/data/products';
 import { playNewOrderSound } from '@/lib/soundNotification';
 import { useCart, OrderRecord } from '@/context/CartContext';
-import { getSocket, isSocketEnabled } from '@/lib/socketClient';
+import {
+  getSocket,
+  isSocketEnabled,
+  sendOrderUpdateNotification,
+  sendProductUpdateNotification,
+  sendPromotionUpdateNotification,
+} from '@/lib/socketClient';
 import { cloudinaryPublicIdFromUrl, deleteCloudinaryImage } from '@/lib/cloudinary';
 import { PromoVoucherData } from '@/components/admin/PromoFormModal';
 import { ToastMessage } from '@/components/admin/ToastNotification';
@@ -313,18 +319,15 @@ function cleanReasonQueryParam() {
     setIsRefreshing(false);
   }, [refreshProductsFromApi]);
 
-  // Real-Time Socket Listener & Sound Alert Notification
+  // Real-Time Socket Listener & Event Sync (No periodic auto-reload!)
   useEffect(() => {
     if (!isAdminLoggedIn) return;
 
-    // 1. Initial data fetch
+    // 1. Initial data fetch once on mount/login
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAllData();
 
-    // 2. Socket.io live alerts — only when a socket server is configured
-    //    (see src/lib/socketClient.ts). Without one (Vercel polling mode) we
-    //    skip the connection entirely; the periodic sync below is the
-    //    realtime channel and already plays the sound + toast + prepend.
+    // 2. Connect to Socket.IO server & join admin room
     const socket = isSocketEnabled ? getSocket() : null;
     if (socket) socket.emit('join_admin');
 
@@ -338,48 +341,106 @@ function cleanReasonQueryParam() {
     socket?.on('connect', onConnect);
     socket?.on('disconnect', onDisconnect);
 
-    // 3. Real-Time Socket Event Listener for New Product Purchase
+    // 3. Real-Time Socket Event: New Orders Placed
     const handleSocketOrderAlert = (incomingOrder: OrderRecord) => {
       if (!incomingOrder || !incomingOrder.id) return;
 
-      // Avoid double-notifying if already processed
       if (knownOrderIdsRef.current.has(incomingOrder.id)) return;
       knownOrderIdsRef.current.add(incomingOrder.id);
 
-      // Play Sound Chime Alert
       playNewOrderSound();
 
-      // Show Toast Notification
       const customerName = incomingOrder.shippingAddress?.fullName || 'Valued Customer';
       addToast(
         'success',
         `🔔 LIVE ORDER ALERT: Order #${incomingOrder.id} placed by ${customerName} (৳${incomingOrder.total})`
       );
 
-      // Instantly update orders list in state without waiting for refresh
       setOrdersList((prev) => {
         if (prev.some((o) => o.id === incomingOrder.id)) return prev;
         return [incomingOrder, ...prev];
       });
 
-      // Signal open tabs so paginated views can prepend the row immediately
       incomingOrderSeqRef.current += 1;
       setIncomingOrderSignal({ order: incomingOrder, seq: incomingOrderSeqRef.current });
     };
 
-    socket?.on('new_order_alert', handleSocketOrderAlert);
+    // 4. Real-Time Socket Event: Existing Order Updated (Status, Payment, Tracking)
+    const handleSocketOrderUpdated = (updatedOrder: Partial<OrderRecord> & { id?: string; orderId?: string }) => {
+      const targetId = updatedOrder.id || updatedOrder.orderId;
+      if (!targetId) return;
 
-    // 4. Periodic sync — the primary realtime channel in polling mode, and
-    //    the safety net that reconciles counts when sockets are enabled.
-    const interval = setInterval(() => {
-      fetchAllData();
-    }, 30000);
+      setOrdersList((prev) =>
+        prev.map((o) => (o.id === targetId ? { ...o, ...updatedOrder } : o))
+      );
+
+      incomingOrderSeqRef.current += 1;
+      setIncomingOrderSignal({ order: updatedOrder as any, seq: incomingOrderSeqRef.current });
+    };
+
+    // 5. Real-Time Socket Event: Product Catalog Sync
+    const handleSocketProductSync = (payload: { type: 'create' | 'update' | 'delete'; product?: Product; id?: string }) => {
+      if (!payload) return;
+      if (payload.type === 'create' && payload.product) {
+        setProductsList((prev) => [payload.product!, ...prev.filter((p) => p.id !== payload.product!.id)]);
+      } else if (payload.type === 'update' && payload.product) {
+        setProductsList((prev) =>
+          prev.map((p) => (p.id === payload.product!.id ? { ...p, ...payload.product } : p))
+        );
+      } else if (payload.type === 'delete' && payload.id) {
+        setProductsList((prev) => prev.filter((p) => p.id !== payload.id));
+      }
+      refreshProductsFromApi();
+      setCatalogVersion((v) => v + 1);
+    };
+
+    // 6. Real-Time Socket Event: Promotion Voucher Sync
+    const handleSocketPromotionSync = (payload: any) => {
+      if (!payload) return;
+      if (Array.isArray(payload.promotions)) {
+        setPromosList(payload.promotions);
+      } else if (payload.promotion) {
+        setPromosList((prev) => {
+          const key = promoKey(payload.promotion);
+          const exists = prev.some((p) => promoKey(p) === key);
+          if (exists) {
+            return prev.map((p) => (promoKey(p) === key ? payload.promotion : p));
+          }
+          return [payload.promotion, ...prev];
+        });
+      } else if (payload.id && payload.status) {
+        setPromosList((prev) =>
+          prev.map((p) => (promoKey(p) === payload.id ? { ...p, status: payload.status } : p))
+        );
+      }
+    };
+
+    // 7. Real-Time Socket Event: Category Taxonomy Sync
+    const handleSocketCategorySync = () => {
+      window.dispatchEvent(new Event('falak:categories-updated'));
+    };
+
+    // 8. Real-Time Socket Event: Store Settings Sync
+    const handleSocketSettingsSync = () => {
+      window.dispatchEvent(new Event('falak:settings-changed'));
+    };
+
+    socket?.on('new_order_alert', handleSocketOrderAlert);
+    socket?.on('order_updated', handleSocketOrderUpdated);
+    socket?.on('product_sync', handleSocketProductSync);
+    socket?.on('promotion_sync', handleSocketPromotionSync);
+    socket?.on('category_sync', handleSocketCategorySync);
+    socket?.on('settings_sync', handleSocketSettingsSync);
 
     return () => {
       socket?.off('connect', onConnect);
       socket?.off('disconnect', onDisconnect);
       socket?.off('new_order_alert', handleSocketOrderAlert);
-      clearInterval(interval);
+      socket?.off('order_updated', handleSocketOrderUpdated);
+      socket?.off('product_sync', handleSocketProductSync);
+      socket?.off('promotion_sync', handleSocketPromotionSync);
+      socket?.off('category_sync', handleSocketCategorySync);
+      socket?.off('settings_sync', handleSocketSettingsSync);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdminLoggedIn]);
@@ -424,6 +485,11 @@ function cleanReasonQueryParam() {
     await fetchAllData();
     refreshProductsFromApi();
     setCatalogVersion((v) => v + 1);
+    sendProductUpdateNotification({
+      type: isEdit ? 'update' : 'create',
+      product: (result as any)?.data?.product || productData,
+      id: editingProduct?.id,
+    });
     addToast(
       'success',
       isEdit
@@ -443,8 +509,7 @@ function cleanReasonQueryParam() {
     }
 
     setProductsList((prev) => prev.map((p) => (p.id === id ? { ...p, stock: newStock } : p)));
-    // The storefront reads from the cart context, not this table — without this
-    // the shop keeps showing the old stock until a full reload.
+    sendProductUpdateNotification({ type: 'update', product: { id, stock: newStock }, id });
     refreshProductsFromApi();
     addToast('info', `Stock updated to ${newStock} pcs.`);
   };
@@ -476,6 +541,7 @@ function cleanReasonQueryParam() {
     }
 
     setProductsList((prev) => prev.filter((p) => p.id !== id));
+    sendProductUpdateNotification({ type: 'delete', id });
     refreshProductsFromApi();
     setCatalogVersion((v) => v + 1);
     addToast('warning', 'Product deleted from inventory catalog.');
@@ -491,6 +557,7 @@ function cleanReasonQueryParam() {
     }
 
     setOrdersList((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
+    sendOrderUpdateNotification({ id: orderId, status: newStatus });
     addToast('success', `Order #${orderId} status changed to ${newStatus}.`);
   };
 
@@ -504,6 +571,7 @@ function cleanReasonQueryParam() {
     }
 
     setOrdersList((prev) => prev.map((o) => (o.id === orderId ? { ...o, paymentStatus } : o)));
+    sendOrderUpdateNotification({ id: orderId, paymentStatus });
     addToast('success', `Order #${orderId} payment status marked as ${paymentStatus}.`);
   };
 
@@ -527,6 +595,7 @@ function cleanReasonQueryParam() {
         ? prev.map((p) => (promoKey(p) === (promoData._id || promoData.id) ? saved : p))
         : [saved, ...prev]
     );
+    sendPromotionUpdateNotification({ promotion: saved });
     addToast('success', `Voucher code ${saved.code} ${isEdit ? 'updated' : 'created'} successfully!`);
   };
 
@@ -548,6 +617,7 @@ function cleanReasonQueryParam() {
     setPromosList((prev) =>
       prev.map((p) => (promoKey(p) === promoId ? { ...p, status: nextStatus } : p))
     );
+    sendPromotionUpdateNotification({ id: promoId, status: nextStatus });
     addToast('info', `Promo code ${promo.code} is now ${nextStatus}.`);
   };
 
@@ -566,6 +636,7 @@ function cleanReasonQueryParam() {
     }
 
     setPromosList((prev) => prev.filter((p) => promoKey(p) !== id && p.code !== code));
+    sendPromotionUpdateNotification({ id, code, deleted: true });
     addToast('warning', `Promo voucher code ${code} deleted.`);
   };
 

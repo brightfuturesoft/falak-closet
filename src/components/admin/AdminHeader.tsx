@@ -60,6 +60,10 @@ export function AdminHeader({
       title: 'Product Inventory Catalog',
       subtitle: 'Manage modest fashion products, stock levels, categories, and color palettes.'
     },
+    landing: {
+      title: 'Dedicated Landing Pages',
+      subtitle: 'Manage video showcase, promotional discount rates, and live offer pricing for dedicated product funnels.'
+    },
     categories: {
       title: 'Category Taxonomy Management',
       subtitle: 'CRUD operations for main categories and subcategories synced live across the store.'
@@ -144,7 +148,19 @@ export function AdminHeader({
       </div>
 
       {/* Global Actions: Search Bar, Refresh, Notifications, Live Store Link */}
-      <div className="flex  items-center gap-3 w-full md:w-auto justify-end">
+      <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+        {/* Real-Time WebSocket Status Pill */}
+        <div
+          className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[11px] font-bold ${
+            isSocketConnected
+              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+              : 'bg-amber-50 text-amber-700 border-amber-200'
+          }`}
+          title={isSocketConnected ? 'WebSocket Live Sync active' : 'Connecting to Socket.IO server...'}
+        >
+          <span className={`w-2 h-2 rounded-full ${isSocketConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+          <span>{isSocketConnected ? 'Live Sync' : 'Connecting'}</span>
+        </div>
 
         {/* Quick Add Product Button */}
         {onOpenAddProductModal && (

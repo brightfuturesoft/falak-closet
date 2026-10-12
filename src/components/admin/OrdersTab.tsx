@@ -281,16 +281,25 @@ export function OrdersTab({
     fetchOrders();
   }, [ordersFeedCount, fetchOrders]);
 
-  // Instant prepend: when a realtime order lands (socket alert with sound +
-  // toast from the provider), show it on the spot if the current view could
-  // contain it — page 1, newest-first sort, and the filter matches. The
-  // feed-count refetch above then reconciles counts and pagination.
+  // Instant update / prepend: when a realtime order arrives or updates
   const lastSignalSeqRef = useRef(incomingOrderSignal?.seq ?? 0);
   useEffect(() => {
     if (!incomingOrderSignal || incomingOrderSignal.seq === lastSignalSeqRef.current) return;
     lastSignalSeqRef.current = incomingOrderSignal.seq;
 
     const { order } = incomingOrderSignal;
+    if (!order || !order.id) return;
+
+    // 1. If order already exists in current page view, update it in place without reload
+    const existingIndex = orders.findIndex((o) => o.id === order.id);
+    if (existingIndex !== -1) {
+      setOrders((prev) =>
+        prev.map((o) => (o.id === order.id ? { ...o, ...order } : o))
+      );
+      return;
+    }
+
+    // 2. If it's a new order, prepend if viewing page 1 and matches filter/search
     const matchesFilter =
       statusFilter === 'All' ||
       order.status === statusFilter ||
@@ -307,7 +316,6 @@ export function OrdersTab({
       ].some((h) => h.toLowerCase().includes(debouncedQuery.trim().toLowerCase()));
 
     if (pagination.page === 1 && sortKey === 'date' && sortDir === 'desc' && matchesFilter && matchesSearch) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- deliberate event-driven prepend; the provider signal only fires on realtime order arrivals
       setOrders((prev) =>
         prev.some((o) => o.id === order.id) ? prev : [order, ...prev.slice(0, pageSize - 1)]
       );
@@ -351,18 +359,15 @@ export function OrdersTab({
     } catch { /* clipboard unavailable */ }
   };
 
-  // Optimistic row update + context handler (owns the API call, global state and
-  // toasts), then refetch so the page reflects the server's truth either way.
+  // Optimistic row update + context handler (emits socket event to all clients)
   const handleStatusChange = async (orderId: string, status: OrderRecord['status']) => {
     setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status } : o)));
     await onUpdateOrderStatus(orderId, status);
-    fetchOrders();
   };
 
   const handlePaymentStatus = async (orderId: string, paymentStatus: string) => {
     setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, paymentStatus } : o)));
     await onUpdatePaymentStatus(orderId, paymentStatus);
-    fetchOrders();
   };
 
   // CSV export re-queries with the same filter/search/sort but a large page.
