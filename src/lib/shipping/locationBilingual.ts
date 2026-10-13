@@ -237,6 +237,9 @@ export function checkIsFreeDelivery(
   return false;
 }
 
+import { parseAddressLocation, ParsedLocation } from './addressParser';
+export { parseAddressLocation, type ParsedLocation };
+
 /**
  * Single source of truth for calculating tiered shipping rates in Bangladesh:
  * - Free Shipping: isFreeDelivery || subtotal >= freeShippingThreshold || product freeDeliveryQuantity met => ৳0
@@ -266,45 +269,17 @@ export function calculateShippingFee({
     };
   }
 
-  const distText = (district || city || '').trim();
-  const addrText = (address || '').trim();
-  const zoneText = (zoneName || '').trim();
-  const areaText = (areaName || '').trim();
+  // Combine all location indicators to parse address with typo tolerance
+  const combined = [address, district, city, division, zoneName, areaName]
+    .filter(Boolean)
+    .join(' ');
 
-  // 1. Check Dhaka Sub-area (৳100):
-  // Triggers if District/City is Gazipur or Narayanganj,
-  // or if District/City/Address/Zone/Area matches sub-area keywords (Savar, Ashulia, Keraniganj, Tongi, Dhamrai, etc.)
-  const isSub =
-    isDhakaSubArea(distText) ||
-    isDhakaSubArea(addrText) ||
-    isDhakaSubArea(zoneText) ||
-    isDhakaSubArea(areaText);
+  const parsed = parseAddressLocation(combined);
 
-  if (isSub) {
-    return {
-      fee: 100,
-      tier: 'dhaka_subarea',
-      reason: 'Dhaka Sub-area (Savar, Ashulia, Keraniganj, Gazipur, Tongi, Narayanganj, Dhamrai)',
-    };
-  }
-
-  // 2. Check Inside Dhaka Core (৳80):
-  // Triggers if District/City is Dhaka (and not a sub-area) or address specifies Dhaka core
-  const isDhaka = isDhakaCity(distText) || isDhakaCity(addrText);
-  if (isDhaka) {
-    return {
-      fee: 80,
-      tier: 'dhaka_core',
-      reason: 'Inside Dhaka Core',
-    };
-  }
-
-  // 3. Outside Dhaka (৳150):
-  // All other districts across Bangladesh (Pabna, Rajshahi, Bogura, Chattogram, Sylhet, Khulna, Barishal, Rangpur, etc.)
   return {
-    fee: 150,
-    tier: 'outside_dhaka',
-    reason: 'Outside Dhaka',
+    fee: parsed.rate,
+    tier: parsed.tier,
+    reason: parsed.badgeLabelBn,
   };
 }
 

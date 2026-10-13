@@ -34,6 +34,7 @@ import {
   matchZoneFromText,
   calculateShippingFee,
   checkIsFreeDelivery,
+  parseAddressLocation,
 } from '@/lib/shipping/locationBilingual';
 import {
   BANGLADESH_DIVISIONS,
@@ -365,75 +366,25 @@ export default function CheckoutClient() {
   const [selectedDivisionId, setSelectedDivisionId] = useState<string | null>(null);
   const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(null);
 
-  // ── Division & District Dropdown Options ─────────────────────────────────────
-  const divisionOptions = useMemo(() => {
-    return BANGLADESH_DIVISIONS.map((div) => ({
-      value: div.id,
-      label: `${div.nameEn} (${div.nameBn})`,
-      subLabel: `${div.nameEn} Division`,
-    }));
-  }, []);
+  // ── Smart Bilingual Address Parsing with Zero Mismatch Guarantee ─────────────
+  const parsedAddress = useMemo(() => {
+    return parseAddressLocation(formData.street);
+  }, [formData.street]);
 
-  const districtOptions = useMemo(() => {
-    const list = selectedDivisionId
-      ? getDistrictsByDivision(selectedDivisionId)
-      : BANGLADESH_DISTRICTS;
-
-    return list.map((dist) => ({
-      value: dist.id,
-      label: `${dist.nameEn} (${dist.nameBn})`,
-      subLabel: `${dist.divisionNameEn} Division`,
-    }));
-  }, [selectedDivisionId]);
-
-  const handleDivisionChange = (divId: string | null) => {
-    setSelectedDivisionId(divId);
-    if (!divId) {
-      setFormData((prev) => ({ ...prev, division: '' }));
-      return;
-    }
-    const divObj = BANGLADESH_DIVISIONS.find((d) => d.id === divId);
-    setFormData((prev) => ({ ...prev, division: divObj ? divObj.nameEn : '' }));
-
-    if (divObj) {
-      setSelectedPathaoCityId(divObj.pathaoCityId);
-    }
-
-    // If currently selected district doesn't belong to newly selected division, reset district
-    if (selectedDistrictId) {
-      const currentDist = BANGLADESH_DISTRICTS.find((d) => d.id === selectedDistrictId);
-      if (currentDist && currentDist.divisionId !== divId) {
-        setSelectedDistrictId(null);
-        setFormData((prev) => ({ ...prev, city: '', district: '' }));
+  // Keep division, district, and Pathao city strictly synced with parsedAddress
+  useEffect(() => {
+    if (parsedAddress.isRecognized) {
+      if (parsedAddress.district?.id) {
+        setSelectedDistrictId(parsedAddress.district.id);
       }
-    }
-  };
-
-  const handleDistrictChange = (distId: string | null) => {
-    setSelectedDistrictId(distId);
-    if (!distId) {
-      setFormData((prev) => ({ ...prev, city: '', district: '' }));
-      return;
-    }
-    const distObj = BANGLADESH_DISTRICTS.find((d) => d.id === distId);
-    if (distObj) {
-      setFormData((prev) => ({
-        ...prev,
-        city: distObj.nameEn,
-        district: distObj.nameEn,
-        division: distObj.divisionNameEn,
-      }));
-
-      // Automatically select the corresponding division!
-      if (selectedDivisionId !== distObj.divisionId) {
-        setSelectedDivisionId(distObj.divisionId);
-        const divObj = BANGLADESH_DIVISIONS.find((d) => d.id === distObj.divisionId);
-        if (divObj) {
-          setSelectedPathaoCityId(divObj.pathaoCityId);
+      if (parsedAddress.division?.id) {
+        setSelectedDivisionId(parsedAddress.division.id);
+        if (parsedAddress.division.pathaoCityId) {
+          setSelectedPathaoCityId(parsedAddress.division.pathaoCityId);
         }
       }
     }
-  };
+  }, [parsedAddress]);
 
   // ── Pathao Dynamic Shipping State ──────────────────────────────────────────
   const [pathaoCities, setPathaoCities] = useState<Array<{ city_id: number; city_name: string }>>([]);
@@ -624,9 +575,9 @@ export default function CheckoutClient() {
   const calculatedDeliveryFee = useMemo(() => {
     const selectedZoneObj = pathaoZones.find((z) => z.zone_id === selectedPathaoZoneId);
     const result = calculateShippingFee({
-      district: formData.district || formData.city,
-      city: formData.city,
-      division: formData.division,
+      district: parsedAddress.districtNameEn || formData.district || formData.city,
+      city: parsedAddress.districtNameEn || formData.city,
+      division: parsedAddress.divisionNameEn || formData.division,
       address: formData.street,
       zoneName: selectedZoneObj?.zone_name,
       subtotal,
@@ -635,7 +586,7 @@ export default function CheckoutClient() {
       items: activeItems,
     });
     return result.fee;
-  }, [formData.district, formData.city, formData.division, formData.street, subtotal, freeShippingThreshold, pathaoZones, selectedPathaoZoneId, isFreeDeliveryUnlocked, activeItems]);
+  }, [parsedAddress, formData.district, formData.city, formData.division, formData.street, subtotal, freeShippingThreshold, pathaoZones, selectedPathaoZoneId, isFreeDeliveryUnlocked, activeItems]);
 
   const effectiveShippingFee = isFreeDeliveryUnlocked ? 0 : calculatedDeliveryFee;
 
@@ -797,7 +748,21 @@ export default function CheckoutClient() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value };
+      if (name === 'street') {
+        const parsed = parseAddressLocation(value);
+        if (parsed.isRecognized) {
+          next.district = parsed.districtNameEn;
+          next.division = parsed.divisionNameEn;
+          next.city = parsed.districtNameEn;
+          if (parsed.division?.pathaoCityId) {
+            setSelectedPathaoCityId(parsed.division.pathaoCityId);
+          }
+        }
+      }
+      return next;
+    });
   };
 
   const handleCompleteOrder = async (e: React.FormEvent) => {
@@ -814,15 +779,28 @@ export default function CheckoutClient() {
     setBkashError(null);
 
     try {
-      const currentDist = BANGLADESH_DISTRICTS.find((d) => d.id === selectedDistrictId);
-      const currentDiv = BANGLADESH_DIVISIONS.find((d) => d.id === selectedDivisionId);
+      const parsed = parseAddressLocation(formData.street);
+      const currentDist = parsed.district || BANGLADESH_DISTRICTS.find((d) => d.id === selectedDistrictId);
+      const currentDiv = parsed.division || BANGLADESH_DIVISIONS.find((d) => d.id === selectedDivisionId);
 
-      const districtName = currentDist?.nameEn || formData.district || formData.city;
-      const divisionName = currentDiv?.nameEn || formData.division;
+      const districtName =
+        parsed.districtNameEn ||
+        currentDist?.nameEn ||
+        formData.district ||
+        formData.city ||
+        (parsed.tier === 'dhaka_core' || parsed.tier === 'dhaka_subarea' ? 'Dhaka' : '');
+
+      const divisionName =
+        parsed.divisionNameEn ||
+        currentDiv?.nameEn ||
+        formData.division ||
+        (parsed.tier === 'dhaka_core' || parsed.tier === 'dhaka_subarea' ? 'Dhaka' : '');
 
       const selectedCityObj = pathaoCities.find((c) => c.city_id === selectedPathaoCityId);
       const selectedZoneObj = pathaoZones.find((z) => z.zone_id === selectedPathaoZoneId);
       const selectedAreaObj = pathaoAreas.find((a) => a.area_id === selectedPathaoAreaId);
+
+      const pathaoCityIdToUse = parsed.division?.pathaoCityId || currentDiv?.pathaoCityId || selectedPathaoCityId || undefined;
 
       const updatedShippingAddress = {
         ...formData,
@@ -831,7 +809,7 @@ export default function CheckoutClient() {
         city: districtName,
         street: formData.street,
         fullAddress: formData.street,
-        pathaoCityId: currentDiv?.pathaoCityId || selectedPathaoCityId || undefined,
+        pathaoCityId: pathaoCityIdToUse,
         pathaoZoneId: selectedPathaoZoneId || undefined,
         pathaoAreaId: selectedPathaoAreaId || undefined,
         pathaoCityName: divisionName || selectedCityObj?.city_name || undefined,
@@ -1351,49 +1329,41 @@ export default function CheckoutClient() {
                 maxLength={11}
               />
 
-              {/* Division Dropdown */}
-              <SearchableSelect
-                label="Division / বিভাগ"
-                id="co-division"
-                required
-                options={divisionOptions}
-                value={selectedDivisionId}
-                placeholder="-- Select Division (বিভাগ) --"
-                className="sm:col-span-1"
-                onChange={handleDivisionChange}
-              />
+              {/* Unified Single Full Address Field (Division, District, Full Address combined) */}
+              <div className="sm:col-span-2 space-y-2">
+                <Field
+                  label="Full Address / সম্পূর্ণ ঠিকানা (District, Thana/Area, Road/House)"
+                  name="street"
+                  value={formData.street}
+                  onChange={handleInputChange}
+                  placeholder="e.g. বাড়ি ১২, রোড ৪, ধানমন্ডি, ঢাকা অথবা গ্রাম, থানা, জেলা (যেমন: পাবনা / সাভার / চট্টগ্রাম)"
+                  autoComplete="street-address"
+                  required
+                  className="w-full"
+                />
 
-              {/* City / District Dropdown */}
-              <SearchableSelect
-                label="City / District (জেলা)"
-                id="co-district"
-                required
-                options={districtOptions}
-                value={selectedDistrictId}
-                placeholder={
-                  selectedDivisionId
-                    ? `-- Select District in ${formData.division || 'Division'} --`
-                    : '-- Select District (জেলা) --'
-                }
-                className="sm:col-span-1"
-                onChange={handleDistrictChange}
-              />
-
-              {/* Full Address Field — Separate full-width field */}
-              <Field
-                label="Full Address (House, Road, Flat & Landmark)"
-                name="street"
-                value={formData.street}
-                onChange={handleInputChange}
-                placeholder="e.g. Banglabazar, House 42, Road 11, Flat 4B"
-                autoComplete="street-address"
-                required
-                className="sm:col-span-2"
-              />
+                {/* Real-time Location Detection & Rate Status Badge */}
+                {parsedAddress.isRecognized ? (
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/90 border border-emerald-200 text-xs text-emerald-900 transition-all shadow-xs">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                      <span className="font-semibold truncate">{parsedAddress.badgeLabelBn}</span>
+                    </div>
+                    <span className="font-bold text-[#A80C14] bg-white px-2.5 py-0.5 rounded-lg border border-rose-100 shadow-xs shrink-0 ml-2">
+                      {effectiveShippingFee === 0 ? 'ফ্রি ডেলিভারি' : `৳ ${effectiveShippingFee}`}
+                    </span>
+                  </div>
+                ) : formData.street.trim() ? (
+                  <div className="flex items-center gap-1.5 text-[11px] text-stone-500 px-1">
+                    <Info className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+                    <span>ঠিকানায় জেলা বা এলাকার নাম লিখলে ডেলিভারি চার্জ স্বয়ংক্রিয়ভাবে নির্ধারিত হবে (যেমন: পাবনা, সাভার, মিরপুর)।</span>
+                  </div>
+                ) : null}
+              </div>
             </div>
 
-            {/* Delivery Fee Info Banner */}
-            <div className="p-3.5 bg-rose-50/60 border border-[#F8D2D5] rounded-2xl text-xs text-stone-700 space-y-1.5">
+            {/* Delivery Fee Info Banner with Active Tier Highlight */}
+            <div className="p-3.5 bg-rose-50/60 border border-[#F8D2D5] rounded-2xl text-xs text-stone-700 space-y-2">
               <div className="flex items-center justify-between font-bold text-stone-900 flex-wrap gap-1">
                 <span className="flex items-center gap-1.5 text-[#A80C14]">
                   <Truck className="w-4 h-4" /> Standard Delivery Rates
@@ -1411,9 +1381,35 @@ export default function CheckoutClient() {
                   </span>
                 </div>
               </div>
-              <p className="text-[11px] text-stone-500">
-                Inside Dhaka: <strong>৳80</strong> • Sub-area Dhaka: <strong>৳100</strong> • Outside Dhaka: <strong>৳150</strong>
-              </p>
+              <div className="flex items-center gap-2 flex-wrap text-[11px]">
+                <span
+                  className={`px-2 py-0.5 rounded-md transition-colors ${
+                    parsedAddress.tier === 'dhaka_core' && parsedAddress.isRecognized
+                      ? 'bg-[#A80C14] text-white font-bold shadow-xs'
+                      : 'text-stone-600 bg-white/70 border border-[#F8D2D5]'
+                  }`}
+                >
+                  Inside Dhaka: <strong>৳80</strong>
+                </span>
+                <span
+                  className={`px-2 py-0.5 rounded-md transition-colors ${
+                    parsedAddress.tier === 'dhaka_subarea' && parsedAddress.isRecognized
+                      ? 'bg-[#A80C14] text-white font-bold shadow-xs'
+                      : 'text-stone-600 bg-white/70 border border-[#F8D2D5]'
+                  }`}
+                >
+                  Sub-area Dhaka: <strong>৳100</strong>
+                </span>
+                <span
+                  className={`px-2 py-0.5 rounded-md transition-colors ${
+                    (parsedAddress.tier === 'outside_dhaka' || !parsedAddress.isRecognized) && effectiveShippingFee === 150
+                      ? 'bg-[#A80C14] text-white font-bold shadow-xs'
+                      : 'text-stone-600 bg-white/70 border border-[#F8D2D5]'
+                  }`}
+                >
+                  Outside Dhaka: <strong>৳150</strong>
+                </span>
+              </div>
             </div>
           </section>
         </div>
