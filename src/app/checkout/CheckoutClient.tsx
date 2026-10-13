@@ -35,6 +35,12 @@ import {
   calculateShippingFee,
   checkIsFreeDelivery,
 } from '@/lib/shipping/locationBilingual';
+import {
+  BANGLADESH_DIVISIONS,
+  BANGLADESH_DISTRICTS,
+  getDistrictsByDivision,
+  findDistrict,
+} from '@/lib/shipping/bangladeshLocations';
 import { getProductVariationImage, getProductVariationPrice } from '@/lib/utils';
 
 /** Shared 44px-touch-target text field. */
@@ -88,8 +94,8 @@ function Field({
   );
 }
 
-/** Interactive searchable select dropdown for City, Zone, Area */
-function SearchableSelect({
+/** Interactive searchable select dropdown for Division, City, District, Zone, Area */
+function SearchableSelect<T extends string | number = string | number>({
   label,
   id,
   options,
@@ -103,9 +109,9 @@ function SearchableSelect({
 }: {
   label: string;
   id: string;
-  options: Array<{ value: number; label: string }>;
-  value: number | null;
-  onChange: (val: number | null) => void;
+  options: Array<{ value: T; label: string; subLabel?: string }>;
+  value: T | null;
+  onChange: (val: T | null) => void;
   placeholder: string;
   disabled?: boolean;
   required?: boolean;
@@ -126,7 +132,11 @@ function SearchableSelect({
     const q = searchQuery.toLowerCase().trim();
     return options.filter((o) => {
       const terms = getSearchableTerms(o.label);
-      return terms.some((t) => t.toLowerCase().includes(q));
+      return (
+        terms.some((t) => t.toLowerCase().includes(q)) ||
+        o.label.toLowerCase().includes(q) ||
+        (o.subLabel && o.subLabel.toLowerCase().includes(q))
+      );
     });
   }, [options, searchQuery]);
 
@@ -212,7 +222,7 @@ function SearchableSelect({
                 const isSelected = opt.value === value;
                 return (
                   <button
-                    key={opt.value}
+                    key={String(opt.value)}
                     type="button"
                     onClick={() => {
                       onChange(opt.value);
@@ -224,8 +234,13 @@ function SearchableSelect({
                       : 'text-stone-700 hover:bg-stone-50'
                       }`}
                   >
-                    <span>{opt.label}</span>
-                    {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#A80C14]" />}
+                    <div className="flex flex-col min-w-0 pr-2">
+                      <span className="truncate">{opt.label}</span>
+                      {opt.subLabel && (
+                        <span className="text-[10px] text-stone-400 font-normal truncate">{opt.subLabel}</span>
+                      )}
+                    </div>
+                    {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#A80C14] shrink-0" />}
                   </button>
                 );
               })
@@ -339,11 +354,86 @@ export default function CheckoutClient() {
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
+    division: '',
+    district: '',
     street: '',
     city: '',
     country: 'Bangladesh',
-    postalCode: ''
+    postalCode: '',
   });
+
+  const [selectedDivisionId, setSelectedDivisionId] = useState<string | null>(null);
+  const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(null);
+
+  // ── Division & District Dropdown Options ─────────────────────────────────────
+  const divisionOptions = useMemo(() => {
+    return BANGLADESH_DIVISIONS.map((div) => ({
+      value: div.id,
+      label: `${div.nameEn} (${div.nameBn})`,
+      subLabel: `${div.nameEn} Division`,
+    }));
+  }, []);
+
+  const districtOptions = useMemo(() => {
+    const list = selectedDivisionId
+      ? getDistrictsByDivision(selectedDivisionId)
+      : BANGLADESH_DISTRICTS;
+
+    return list.map((dist) => ({
+      value: dist.id,
+      label: `${dist.nameEn} (${dist.nameBn})`,
+      subLabel: `${dist.divisionNameEn} Division`,
+    }));
+  }, [selectedDivisionId]);
+
+  const handleDivisionChange = (divId: string | null) => {
+    setSelectedDivisionId(divId);
+    if (!divId) {
+      setFormData((prev) => ({ ...prev, division: '' }));
+      return;
+    }
+    const divObj = BANGLADESH_DIVISIONS.find((d) => d.id === divId);
+    setFormData((prev) => ({ ...prev, division: divObj ? divObj.nameEn : '' }));
+
+    if (divObj) {
+      setSelectedPathaoCityId(divObj.pathaoCityId);
+    }
+
+    // If currently selected district doesn't belong to newly selected division, reset district
+    if (selectedDistrictId) {
+      const currentDist = BANGLADESH_DISTRICTS.find((d) => d.id === selectedDistrictId);
+      if (currentDist && currentDist.divisionId !== divId) {
+        setSelectedDistrictId(null);
+        setFormData((prev) => ({ ...prev, city: '', district: '' }));
+      }
+    }
+  };
+
+  const handleDistrictChange = (distId: string | null) => {
+    setSelectedDistrictId(distId);
+    if (!distId) {
+      setFormData((prev) => ({ ...prev, city: '', district: '' }));
+      return;
+    }
+    const distObj = BANGLADESH_DISTRICTS.find((d) => d.id === distId);
+    if (distObj) {
+      setFormData((prev) => ({
+        ...prev,
+        city: distObj.nameEn,
+        district: distObj.nameEn,
+        division: distObj.divisionNameEn,
+      }));
+
+      // Automatically select the corresponding division!
+      if (selectedDivisionId !== distObj.divisionId) {
+        setSelectedDivisionId(distObj.divisionId);
+        const divObj = BANGLADESH_DIVISIONS.find((d) => d.id === distObj.divisionId);
+        if (divObj) {
+          setSelectedPathaoCityId(divObj.pathaoCityId);
+        }
+      }
+    }
+  };
 
   // ── Pathao Dynamic Shipping State ──────────────────────────────────────────
   const [pathaoCities, setPathaoCities] = useState<Array<{ city_id: number; city_name: string }>>([]);
@@ -534,7 +624,9 @@ export default function CheckoutClient() {
   const calculatedDeliveryFee = useMemo(() => {
     const selectedZoneObj = pathaoZones.find((z) => z.zone_id === selectedPathaoZoneId);
     const result = calculateShippingFee({
+      district: formData.district || formData.city,
       city: formData.city,
+      division: formData.division,
       address: formData.street,
       zoneName: selectedZoneObj?.zone_name,
       subtotal,
@@ -543,7 +635,7 @@ export default function CheckoutClient() {
       items: activeItems,
     });
     return result.fee;
-  }, [formData.city, formData.street, subtotal, freeShippingThreshold, pathaoZones, selectedPathaoZoneId, isFreeDeliveryUnlocked, activeItems]);
+  }, [formData.district, formData.city, formData.division, formData.street, subtotal, freeShippingThreshold, pathaoZones, selectedPathaoZoneId, isFreeDeliveryUnlocked, activeItems]);
 
   const effectiveShippingFee = isFreeDeliveryUnlocked ? 0 : calculatedDeliveryFee;
 
@@ -583,9 +675,9 @@ export default function CheckoutClient() {
 
   // Auto-select zone based on user's district
   React.useEffect(() => {
-    if (!formData.city || deliveryZones.length === 0) return;
-    const cleanCity = formData.city.toLowerCase().trim();
-    if (cleanCity.includes('dhaka')) {
+    const targetCity = (formData.district || formData.city || '').toLowerCase().trim();
+    if (!targetCity || deliveryZones.length === 0) return;
+    if (targetCity.includes('dhaka') && !isDhakaSubArea(formData.street)) {
       const dhakaZone = deliveryZones.find(z => z.name.toLowerCase().includes('inside dhaka'));
       if (dhakaZone && selectedZoneId !== dhakaZone.id) {
         setSelectedZone(dhakaZone.id, null);
@@ -597,7 +689,7 @@ export default function CheckoutClient() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.city, deliveryZones]);
+  }, [formData.district, formData.city, formData.street, deliveryZones]);
 
   React.useEffect(() => {
     const fetchSettings = async () => {
@@ -619,11 +711,23 @@ export default function CheckoutClient() {
     if (user) {
       Promise.resolve().then(() => {
         if (user.email) setUserEmail(user.email);
+        const userDistName = user.district || '';
+        const matchedDist = userDistName ? findDistrict(userDistName) : undefined;
+        if (matchedDist) {
+          setSelectedDistrictId(matchedDist.id);
+          setSelectedDivisionId(matchedDist.divisionId);
+          const divObj = BANGLADESH_DIVISIONS.find((d) => d.id === matchedDist.divisionId);
+          if (divObj) {
+            setSelectedPathaoCityId(divObj.pathaoCityId);
+          }
+        }
         setFormData((prev) => ({
           ...prev,
           fullName: user.name || prev.fullName,
           phone: user.phone || prev.phone,
-          city: user.district || prev.city,
+          city: matchedDist?.nameEn || user.district || prev.city,
+          district: matchedDist?.nameEn || user.district || prev.district,
+          division: matchedDist?.divisionNameEn || prev.division,
           street: user.fullAddress || prev.street,
         }));
       });
@@ -710,18 +814,27 @@ export default function CheckoutClient() {
     setBkashError(null);
 
     try {
+      const currentDist = BANGLADESH_DISTRICTS.find((d) => d.id === selectedDistrictId);
+      const currentDiv = BANGLADESH_DIVISIONS.find((d) => d.id === selectedDivisionId);
+
+      const districtName = currentDist?.nameEn || formData.district || formData.city;
+      const divisionName = currentDiv?.nameEn || formData.division;
+
       const selectedCityObj = pathaoCities.find((c) => c.city_id === selectedPathaoCityId);
       const selectedZoneObj = pathaoZones.find((z) => z.zone_id === selectedPathaoZoneId);
       const selectedAreaObj = pathaoAreas.find((a) => a.area_id === selectedPathaoAreaId);
 
       const updatedShippingAddress = {
         ...formData,
-        city: selectedCityObj?.city_name || formData.city,
-        district: selectedCityObj?.city_name || formData.city,
-        pathaoCityId: selectedPathaoCityId || undefined,
+        division: divisionName,
+        district: districtName,
+        city: districtName,
+        street: formData.street,
+        fullAddress: formData.street,
+        pathaoCityId: currentDiv?.pathaoCityId || selectedPathaoCityId || undefined,
         pathaoZoneId: selectedPathaoZoneId || undefined,
         pathaoAreaId: selectedPathaoAreaId || undefined,
-        pathaoCityName: selectedCityObj?.city_name || undefined,
+        pathaoCityName: divisionName || selectedCityObj?.city_name || undefined,
         pathaoZoneName: selectedZoneObj?.zone_name || undefined,
         pathaoAreaName: selectedAreaObj?.area_name || undefined,
       };
@@ -734,14 +847,14 @@ export default function CheckoutClient() {
         courierDeliveryFee: pathaoCourierFee || undefined,
         total: totalAmount,
         shippingAddress: updatedShippingAddress,
-        deliveryMethod: selectedCityObj
-          ? `Pathao Express (${selectedCityObj.city_name}${selectedZoneObj ? ` - ${selectedZoneObj.zone_name}` : ''})`
+        deliveryMethod: districtName
+          ? `Standard Delivery (${districtName}${divisionName ? `, ${divisionName}` : ''})`
           : selectedZoneName + (selectedSubAreaName ? ` - ${selectedSubAreaName}` : ''),
         paymentMethod,
         userEmail,
         userIp,
-        deliveryZone: selectedZoneObj?.zone_name || selectedZoneName,
-        deliverySubArea: selectedAreaObj?.area_name || selectedSubAreaName || undefined,
+        deliveryZone: divisionName || selectedZoneObj?.zone_name || selectedZoneName,
+        deliverySubArea: districtName || selectedAreaObj?.area_name || selectedSubAreaName || undefined,
         promoCode: appliedCoupon?.code || undefined,
       };
 
@@ -1238,46 +1351,45 @@ export default function CheckoutClient() {
                 maxLength={11}
               />
 
-              {/* Pathao Searchable City Selection — Full width on desktop */}
+              {/* Division Dropdown */}
               <SearchableSelect
-                label="City / District"
-                id="co-pathao-city"
+                label="Division / বিভাগ"
+                id="co-division"
                 required
-                options={pathaoCities.map((city) => ({ value: city.city_id, label: city.city_name }))}
-                value={selectedPathaoCityId}
-                loading={isLoadingCities}
-                placeholder="-- Type or search City (e.g. Dhaka, Chittagong...) --"
-                className="sm:col-span-2"
-                onChange={(val) => {
-                  setSelectedPathaoCityId(val);
-                  if (val) {
-                    const cityObj = pathaoCities.find((c) => c.city_id === val);
-                    if (cityObj) {
-                      setFormData((prev) => ({ ...prev, city: cityObj.city_name }));
-                    }
-                  } else {
-                    setFormData((prev) => ({ ...prev, city: '' }));
-                  }
-                }}
+                options={divisionOptions}
+                value={selectedDivisionId}
+                placeholder="-- Select Division (বিভাগ) --"
+                className="sm:col-span-1"
+                onChange={handleDivisionChange}
               />
 
-              {/* Full Address Field — Shown only after City / District is selected */}
-              {Boolean(selectedPathaoCityId || formData.city) ? (
-                <Field
-                  label="Full Address (House, Road, Flat & Landmark)"
-                  name="street"
-                  value={formData.street}
-                  onChange={handleInputChange}
-                  placeholder="e.g. House 42, Road 11, Flat 4B, near Abahani Field"
-                  autoComplete="street-address"
-                  className="sm:col-span-2 animate-in fade-in slide-in-from-top-2 duration-200"
-                />
-              ) : (
-                <div className="sm:col-span-2 p-3 bg-amber-50/60 border border-amber-200/80 rounded-2xl text-[11px] font-semibold text-amber-800 flex items-center gap-2">
-                  <span className="shrink-0 text-amber-600 font-bold">📍</span>
-                  <span>Please select your <strong>City / District</strong> above to enter your detailed delivery address.</span>
-                </div>
-              )}
+              {/* City / District Dropdown */}
+              <SearchableSelect
+                label="City / District (জেলা)"
+                id="co-district"
+                required
+                options={districtOptions}
+                value={selectedDistrictId}
+                placeholder={
+                  selectedDivisionId
+                    ? `-- Select District in ${formData.division || 'Division'} --`
+                    : '-- Select District (জেলা) --'
+                }
+                className="sm:col-span-1"
+                onChange={handleDistrictChange}
+              />
+
+              {/* Full Address Field — Separate full-width field */}
+              <Field
+                label="Full Address (House, Road, Flat & Landmark)"
+                name="street"
+                value={formData.street}
+                onChange={handleInputChange}
+                placeholder="e.g. Banglabazar, House 42, Road 11, Flat 4B"
+                autoComplete="street-address"
+                required
+                className="sm:col-span-2"
+              />
             </div>
 
             {/* Delivery Fee Info Banner */}
