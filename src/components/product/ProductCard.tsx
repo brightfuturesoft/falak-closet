@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { SmartImage } from '@/components/ui/SmartImage';
-import { Heart, ShoppingBag, Zap, Star, Truck } from 'lucide-react';
+import { Heart, ShoppingBag, Zap, Star, Truck, Gift } from 'lucide-react';
 import { Product, type ProductColor } from '@/data/products';
 import { useCart } from '@/context/CartContext';
 import { useAnalytics } from '@/context/AnalyticsContext';
@@ -42,6 +42,14 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
 
   const sizesList = product?.sizes && product.sizes.length > 0 ? product.sizes : ['Free Size'];
   const freeDeliveryQty = Number(product?.freeDeliveryQuantity) || 0;
+
+  // Active combo tier discounts (sorted by minQuantity ascending)
+  const sortedTierDiscounts = React.useMemo(() => {
+    if (!product?.tierDiscounts || !Array.isArray(product.tierDiscounts)) return [];
+    return [...product.tierDiscounts]
+      .filter((t) => Number(t.minQuantity) > 0 && Number(t.discountAmount) > 0)
+      .sort((a, b) => Number(a.minQuantity) - Number(b.minQuantity));
+  }, [product?.tierDiscounts]);
 
   // Find color object if matched or selected
   const initialColorObj = React.useMemo(() => {
@@ -319,6 +327,20 @@ export function ProductCard({ product, selectedColor }: ProductCardProps) {
                 {freeDeliveryQty === 1
                   ? '১টি কিনলেই ডেলিভারি ফ্রি!'
                   : `${toBengaliNumber(freeDeliveryQty)}টি কিনলে ফ্রি ডেলিভারি`}
+              </span>
+            </div>
+          )}
+
+          {/* Combo Pack / Tier Discount Pill (Buy X -> Save Y) */}
+          {sortedTierDiscounts.length > 0 && (
+            <div className="mt-1 flex items-center justify-center gap-1.5 px-2 py-1 rounded-lg bg-[#FDF2F3] border border-[#F8D2D5] text-[#A80C14] text-[10px] sm:text-[11px] font-bold tracking-tight shadow-2xs animate-in fade-in duration-200">
+              <Gift className="w-3.5 h-3.5 text-[#A80C14] shrink-0" />
+              <span className="truncate">
+                {sortedTierDiscounts.length === 1
+                  ? `${toBengaliNumber(sortedTierDiscounts[0].minQuantity)}টি কিনলে ${toBengaliNumber(sortedTierDiscounts[0].discountAmount)}৳ ছাড়!`
+                  : sortedTierDiscounts.length === 2
+                  ? `${toBengaliNumber(sortedTierDiscounts[0].minQuantity)}টিতে ${toBengaliNumber(sortedTierDiscounts[0].discountAmount)}৳ | ${toBengaliNumber(sortedTierDiscounts[1].minQuantity)}টিতে ${toBengaliNumber(sortedTierDiscounts[1].discountAmount)}৳ ছাড়`
+                  : `${toBengaliNumber(sortedTierDiscounts[0].minQuantity)}টিতে ${toBengaliNumber(sortedTierDiscounts[0].discountAmount)}৳ | ${toBengaliNumber(sortedTierDiscounts[1].minQuantity)}টিতে ${toBengaliNumber(sortedTierDiscounts[1].discountAmount)}৳ (+কম্বো)`}
               </span>
             </div>
           )}

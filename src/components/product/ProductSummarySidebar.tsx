@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Star, Truck } from 'lucide-react';
+import { Star, Truck, Gift } from 'lucide-react';
 import { Product, ProductColor } from '@/data/products';
 import { formatCurrency, toBengaliNumber } from '@/lib/utils';
 
@@ -226,6 +226,24 @@ export function ProductSummarySidebar({
           </span>
         </div>
       ) : null}
+
+      {/* Combo Tier Discounts Offer Tag */}
+      {product.tierDiscounts && product.tierDiscounts.length > 0 && (
+        <div className="flex flex-wrap gap-2 pt-0.5">
+          {product.tierDiscounts
+            .filter((t) => t.minQuantity > 0 && t.discountAmount > 0)
+            .sort((a, b) => a.minQuantity - b.minQuantity)
+            .map((tier, idx) => (
+              <div
+                key={idx}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FDF2F3] border border-[#F8D2D5] text-[#A80C14] text-xs font-bold shadow-2xs"
+              >
+                <Gift className="w-3.5 h-3.5 text-[#A80C14] shrink-0" />
+                <span>{toBengaliNumber(tier.minQuantity)}টি কিনলে {toBengaliNumber(tier.discountAmount)}৳ ছাড়!</span>
+              </div>
+            ))}
+        </div>
+      )}
 
       {/* SUMMARY Section */}
       <div className="pt-4 border-t border-stone-200/80 space-y-5">
