@@ -118,7 +118,7 @@ interface LandingPageClientProps {
 
 export default function LandingPageClient({ initialProduct }: LandingPageClientProps) {
   const router = useRouter();
-  const { placeOrder, deliveryZones, products, freeShippingThreshold } = useCart();
+  const { placeOrder, deliveryZones, products, freeShippingThreshold, announcement } = useCart();
   const { trackEvent } = useAnalytics();
   const { showToast } = useToast();
 
@@ -453,9 +453,10 @@ export default function LandingPageClient({ initialProduct }: LandingPageClientP
     return checkIsFreeDelivery(
       [{ product, quantity }],
       subtotal,
-      Number(freeShippingThreshold)
+      Number(freeShippingThreshold),
+      announcement
     );
-  }, [product, quantity, subtotal, freeShippingThreshold]);
+  }, [product, quantity, subtotal, freeShippingThreshold, announcement]);
 
   const effectiveShippingFee = isFreeDeliveryUnlocked ? 0 : parsedAddress.rate;
   const deliveryFee = effectiveShippingFee;

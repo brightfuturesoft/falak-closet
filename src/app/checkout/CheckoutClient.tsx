@@ -278,6 +278,7 @@ export default function CheckoutClient() {
     products,
     freeShippingThreshold,
     quantityFreeDelivery,
+    announcement,
     updateQuantity,
   } = useCart();
   const { trackEvent } = useAnalytics();
@@ -569,9 +570,10 @@ export default function CheckoutClient() {
     return checkIsFreeDelivery(
       activeItems,
       subtotal,
-      Number(freeShippingThreshold)
+      Number(freeShippingThreshold),
+      announcement
     );
-  }, [activeItems, subtotal, freeShippingThreshold]);
+  }, [activeItems, subtotal, freeShippingThreshold, announcement]);
 
   const calculatedDeliveryFee = useMemo(() => {
     const selectedZoneObj = pathaoZones.find((z) => z.zone_id === selectedPathaoZoneId);
@@ -585,9 +587,10 @@ export default function CheckoutClient() {
       freeShippingThreshold: Number(freeShippingThreshold),
       isFreeDelivery: isFreeDeliveryUnlocked,
       items: activeItems,
+      announcement,
     });
     return result.fee;
-  }, [parsedAddress, formData.district, formData.city, formData.division, formData.street, subtotal, freeShippingThreshold, pathaoZones, selectedPathaoZoneId, isFreeDeliveryUnlocked, activeItems]);
+  }, [parsedAddress, formData.district, formData.city, formData.division, formData.street, subtotal, freeShippingThreshold, pathaoZones, selectedPathaoZoneId, isFreeDeliveryUnlocked, activeItems, announcement]);
 
   const effectiveShippingFee = isFreeDeliveryUnlocked ? 0 : calculatedDeliveryFee;
 
