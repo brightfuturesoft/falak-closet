@@ -1367,6 +1367,12 @@ export default function CheckoutClient() {
                 <span className="w-7 h-7 rounded-full bg-[#A80C14]/10 text-[#A80C14] text-xs font-black flex items-center justify-center shrink-0">2</span>
                 Shipping &amp; Contact Details
               </h2>
+              {!user && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold shadow-xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  গেস্ট চেকআউট (একাউন্ট খোলার প্রয়োজন নেই)
+                </span>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">

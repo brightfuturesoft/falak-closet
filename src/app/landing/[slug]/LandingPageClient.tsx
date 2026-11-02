@@ -637,44 +637,8 @@ export default function LandingPageClient({ initialProduct }: LandingPageClientP
       return;
     }
 
-    // 2. Not logged in: check if account exists in database for this phone number
-    setIsSubmitting(true);
-    try {
-      const res = await fetch('/api/auth/check-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: digitsOnly }),
-      });
-      const data = await res.json();
-
-      if (data.isLoggedIn && data.user) {
-        setSessionUser(data.user);
-        await executeOrderSubmission(data.user);
-        return;
-      }
-
-      setAuthPassword('');
-      setAuthConfirmPassword('');
-      setAuthModalError('');
-      setAuthEmail('');
-
-      if (data.accountExists && data.hasPassword) {
-        // Account exists with password -> prompt login
-        setAuthExistingUser(data.user || { phone: digitsOnly });
-        setAuthMode('signin');
-        setShowAuthModal(true);
-      } else {
-        // Account does not exist or has no password -> prompt user to create account
-        setAuthExistingUser(null);
-        setAuthMode('signup');
-        setShowAuthModal(true);
-      }
-    } catch (err) {
-      console.error('Account check error:', err);
-      setFormError('Connection issue while verifying account. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    // 2. Direct guest checkout: any visitor can place an order without opening an account or logging in
+    await executeOrderSubmission(null);
   };
 
   // ─── Modal Form Submit Handlers ───────────────────────────────────────────
@@ -1735,8 +1699,11 @@ export default function LandingPageClient({ initialProduct }: LandingPageClientP
                     </button>
                   </div>
                 ) : (
-                  <div className="px-3.5 py-2.5 bg-[#FAF6F4] border border-stone-200/90 rounded-2xl flex items-center justify-between text-xs text-stone-600">
-                    <span className="text-[11px]">Already have a Falak Closet account?</span>
+                  <div className="px-3.5 py-2.5 bg-emerald-50/70 border border-emerald-200/90 rounded-2xl flex items-center justify-between text-xs text-emerald-900">
+                    <span className="text-[11px] font-semibold flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                      গেস্ট চেকআউট: একাউন্ট খোলার প্রয়োজন নেই (সরাসরি অর্ডার করুন)
+                    </span>
                     <button
                       type="button"
                       onClick={() => {
@@ -1746,9 +1713,9 @@ export default function LandingPageClient({ initialProduct }: LandingPageClientP
                         setAuthModalError('');
                         setShowAuthModal(true);
                       }}
-                      className="font-bold text-[#800020] hover:text-[#5B060B] hover:underline cursor-pointer flex items-center gap-1 text-[11px]"
+                      className="font-bold text-[#800020] hover:text-[#5B060B] hover:underline cursor-pointer flex items-center gap-1 text-[11px] shrink-0 ml-2"
                     >
-                      <LogIn className="w-3.5 h-3.5" /> Sign In Here
+                      <LogIn className="w-3.5 h-3.5" /> সাইন ইন
                     </button>
                   </div>
                 )}
@@ -2210,7 +2177,7 @@ export default function LandingPageClient({ initialProduct }: LandingPageClientP
                     )}
                   </button>
 
-                  <div className="text-center pt-2 border-t border-stone-100">
+                  <div className="text-center pt-2 border-t border-stone-100 space-y-2">
                     <button
                       type="button"
                       onClick={() => {
@@ -2219,10 +2186,20 @@ export default function LandingPageClient({ initialProduct }: LandingPageClientP
                         setAuthConfirmPassword('');
                         setAuthModalError('');
                       }}
-                      className="text-xs text-stone-600 hover:text-[#800020] font-semibold cursor-pointer"
+                      className="text-xs text-stone-600 hover:text-[#800020] font-semibold cursor-pointer block mx-auto"
                     >
                       Don&apos;t have an account yet?{' '}
                       <span className="text-[#800020] font-bold underline">Create New Account</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setShowAuthModal(false);
+                        await executeOrderSubmission(null);
+                      }}
+                      className="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      একাউন্ট ছাড়াই সরাসরি অর্ডার সম্পন্ন করুন (Guest Checkout)
                     </button>
                   </div>
                 </form>
@@ -2313,7 +2290,7 @@ export default function LandingPageClient({ initialProduct }: LandingPageClientP
                     )}
                   </button>
 
-                  <div className="text-center pt-2 border-t border-stone-100">
+                  <div className="text-center pt-2 border-t border-stone-100 space-y-2">
                     <button
                       type="button"
                       onClick={() => {
@@ -2322,10 +2299,20 @@ export default function LandingPageClient({ initialProduct }: LandingPageClientP
                         setAuthConfirmPassword('');
                         setAuthModalError('');
                       }}
-                      className="text-xs text-stone-600 hover:text-[#800020] font-semibold cursor-pointer"
+                      className="text-xs text-stone-600 hover:text-[#800020] font-semibold cursor-pointer block mx-auto"
                     >
                       Already have an account?{' '}
                       <span className="text-[#800020] font-bold underline">Sign In</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setShowAuthModal(false);
+                        await executeOrderSubmission(null);
+                      }}
+                      className="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      একাউন্ট ছাড়াই সরাসরি অর্ডার সম্পন্ন করুন (Guest Checkout)
                     </button>
                   </div>
                 </form>

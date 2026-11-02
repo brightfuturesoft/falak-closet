@@ -537,10 +537,10 @@ export default function CartClient() {
 
             <div className="p-3.5 bg-[#FDF2F3] border border-[#F8D2D5] rounded-2xl text-xs text-stone-600 space-y-1.5">
               <p className="flex items-center gap-1.5 font-bold text-stone-800">
-                <ShieldCheck className="w-4 h-4 text-[#A80C14]" /> Safe & Secure Checkout Guarantee
+                <ShieldCheck className="w-4 h-4 text-[#A80C14]" /> Safe &amp; Secure Checkout Guarantee
               </p>
               <p className="text-[11px] text-stone-500 leading-relaxed">
-                Cash on Delivery (COD), bKash, and Mobile Banking accepted across Bangladesh.
+                গেস্ট চেকআউট সুবিধা: একাউন্ট বা রেজিস্ট্রেশন ছাড়াই যে কোনো ভিজিটর সরাসরি অর্ডার করতে পারবেন।
               </p>
             </div>
           </div>

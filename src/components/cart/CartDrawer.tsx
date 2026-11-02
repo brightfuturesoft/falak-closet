@@ -394,8 +394,8 @@ export function CartDrawer() {
               )}
             </div>
 
-            <p className="text-[10px] text-stone-400 text-center flex items-center justify-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-emerald-500" /> Guaranteed 256-Bit Encrypted Secure Checkout
+            <p className="text-[10px] text-stone-500 text-center flex items-center justify-center gap-1">
+              <ShieldCheck className="w-3 h-3 text-emerald-500" /> গেস্ট চেকআউট · একাউন্ট ছাড়াই সরাসরি অর্ডার করুন
             </p>
           </div>
         )}
